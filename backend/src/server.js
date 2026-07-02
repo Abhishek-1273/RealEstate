@@ -17,11 +17,41 @@ connectDB();
 // Middleware
 app.use(helmet());
 app.use(morgan('dev'));
+
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://localhost:5174',
+  'https://real-estate-mu-plum.vercel.app'
+];
+
 app.use(cors({
-  origin: process.env.CLIENT_URL || 'http://localhost:5173',
+  origin: (origin, callback) => {
+    // Allow requests with no origin (like mobile apps or curl)
+    if (!origin) return callback(null, true);
+    
+    // Check exact matches or any vercel.app subdomain
+    if (allowedOrigins.includes(origin) || origin.endsWith('.vercel.app')) {
+      return callback(null, true);
+    }
+    
+    // Check environment variable
+    if (process.env.CLIENT_URL) {
+      const formattedClientUrl = process.env.CLIENT_URL.replace(/\/$/, '');
+      if (origin === formattedClientUrl) {
+        return callback(null, true);
+      }
+    }
+    
+    return callback(new Error(`Origin ${origin} not allowed by CORS`));
+  },
   credentials: true,
 }));
 app.use(express.json());
+
+// Base Route
+app.get('/', (req, res) => {
+  res.send('HyperRelestix API running 🚀');
+});
 
 // Routes
 app.use('/api/auth', authRoutes);
