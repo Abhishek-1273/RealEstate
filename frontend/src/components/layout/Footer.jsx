@@ -1,5 +1,4 @@
 import { Link } from 'react-router-dom';
-
 import { Mail, Phone, MapPin, ArrowRight } from 'lucide-react';
 import { FaInstagram, FaXTwitter, FaLinkedinIn, FaYoutube } from 'react-icons/fa6';
 import { useAuth } from '../../contexts';
@@ -70,8 +69,6 @@ export default function Footer() {
         style={{ background: 'radial-gradient(ellipse, rgba(30,58,138,0.08) 0%, transparent 70%)' }} />
 
       <div className="container-luxury pt-20 pb-12 relative">
-
-
         <div className="grid grid-cols-2 lg:grid-cols-12 gap-x-6 gap-y-10 xl:gap-16">
           {/* Brand Column */}
           <div className="col-span-2 lg:col-span-4">
