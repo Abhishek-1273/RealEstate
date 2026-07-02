@@ -1,0 +1,13 @@
+/* HyperRelestix — Base Reset
+   All design system styles live in styles/globals.css
+*/
+
+*, *::before, *::after { box-sizing: border-box; }
+
+body { margin: 0; }
+
+#root {
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+}

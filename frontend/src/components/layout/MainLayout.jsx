@@ -1,0 +1,106 @@
+import { Outlet, useLocation } from 'react-router-dom';
+import { useEffect, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import Navbar from './Navbar';
+import Footer from './Footer';
+import AuthModal from '../common/AuthModal';
+import SearchModal from '../common/SearchModal';
+import ScrollProgress from '../common/ScrollProgress';
+import FloatingCTA from '../common/FloatingCTA';
+import { useAuth, useSearch } from '../../contexts';
+import { pageTransition } from '../../animations/variants';
+
+const MainLayout = () => {
+  const { showAuthModal } = useAuth();
+  const { showSearch } = useSearch();
+  const location = useLocation();
+  const lenisRef = useRef(null);
+
+  // ── Lenis smooth scroll initialisation ──
+  useEffect(() => {
+    let lenis = null;
+    let rafId = null;
+
+    const initLenis = async () => {
+      try {
+        const { default: Lenis } = await import('@studio-freight/lenis');
+        lenis = new Lenis({
+          duration: 1.2,
+          easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+          direction: 'vertical',
+          gestureDirection: 'vertical',
+          smooth: true,
+          smoothTouch: false,
+          touchMultiplier: 2,
+        });
+        lenisRef.current = lenis;
+        window.lenis = lenis;
+
+        // If modal was already opened during lazy load, stop lenis immediately
+        if (document.body.style.overflow === 'hidden') {
+          lenis.stop();
+        }
+
+        const raf = (time) => {
+          lenis.raf(time);
+          rafId = requestAnimationFrame(raf);
+        };
+        rafId = requestAnimationFrame(raf);
+      } catch {
+        // Lenis not available, fall back gracefully
+      }
+    };
+
+    initLenis();
+
+    return () => {
+      if (rafId) cancelAnimationFrame(rafId);
+      if (lenisRef.current) {
+        lenisRef.current.destroy();
+        window.lenis = null;
+      }
+    };
+  }, []);
+
+  // ── Lock scroll when modals open ──
+  useEffect(() => {
+    const locked = showAuthModal || showSearch;
+    document.body.style.overflow = locked ? 'hidden' : '';
+    if (locked && lenisRef.current) lenisRef.current.stop();
+    else if (!locked && lenisRef.current) lenisRef.current.start();
+    return () => { document.body.style.overflow = ''; };
+  }, [showAuthModal, showSearch]);
+
+  // ── Scroll to top on route change ──
+  useEffect(() => {
+    if (lenisRef.current) lenisRef.current.scrollTo(0, { immediate: true });
+    else window.scrollTo(0, 0);
+  }, [location.pathname]);
+
+  return (
+    <div className="min-h-screen flex flex-col">
+      <ScrollProgress />
+      <Navbar />
+
+      <main className="flex-1">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={location.pathname}
+            initial={pageTransition.initial}
+            animate={pageTransition.animate}
+            exit={pageTransition.exit}
+          >
+            <Outlet />
+          </motion.div>
+        </AnimatePresence>
+      </main>
+
+      <Footer />
+      <FloatingCTA />
+      {showAuthModal && <AuthModal />}
+      {showSearch && <SearchModal />}
+    </div>
+  );
+};
+
+export default MainLayout;
