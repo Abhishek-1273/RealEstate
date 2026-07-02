@@ -118,7 +118,7 @@ function StatsStrip() {
         >
           {stats.map((s, i) => (
             <motion.div key={i} variants={scaleIn} className="text-center">
-              <p className="font-display font-black text-white leading-none mb-3" style={{ fontSize: '3.5rem' }}>
+              <p className="font-display font-black text-white leading-none mb-3 text-3xl sm:text-4xl md:text-5xl lg:text-[3.5rem]">
                 <CountUpNumber end={s.value} duration={2.5} />
                 <span style={{ color: '#D4AF37' }}>{s.suffix}</span>
               </p>
@@ -143,7 +143,7 @@ function ExploreCities() {
       {/* Ambient */}
       <div className="absolute inset-0 pointer-events-none opacity-30"
         style={{ background: 'radial-gradient(ellipse at 50% 100%, rgba(212,175,55,0.08) 0%, transparent 60%)' }} />
-      
+
       <div className="container-luxury relative">
         <SectionHeader
           label="Explore by City"
@@ -154,7 +154,7 @@ function ExploreCities() {
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
           {/* Left Column — 3D Globe */}
-          <div className="lg:col-span-7">
+          <div className="hidden md:block lg:col-span-7">
             <InteractiveGlobe onSelectCity={setActiveCity} activeCity={activeCity} />
           </div>
 
@@ -203,7 +203,7 @@ function ExploreCities() {
                     {activeCityData.tag}
                   </span>
                   <h3 className="font-display font-black text-white text-3xl leading-tight">{activeCityData.name}</h3>
-                  
+
                   <div className="flex items-center justify-between mt-3.5 pt-4" style={{ borderTop: '1px solid rgba(255,255,255,0.12)' }}>
                     <p className="text-white/70 text-sm font-semibold">{activeCityData.properties}+ Verified Properties</p>
                     <Link

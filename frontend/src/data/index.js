@@ -142,8 +142,8 @@ export const cities = [
 ];
 
 export const stats = [
-  { label: 'Luxury Properties Represented', value: 2500, suffix: '+' },
-  { label: 'High-Net-Worth Clients Served', value: 8500, suffix: '+' },
+  { label: 'Luxury Properties Represented', value: 2.5, suffix: 'K+' },
+  { label: 'High-Net-Worth Clients Served', value: 8.5, suffix: 'K+' },
   { label: 'Major Indian Cities Covered', value: 6, suffix: '' },
   { label: 'Years of Excellence', value: 15, suffix: '+' },
 ];

@@ -15,7 +15,8 @@ export default function CountUpNumber({ end, duration = 2, suffix = '' }) {
             const elapsed = (now - startTime) / (duration * 1000);
             const progress = Math.min(elapsed, 1);
             const eased = 1 - Math.pow(1 - progress, 3);
-            setCount(Math.round(eased * end));
+            const currentVal = eased * end;
+            setCount(end % 1 !== 0 ? Number(currentVal.toFixed(1)) : Math.round(currentVal));
             if (progress < 1) requestAnimationFrame(step);
           };
           requestAnimationFrame(step);

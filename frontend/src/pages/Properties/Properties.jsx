@@ -71,62 +71,65 @@ export default function Properties() {
       <div className="sticky top-[74px] z-30 bg-white/95 backdrop-blur-xl"
         style={{ borderBottom: '1px solid rgba(7,26,47,0.07)', boxShadow: '0 4px 20px rgba(7,26,47,0.04)' }}>
         <div className="container-luxury py-4">
-          <div className="flex flex-col md:flex-row md:items-center gap-3">
-            {/* Search */}
-            <div className="relative flex-1">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-soft" />
-              <input
-                value={query}
-                onChange={e => setQuery(e.target.value)}
-                placeholder="Search by name or locality..."
-                className="w-full pl-11 pr-4 h-[44px] rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-gold focus:ring-2 focus:ring-gold/15 transition-all"
-              />
+          <div className="flex flex-col gap-3">
+            {/* Row 1: Search + Filters Toggle + Sort + View Toggle */}
+            <div className="flex items-center gap-2 md:gap-3 w-full">
+              {/* Search */}
+              <div className="relative flex-1 min-w-0">
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-soft" />
+                <input
+                  value={query}
+                  onChange={e => setQuery(e.target.value)}
+                  placeholder="Search..."
+                  className="w-full pl-9 pr-3 h-[40px] rounded-xl border border-gray-200 text-xs md:text-sm focus:outline-none focus:border-gold focus:ring-2 focus:ring-gold/15 transition-all"
+                />
+              </div>
+
+              {/* More filters toggle */}
+              <button
+                onClick={() => setFiltersOpen(v => !v)}
+                className="flex items-center justify-center gap-1.5 px-3 md:px-4 h-[40px] rounded-xl text-xs md:text-sm font-semibold shrink-0 transition-all duration-200"
+                style={{ background: filtersOpen ? 'rgba(212,175,55,0.1)' : 'rgba(7,26,47,0.04)', color: filtersOpen ? '#8A6A18' : '#52525B', border: filtersOpen ? '1px solid rgba(212,175,55,0.3)' : '1px solid transparent' }}
+              >
+                <SlidersHorizontal className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Filters</span>
+                {hasFilters && <span className="w-1.5 h-1.5 rounded-full bg-gold" />}
+              </button>
+
+              {/* Sort */}
+              <div className="relative shrink-0 flex items-center">
+                <select value={sort} onChange={e => setSort(e.target.value)}
+                  className="appearance-none pl-3 pr-8 h-[40px] rounded-xl text-[11px] md:text-xs font-semibold border border-gray-200 focus:outline-none focus:border-gold cursor-pointer bg-white flex items-center justify-center"
+                  style={{ lineHeight: 'normal' }}
+                >
+                  {SORTBY.map(s => <option key={s}>{s}</option>)}
+                </select>
+                <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-ink-soft pointer-events-none" />
+              </div>
+
+              {/* View toggle */}
+              <div className="flex gap-0.5 p-1 h-[40px] items-center rounded-xl shrink-0" style={{ background: 'rgba(7,26,47,0.04)' }}>
+                {[['grid', <Grid3X3 className="w-3.5 h-3.5" />], ['list', <List className="w-3.5 h-3.5" />]].map(([v, icon]) => (
+                  <button key={v} onClick={() => setView(v)}
+                    className="p-1.5 rounded-lg transition-all duration-200 h-7 w-7 flex items-center justify-center"
+                    style={{ background: view === v ? 'white' : 'transparent', color: view === v ? '#071A2F' : '#71717A', boxShadow: view === v ? '0 1px 3px rgba(7,26,47,0.08)' : 'none' }}>
+                    {icon}
+                  </button>
+                ))}
+              </div>
             </div>
 
-            {/* Type filter */}
-            <div className="flex gap-1.5 overflow-x-auto no-scrollbar md:items-center">
+            {/* Row 2: Type filter buttons ("All", "Villa", etc.) */}
+            <div className="flex gap-1.5 overflow-x-auto no-scrollbar items-center py-1">
               {TYPES.map(t => (
                 <button key={t} onClick={() => setType(t)}
-                  className="px-4 h-[44px] rounded-xl text-xs font-semibold whitespace-nowrap transition-all duration-250 shrink-0 flex items-center justify-center"
+                  className="px-3.5 h-[36px] rounded-lg text-[11px] font-semibold whitespace-nowrap transition-all duration-250 shrink-0 flex items-center justify-center"
                   style={{
                     background: type === t ? 'linear-gradient(135deg, #D4AF37, #E8C84A)' : 'rgba(7,26,47,0.04)',
                     color: type === t ? '#071A2F' : '#52525B',
-                    boxShadow: type === t ? '0 3px 12px rgba(212,175,55,0.3)' : 'none',
+                    boxShadow: type === t ? '0 3px 10px rgba(212,175,55,0.2)' : 'none',
                   }}>
                   {t}
-                </button>
-              ))}
-            </div>
-
-            {/* More filters toggle */}
-            <button
-              onClick={() => setFiltersOpen(v => !v)}
-              className="flex items-center justify-center gap-2 px-4 h-[44px] rounded-xl text-sm font-semibold shrink-0 transition-all duration-200"
-              style={{ background: filtersOpen ? 'rgba(212,175,55,0.1)' : 'rgba(7,26,47,0.04)', color: filtersOpen ? '#8A6A18' : '#52525B', border: filtersOpen ? '1px solid rgba(212,175,55,0.3)' : '1px solid transparent' }}
-            >
-              <SlidersHorizontal className="w-4 h-4" />
-              Filters
-              {hasFilters && <span className="w-1.5 h-1.5 rounded-full bg-gold ml-0.5" />}
-            </button>
-
-            {/* Sort */}
-            <div className="relative shrink-0 flex items-center">
-              <select value={sort} onChange={e => setSort(e.target.value)}
-                className="appearance-none pl-4 pr-9 h-[44px] rounded-xl text-xs font-semibold border border-gray-200 focus:outline-none focus:border-gold cursor-pointer bg-white flex items-center justify-center"
-                style={{ lineHeght: 'normal' }}
-              >
-                {SORTBY.map(s => <option key={s}>{s}</option>)}
-              </select>
-              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-ink-soft pointer-events-none" />
-            </div>
-
-            {/* View toggle */}
-            <div className="flex gap-1 p-1 h-[44px] items-center rounded-xl shrink-0" style={{ background: 'rgba(7,26,47,0.04)' }}>
-              {[['grid', <Grid3X3 className="w-4 h-4" />], ['list', <List className="w-4 h-4" />]].map(([v, icon]) => (
-                <button key={v} onClick={() => setView(v)}
-                  className="p-2 rounded-lg transition-all duration-200 h-8 flex items-center justify-center"
-                  style={{ background: view === v ? 'white' : 'transparent', color: view === v ? '#071A2F' : '#71717A', boxShadow: view === v ? '0 1px 4px rgba(7,26,47,0.08)' : 'none' }}>
-                  {icon}
                 </button>
               ))}
             </div>

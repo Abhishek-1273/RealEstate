@@ -73,28 +73,35 @@ export default function BuyProperty() {
         {!submitted ? (
           <>
             {/* Progress bar */}
-            <div className="flex items-center gap-3 mb-12">
-              {STEPS.map((s, i) => (
-                <div key={i} className="flex items-center gap-3 flex-1">
-                  <div className="flex items-center gap-2.5">
+            <div className="relative mb-10 md:mb-12">
+              {/* Line connector behind */}
+              <div className="absolute top-4 left-[15%] right-[15%] h-[2px] bg-gray-100 -z-10 rounded-full">
+                <div 
+                  className="h-full bg-gold transition-all duration-500 rounded-full"
+                  style={{ width: `${(step / (STEPS.length - 1)) * 100}%` }}
+                />
+              </div>
+
+              <div className="flex items-start justify-between w-full">
+                {STEPS.map((s, i) => (
+                  <div key={i} className="flex flex-col items-center gap-2 flex-1 relative">
                     <div
-                      className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0 transition-all duration-400"
+                      className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-400 border-2 bg-white"
                       style={{
-                        background: i < step ? 'linear-gradient(135deg, #D4AF37, #E8C84A)' : i === step ? '#071A2F' : 'rgba(7,26,47,0.06)',
-                        color: i <= step ? (i < step ? '#071A2F' : 'white') : '#52525B',
-                        border: i === step ? '2px solid #D4AF37' : 'none',
+                        borderColor: i <= step ? '#D4AF37' : 'rgba(7,26,47,0.1)',
+                        background: i < step ? 'linear-gradient(135deg, #D4AF37, #E8C84A)' : i === step ? '#071A2F' : '#FFFFFF',
+                        color: i === step ? 'white' : i < step ? '#071A2F' : '#71717A',
                       }}
                     >
                       {i < step ? <CheckCircle2 className="w-4 h-4" /> : i + 1}
                     </div>
-                    <span className="hidden sm:block text-xs font-semibold" style={{ color: i === step ? '#071A2F' : '#71717A' }}>{s}</span>
+                    <span className="text-[9px] md:text-xs font-bold text-center leading-tight tracking-wide max-w-[85px] md:max-w-none" 
+                      style={{ color: i <= step ? '#071A2F' : '#71717A' }}>
+                      {s}
+                    </span>
                   </div>
-                  {i < STEPS.length - 1 && (
-                    <div className="flex-1 h-px rounded-full"
-                      style={{ background: i < step ? '#D4AF37' : 'rgba(7,26,47,0.1)' }} />
-                  )}
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
 
             <AnimatePresence mode="wait">

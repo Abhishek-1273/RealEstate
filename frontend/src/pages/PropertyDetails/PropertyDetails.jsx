@@ -127,7 +127,7 @@ export default function PropertyDetails() {
 
         <div className="container-luxury">
           {/* Main swiper wrapper */}
-          <div className="relative rounded-3xl overflow-hidden mb-5 shadow-2xl group border border-white/10" style={{ height: '520px' }}>
+          <div className="relative rounded-3xl overflow-hidden mb-5 shadow-2xl group border border-white/10 aspect-square md:aspect-auto md:h-[520px] w-full">
             <Swiper
               modules={[Pagination, Thumbs]}
               onSwiper={setMainSwiper}
@@ -168,35 +168,37 @@ export default function PropertyDetails() {
               <ChevronRight className="w-5 h-5 translate-x-0.5" />
             </button>
 
-            {/* Overlay badges (Pill tags) */}
-            <div className="absolute top-6 left-6 z-10 flex items-center gap-2.5 select-none">
+            {/* Overlay badges (Pill tags - shortened on mobile) */}
+            <div className="absolute top-3.5 left-3.5 md:top-6 md:left-6 z-10 flex items-center gap-1.5 md:gap-2.5 select-none">
               {property.badge && (
                 <span 
-                  className="px-4 py-2 rounded-full text-[10px] font-bold tracking-widest uppercase shadow-md flex items-center gap-1.5 border border-white/20"
+                  className="px-2.5 py-1 md:px-4 md:py-2 rounded-full text-[8px] md:text-[10px] font-bold tracking-widest uppercase shadow-md flex items-center gap-1 md:gap-1.5 border border-white/20"
                   style={{ 
                     background: 'linear-gradient(135deg, #D4AF37 0%, #B89020 100%)', 
                     color: '#071A2F'
                   }}
                 >
-                  <Sparkles className="w-3.5 h-3.5 animate-pulse" />
-                  {property.badge}
+                  <Sparkles className="w-3 md:w-3.5 h-3 md:h-3.5 animate-pulse" />
+                  <span className="hidden sm:inline">{property.badge}</span>
+                  <span className="inline sm:hidden">{property.badge === 'New Launch' ? 'New' : property.badge === 'Signature Collection' ? 'Signature' : property.badge}</span>
                 </span>
               )}
               <span 
-                className="px-4 py-2 rounded-full text-[10px] font-bold tracking-widest uppercase shadow-md flex items-center gap-1.5 border border-white/10"
+                className="px-2.5 py-1 md:px-4 md:py-2 rounded-full text-[8px] md:text-[10px] font-bold tracking-widest uppercase shadow-md flex items-center gap-1 md:gap-1.5 border border-white/10"
                 style={{ 
                   background: 'rgba(7, 26, 47, 0.65)', 
                   color: 'white', 
                   backdropFilter: 'blur(12px)'
                 }}
               >
-                <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
-                {property.status}
+                <div className="w-1 h-1.5 rounded-full bg-emerald-400 animate-ping mr-0.5" />
+                <span className="hidden sm:inline">{property.status}</span>
+                <span className="inline sm:hidden">{property.status === 'Ready to Move' ? 'Ready' : property.status === 'Under Construction' ? 'Const.' : property.status}</span>
               </span>
             </div>
 
-            {/* Premium Actions (Wishlist & Share) */}
-            <div className="absolute top-6 right-6 z-10 flex gap-3">
+            {/* Premium Actions (Wishlist & Share - shortened/smaller on mobile) */}
+            <div className="absolute top-3.5 right-3.5 md:top-6 md:right-6 z-10 flex gap-2 md:gap-3">
               <button
                 onClick={() => {
                   if (!user) {
@@ -205,7 +207,7 @@ export default function PropertyDetails() {
                   }
                   toggleWishlist(property);
                 }}
-                className="w-11 h-11 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95 shadow-lg border"
+                className="w-8.5 h-8.5 md:w-11 md:h-11 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95 shadow-lg border"
                 style={{
                   background: wished ? 'rgba(239, 68, 68, 0.95)' : 'rgba(7, 26, 47, 0.5)',
                   borderColor: wished ? '#EF4444' : 'rgba(255, 255, 255, 0.2)',
@@ -213,18 +215,18 @@ export default function PropertyDetails() {
                   backdropFilter: 'blur(10px)',
                 }}
               >
-                <Heart className={`w-4.5 h-4.5 ${wished ? 'fill-current animate-pulse' : ''}`} />
+                <Heart className={`w-3.5 h-3.5 md:w-4.5 md:h-4.5 ${wished ? 'fill-current animate-pulse' : ''}`} />
               </button>
               <button 
                 onClick={handleShare}
-                className="w-11 h-11 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95 shadow-lg border text-white hover:text-gold"
+                className="w-8.5 h-8.5 md:w-11 md:h-11 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95 shadow-lg border text-white hover:text-gold"
                 style={{ 
                   background: 'rgba(7, 26, 47, 0.5)', 
                   borderColor: 'rgba(255, 255, 255, 0.2)',
                   backdropFilter: 'blur(10px)' 
                 }}
               >
-                <Share2 className="w-4.5 h-4.5" />
+                <Share2 className="w-3.5 h-3.5 md:w-4.5 md:h-4.5" />
               </button>
             </div>
           </div>

@@ -70,8 +70,7 @@ export default function About() {
           >
             {stats.map((s, i) => (
               <motion.div key={i} variants={scaleIn} className="text-center">
-                <p className="font-display font-black text-white leading-none mb-2"
-                  style={{ fontSize: '3rem' }}>
+                <p className="font-display font-black text-white leading-none mb-2 text-2xl sm:text-3xl md:text-4xl lg:text-[3rem]">
                   <CountUpNumber end={s.value} duration={2} />{s.suffix}
                 </p>
                 <p className="text-white/50 text-xs">{s.label}</p>

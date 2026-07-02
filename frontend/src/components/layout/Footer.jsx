@@ -70,36 +70,11 @@ export default function Footer() {
         style={{ background: 'radial-gradient(ellipse, rgba(30,58,138,0.08) 0%, transparent 70%)' }} />
 
       <div className="container-luxury pt-20 pb-12 relative">
-        {/* Full-width Newsletter Row at the Top */}
-        <div className="border-b border-white/10 pb-10 mb-12 flex flex-col md:flex-row items-center justify-between gap-6">
-          <div>
-            <h4 className="font-display font-bold text-white text-lg mb-1">
-              Subscribe to our Newsletter
-            </h4>
-            <p className="text-white/50 text-xs">
-              Exclusive Pune luxury listings and market insights delivered weekly.
-            </p>
-          </div>
-          <div className="flex flex-col sm:flex-row w-full md:w-auto gap-3">
-            <input
-              type="email"
-              placeholder="Your email address"
-              className="input-glass text-xs py-3 px-5 sm:w-64" w
-            />
-            <button
-              className="flex items-center justify-center gap-2 text-navy font-semibold py-3 px-6 rounded-xl text-xs transition-all duration-300 hover:-translate-y-0.5"
-              style={{ background: 'linear-gradient(135deg, #D4AF37, #E8C84A)' }}
-              onMouseEnter={e => { e.currentTarget.style.boxShadow = '0 6px 20px rgba(212,175,55,0.35)'; }}
-              onMouseLeave={e => { e.currentTarget.style.boxShadow = 'none'; }}
-            >
-              Subscribe <ArrowRight className="w-3.5 h-3.5" />
-            </button>
-          </div>
-        </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 xl:gap-16">
+
+        <div className="grid grid-cols-2 lg:grid-cols-12 gap-x-6 gap-y-10 xl:gap-16">
           {/* Brand Column */}
-          <div className="lg:col-span-4">
+          <div className="col-span-2 lg:col-span-4">
             <Link to="/" className="inline-flex items-center gap-3 mb-7 group">
               <div
                 className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:scale-105"
@@ -159,9 +134,9 @@ export default function Footer() {
             </div>
           </div>
 
-          {/* Link Columns (Now filling the remaining 8 columns perfectly on one row) */}
+          {/* Link Columns */}
           {columns.map((col) => (
-            <div key={col.title} className="lg:col-span-2">
+            <div key={col.title} className="col-span-1 lg:col-span-2">
               <h4 className="font-display font-bold text-white text-[10px] uppercase tracking-[0.22em] mb-5">
                 {col.title}
               </h4>

@@ -26,8 +26,8 @@ export default function BlogDetails() {
         {/* Top Left Back Button */}
         <div className="absolute top-8 left-0 right-0 z-10">
           <div className="container-luxury">
-            <Link 
-              to="/blog" 
+            <Link
+              to="/blog"
               state={{ category: prevCategory }}
               className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full text-white/70 hover:text-white transition-all duration-300 group shadow-lg"
               style={{
@@ -50,19 +50,22 @@ export default function BlogDetails() {
           </div>
         </div>
 
-        <div className="absolute inset-0 flex flex-col justify-end p-8">
+        <div className="absolute inset-x-0 bottom-0 pb-8 pt-24 bg-gradient-to-t from-[#071A2F]/95 via-[#071A2F]/70 to-transparent">
           <div className="container-luxury">
-            <span className="badge-gold mb-4 inline-block">{blog.category}</span>
-            <h1 className="font-display font-black text-white leading-[1.1] mb-5 max-w-3xl"
-              style={{ fontSize: 'clamp(1.75rem, 3.5vw, 2.75rem)' }}>
+            <span className="badge-gold mb-3 inline-block">{blog.category}</span>
+            <h1 className="font-display font-black text-white leading-[1.15] mb-4 max-w-3xl"
+              style={{ fontSize: 'clamp(1.5rem, 3.5vw, 2.5rem)' }}>
               {blog.title}
             </h1>
-            <div className="flex items-center gap-4 text-white/60 text-xs">
-              <img src={blog.author.image} alt="" className="w-8 h-8 rounded-full object-cover border-2 border-gold/50" />
-              <span className="text-white/80 font-semibold">{blog.author.name}</span>
-              <span>·</span><span>{blog.date}</span>
-              <span>·</span>
-              <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{blog.readTime}</span>
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-white/70 text-xs md:text-sm">
+              <div className="flex items-center gap-2">
+                <img src={blog.author.image} alt="" className="w-7 h-7 rounded-full object-cover border-2 border-gold/50" />
+                <span className="text-white/95 font-semibold">{blog.author.name}</span>
+              </div>
+              <span className="text-white/30 hidden sm:inline">•</span>
+              <span>{blog.date}</span>
+              <span className="text-white/30">•</span>
+              <span className="flex items-center gap-1.5"><Clock className="w-3.5 h-3.5 text-gold" />{blog.readTime}</span>
             </div>
           </div>
         </div>
