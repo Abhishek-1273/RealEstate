@@ -9,16 +9,16 @@ const links = {
   company: [
     { label: 'About Us', to: '/about' },
     { label: 'Our Team', to: '/about#team' },
+    { label: 'NRI Desk', to: '/nri-corner' },
     { label: 'Blog', to: '/blog' },
-    { label: 'Careers', to: '/contact' },
-    { label: 'Press', to: '/contact' },
+    { label: 'Contact Us', to: '/contact' },
+    { label: 'My Wishlist', to: '/wishlist' },
   ],
   services: [
     { label: 'Buy Property', to: '/services/buy' },
     { label: 'Sell Property', to: '/services/sell' },
     { label: 'Lease Property', to: '/services/lease' },
     { label: 'Property Management', to: '/services/management' },
-    { label: 'Home Loans', to: '/contact' },
   ],
   properties: [
     { label: 'Luxury Villas', to: '/properties?category=villas' },
@@ -28,19 +28,19 @@ const links = {
     { label: 'Commercial', to: '/properties?category=commercial' },
   ],
   locations: [
-    { label: 'Mumbai', to: '/properties?city=Mumbai' },
-    { label: 'Delhi NCR', to: '/properties?city=Delhi NCR' },
-    { label: 'Bengaluru', to: '/properties?city=Bengaluru' },
-    { label: 'Hyderabad', to: '/properties?city=Hyderabad' },
-    { label: 'Pune', to: '/properties?city=Pune' },
+    { label: 'Koregaon Park', to: '/properties?city=Koregaon Park' },
+    { label: 'Kalyani Nagar', to: '/properties?city=Kalyani Nagar' },
+    { label: 'Baner', to: '/properties?city=Baner' },
+    { label: 'Kharadi', to: '/properties?city=Kharadi' },
+    { label: 'Balewadi', to: '/properties?city=Balewadi' },
   ],
 };
 
 const socials = [
-  { icon: <FaInstagram />, href: '#', label: 'Instagram' },
-  { icon: <FaXTwitter />, href: '#', label: 'X (Twitter)' },
-  { icon: <FaLinkedinIn />, href: '#', label: 'LinkedIn' },
-  { icon: <FaYoutube />, href: '#', label: 'YouTube' },
+  { icon: <FaInstagram />, href: 'https://instagram.com', label: 'Instagram' },
+  { icon: <FaXTwitter />, href: 'https://x.com', label: 'X (Twitter)' },
+  { icon: <FaLinkedinIn />, href: 'https://linkedin.com', label: 'LinkedIn' },
+  { icon: <FaYoutube />, href: 'https://youtube.com', label: 'YouTube' },
 ];
 
 const columns = [
@@ -65,8 +65,6 @@ export default function Footer() {
       {/* Ambient glow spots */}
       <div className="absolute top-0 left-1/4 w-[500px] h-[500px] rounded-full pointer-events-none"
         style={{ background: 'radial-gradient(ellipse, rgba(212,175,55,0.06) 0%, transparent 70%)' }} />
-      <div className="absolute bottom-0 right-1/4 w-[400px] h-[400px] rounded-full pointer-events-none"
-        style={{ background: 'radial-gradient(ellipse, rgba(30,58,138,0.08) 0%, transparent 70%)' }} />
 
       <div className="container-luxury pt-20 pb-12 relative">
         <div className="grid grid-cols-2 lg:grid-cols-12 gap-x-6 gap-y-10 xl:gap-16">
@@ -112,17 +110,17 @@ export default function Footer() {
                   key={i}
                   href={s.href}
                   aria-label={s.label}
-                  className="w-9 h-9 rounded-xl flex items-center justify-center text-white/50 text-sm transition-all duration-250"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-9 h-9 rounded-xl flex items-center justify-center text-white/50 text-sm transition-all duration-250 hover:text-navy"
                   style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)' }}
                   onMouseEnter={e => {
                     e.currentTarget.style.background = 'linear-gradient(135deg, #D4AF37, #E8C84A)';
-                    e.currentTarget.style.color = '#071A2F';
-                    e.currentTarget.style.border = '1px solid transparent';
+                    e.currentTarget.style.borderColor = 'transparent';
                   }}
                   onMouseLeave={e => {
                     e.currentTarget.style.background = 'rgba(255,255,255,0.06)';
-                    e.currentTarget.style.color = 'rgba(255,255,255,0.5)';
-                    e.currentTarget.style.border = '1px solid rgba(255,255,255,0.08)';
+                    e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)';
                   }}
                 >
                   {s.icon}
@@ -163,11 +161,15 @@ export default function Footer() {
             © 2025 HyperRelestix Realty Pvt. Ltd. All rights reserved.
           </p>
           <div className="flex items-center gap-5">
-            {['Privacy Policy', 'Terms of Service', 'RERA: P52100046789'].map((l) => (
-              <a key={l} href="#" className="text-white/35 hover:text-gold text-xs transition-colors duration-200">
-                {l}
-              </a>
-            ))}
+            <Link to="/privacy" className="text-white/35 hover:text-gold text-xs transition-colors duration-200">
+              Privacy Policy
+            </Link>
+            <Link to="/terms" className="text-white/35 hover:text-gold text-xs transition-colors duration-200">
+              Terms of Service
+            </Link>
+            <span className="text-white/35 text-xs">
+              RERA: P52100046789
+            </span>
           </div>
         </div>
       </div>

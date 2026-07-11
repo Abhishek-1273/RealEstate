@@ -7,9 +7,9 @@ import SectionHeader from '../../components/common/SectionHeader';
 import CountUpNumber from '../../components/common/CountUpNumber';
 import PremiumIcon from '../../components/common/PremiumIcon';
 import { agents, stats } from '../../data/index';
-import aboutBg from '../../assets/image/about-bg.png';
-import missionFront from '../../assets/image/mission-front.png';
-import missionBack from '../../assets/image/mission-back.png';
+import aboutBg from '../../assets/image/about-bg.webp';
+import missionFront from '../../assets/image/mission-front.webp';
+import missionBack from '../../assets/image/mission-back.webp';
 
 
 const values = [
@@ -25,7 +25,7 @@ export default function About() {
   const [isFlipped, setIsFlipped] = useState(false);
 
   return (
-    <div className="min-h-screen bg-surface pt-20">
+    <div className="min-h-screen bg-surface dark:bg-navy-dark pt-20 transition-colors duration-300">
 
       {/* ── Hero ── */}
       <div className="relative overflow-hidden" style={{ height: '560px' }}>
@@ -81,7 +81,7 @@ export default function About() {
       </div>
 
       {/* ── Mission + Vision ── */}
-      <div className="section-pad bg-surface-alt">
+      <div className="section-pad bg-surface-alt dark:bg-navy transition-colors duration-300">
         <div className="container-luxury">
           <div className="grid lg:grid-cols-2 gap-16 items-center">
             <motion.div variants={fadeLeft} initial="hidden" whileInView="visible" viewport={viewportOnce}>
@@ -91,19 +91,19 @@ export default function About() {
                 description="At HyperRelestix, we believe every client deserves not just a property — but a home that amplifies their aspirations."
               />
               <div className="mt-8 space-y-5">
-                <div className="p-6 rounded-2xl" style={{ background: 'white', border: '1px solid rgba(7,26,47,0.07)' }}>
-                  <p className="font-display font-bold text-navy text-sm mb-2 flex items-center gap-2">
+                <div className="p-6 rounded-2xl bg-white dark:bg-navy-light border border-gray-100 dark:border-white/10 transition-colors duration-300">
+                  <p className="font-display font-bold text-navy dark:text-white text-sm mb-2 flex items-center gap-2">
                     <Target className="w-4 h-4" style={{ color: '#D4AF37' }} /> Our Mission
                   </p>
-                  <p className="text-ink-muted text-sm leading-relaxed">
+                  <p className="text-ink-muted dark:text-white/60 text-sm leading-relaxed">
                     To make luxury real estate accessible, transparent, and joyful — connecting India's finest properties with buyers who truly deserve them.
                   </p>
                 </div>
-                <div className="p-6 rounded-2xl" style={{ background: 'white', border: '1px solid rgba(7,26,47,0.07)' }}>
-                  <p className="font-display font-bold text-navy text-sm mb-2 flex items-center gap-2">
+                <div className="p-6 rounded-2xl bg-white dark:bg-navy-light border border-gray-100 dark:border-white/10 transition-colors duration-300">
+                  <p className="font-display font-bold text-navy dark:text-white text-sm mb-2 flex items-center gap-2">
                     <TrendingUp className="w-4 h-4" style={{ color: '#D4AF37' }} /> Our Vision
                   </p>
-                  <p className="text-ink-muted text-sm leading-relaxed">
+                  <p className="text-ink-muted dark:text-white/60 text-sm leading-relaxed">
                     To be India's most trusted luxury real estate platform — known for integrity, expertise, and delivering experiences that exceed every expectation.
                   </p>
                 </div>
@@ -164,18 +164,18 @@ export default function About() {
       </div>
 
       {/* ── Values ── */}
-      <div className="section-pad bg-white">
+      <div className="section-pad bg-white dark:bg-navy-dark transition-colors duration-300">
         <div className="container-luxury">
           <SectionHeader label="What We Stand For" title={<>Our Core <span style={{ color: '#D4AF37' }}>Values</span></>} align="center" className="mb-16" />
           <motion.div variants={staggerContainer} initial="hidden" whileInView="visible" viewport={viewportOnce}
             className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {values.map((v, i) => (
               <motion.div key={i} variants={fadeUp}>
-                <div className="p-7 rounded-2xl h-full transition-all duration-400 hover:-translate-y-2 hover:shadow-card-hover"
-                  style={{ background: 'rgba(7,26,47,0.02)', border: '1px solid rgba(7,26,47,0.07)' }}>
+                <div className="p-7 rounded-2xl h-full transition-all duration-400 hover:-translate-y-2 hover:shadow-card-hover bg-black/5 dark:bg-white/5 border border-transparent dark:border-white/10"
+                >
                   <PremiumIcon icon={v.icon} className="mb-5" variant="gold" size="md" />
-                  <h3 className="font-display font-bold text-navy text-lg mb-2">{v.title}</h3>
-                  <p className="text-ink-muted text-sm leading-[1.85]">{v.desc}</p>
+                  <h3 className="font-display font-bold text-navy dark:text-white text-lg mb-2">{v.title}</h3>
+                  <p className="text-ink-muted dark:text-white/60 text-sm leading-[1.85]">{v.desc}</p>
                 </div>
               </motion.div>
             ))}
@@ -184,7 +184,7 @@ export default function About() {
       </div>
 
       {/* ── Team ── */}
-      <div id="team" className="section-pad bg-surface-alt">
+      <div id="team" className="section-pad bg-surface-alt dark:bg-navy transition-colors duration-300">
         <div className="container-luxury">
           <SectionHeader label="Meet the Team" title={<>Our <span style={{ color: '#D4AF37' }}>Luxury Advisors</span></>}
             description="India's most accomplished luxury real estate specialists — with decades of combined experience."
@@ -193,8 +193,8 @@ export default function About() {
             className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-7">
             {agents.map((a) => (
               <motion.div key={a.id} variants={scaleIn} className="h-full">
-                <div className="h-full flex flex-col rounded-3xl overflow-hidden bg-white transition-all duration-400 hover:-translate-y-2 hover:shadow-luxury"
-                  style={{ border: '1px solid rgba(7,26,47,0.07)' }}>
+                <div className="h-full flex flex-col rounded-3xl overflow-hidden bg-white dark:bg-navy-light transition-all duration-400 hover:-translate-y-2 hover:shadow-luxury border border-gray-100 dark:border-white/10"
+                >
                   <div className="relative h-52 overflow-hidden shrink-0">
                     <img src={a.image} alt={a.name} loading="lazy" className="w-full h-full object-cover" />
                     <div className="absolute inset-0"
@@ -205,19 +205,20 @@ export default function About() {
                   </div>
                   <div className="p-5 flex-1 flex flex-col justify-between">
                     <div>
-                      <h3 className="font-display font-bold text-navy text-base">{a.name}</h3>
+                      <h3 className="font-display font-bold text-navy dark:text-white text-base">{a.name}</h3>
                       <p className="text-xs font-semibold mt-0.5 mb-3" style={{ color: '#D4AF37' }}>{a.role}</p>
                       <div className="flex flex-wrap gap-1.5">
                         {a.specialization.map(s => (
-                          <span key={s} className="text-[9px] font-semibold px-2 py-1 rounded-full"
-                            style={{ background: 'rgba(7,26,47,0.05)', color: '#52525B' }}>{s}</span>
+                          <span key={s} className="text-[9px] font-semibold px-2 py-1 rounded-full bg-black/5 dark:bg-white/5 text-ink-muted dark:text-cream/80"
+                          >{s}</span>
                         ))}
                       </div>
                     </div>
-                    <div className="flex justify-between text-xs text-ink-muted mt-5 pt-4" style={{ borderTop: '1px solid rgba(7,26,47,0.06)' }}>
-                      <span><strong className="text-navy">{a.propertiesSold}</strong> Sold</span>
-                      <span><strong className="text-navy">{a.experience}yr</strong> Exp.</span>
-                      <span><strong className="text-navy">{a.rating}</strong> Rating</span>
+                    <div className="flex justify-between text-xs text-ink-muted dark:text-white/60 mt-5 pt-4 border-t border-gray-100 dark:border-white/10"
+                    >
+                      <span><strong className="text-navy dark:text-white">{a.propertiesSold}</strong> Sold</span>
+                      <span><strong className="text-navy dark:text-white">{a.experience}yr</strong> Exp.</span>
+                      <span><strong className="text-navy dark:text-white">{a.rating}</strong> Rating</span>
                     </div>
                   </div>
                 </div>

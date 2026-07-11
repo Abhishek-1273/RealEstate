@@ -67,7 +67,7 @@ export default function Services() {
   };
 
   return (
-    <div className="min-h-screen bg-surface pt-20">
+    <div className="min-h-screen bg-surface dark:bg-navy-dark pt-20 transition-colors duration-300">
 
       {/* ── Hero ── */}
       <div className="relative py-28 overflow-hidden bg-mesh-dark">
@@ -108,8 +108,8 @@ export default function Services() {
         >
           {services.map((s) => (
             <motion.div key={s.id} variants={fadeUp}>
-              <Link to={s.link} onClick={(e) => handleServiceClick(e, s.link)} className="group block rounded-3xl overflow-hidden transition-all duration-500 hover:-translate-y-2 hover:shadow-luxury"
-                style={{ background: 'white', border: '1px solid rgba(7,26,47,0.07)', boxShadow: '0 2px 24px rgba(7,26,47,0.07)' }}>
+              <Link to={s.link} onClick={(e) => handleServiceClick(e, s.link)} className="group block rounded-3xl overflow-hidden transition-all duration-500 hover:-translate-y-2 hover:shadow-luxury bg-white dark:bg-navy-light border border-gray-100 dark:border-white/10 shadow-card"
+              >
                 {/* Image */}
                 <div className="relative h-56 overflow-hidden">
                   <img src={s.image} alt={s.title} loading="lazy"
@@ -127,10 +127,10 @@ export default function Services() {
 
                 {/* Body */}
                 <div className="p-7">
-                  <p className="text-ink-muted text-sm leading-[1.85] mb-6">{s.desc}</p>
+                  <p className="text-ink-muted dark:text-white/60 text-sm leading-[1.85] mb-6">{s.desc}</p>
                   <ul className="space-y-2.5 mb-7">
                     {s.features.map((f) => (
-                      <li key={f} className="flex items-center gap-3 text-sm text-navy font-body">
+                      <li key={f} className="flex items-center gap-3 text-sm text-navy dark:text-white font-body">
                         <CheckCircle2 className="w-4 h-4 shrink-0" style={{ color: '#D4AF37' }} />
                         {f}
                       </li>

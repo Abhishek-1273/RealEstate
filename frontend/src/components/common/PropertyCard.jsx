@@ -17,7 +17,7 @@ export default function PropertyCard({ property, view = 'grid' }) {
   const { user, openAuth } = useAuth();
   const [imgErr, setImgErr] = useState(false);
   const [imgLoaded, setImgLoaded] = useState(false);
-  const wished = isWishlisted(property.id);
+  const wished = isWishlisted(property._id || property.id);
   const navigate = useNavigate();
 
   const fallback = 'https://images.unsplash.com/photo-1600585154526-990dced4db0d?w=800&q=80';
@@ -25,11 +25,11 @@ export default function PropertyCard({ property, view = 'grid' }) {
   if (view === 'list') {
     return (
       <div 
-        onClick={() => navigate(`/properties/${property.id}`)}
-        className="bg-white rounded-3xl overflow-hidden shadow-card hover:shadow-xl transition-all duration-300 border border-gray-100 flex flex-col md:flex-row md:h-[260px] group cursor-pointer relative"
+        onClick={() => navigate(`/properties/${property._id || property.id}`)}
+        className="bg-white dark:bg-navy-light rounded-3xl overflow-hidden shadow-card hover:shadow-xl transition-all duration-300 border border-gray-100 dark:border-white/20 flex flex-row h-[140px] md:h-[260px] group cursor-pointer relative"
       >
         {/* ── Image Column ── */}
-        <div className="relative overflow-hidden w-full md:w-[320px] shrink-0 h-[240px] md:h-full">
+        <div className="relative overflow-hidden w-[120px] md:w-[320px] shrink-0 h-full">
           {!imgLoaded && (
             <div className="absolute inset-0 bg-gradient-to-br from-gray-100 to-gray-200 animate-pulse" />
           )}
@@ -48,58 +48,61 @@ export default function PropertyCard({ property, view = 'grid' }) {
           />
 
           {property.badge && (
-            <span className={`absolute top-4 left-4 text-[9px] font-accent font-black px-3 py-1.5 rounded-full tracking-wider z-[3] ${badgeStyles[property.badgeColor] || badgeStyles.gold}`}>
+            <span className="absolute top-2 left-2 md:top-4 md:left-4 text-[7px] md:text-[9px] font-accent font-black px-2 py-1 md:px-3 md:py-1.5 rounded-full tracking-wider z-[3] bg-gold text-navy">
               {property.badge}
             </span>
           )}
         </div>
 
         {/* ── Content Column ── */}
-        <div className="p-6 flex-1 flex flex-col justify-between">
+        <div className="p-3 md:p-6 flex-1 flex flex-col justify-between min-w-0">
           <div>
-            <div className="flex flex-col md:flex-row md:items-start justify-between gap-3 mb-2.5">
-              <div className="space-y-1">
-                <span className="badge-gold text-[9px] uppercase font-bold tracking-wider inline-block">{property.type}</span>
-                <h3 className="font-display font-bold text-navy text-lg md:text-xl leading-snug group-hover:text-gold transition-colors duration-250">
+            <div className="flex flex-col md:flex-row md:items-start justify-between gap-1 md:gap-3 mb-1 md:mb-2.5">
+              <div className="space-y-0.5 md:space-y-1 min-w-0">
+                <span className="badge-gold text-[8px] md:text-[9px] uppercase font-bold tracking-wider inline-block">{property.type}</span>
+                <h3 className="font-display font-bold text-navy dark:text-white text-xs sm:text-sm md:text-xl leading-snug group-hover:text-gold transition-colors duration-250 truncate md:whitespace-normal">
                   {property.title}
                 </h3>
               </div>
 
-              <div className="md:text-right shrink-0">
-                <p className="font-display font-black text-navy text-xl md:text-2xl leading-none" style={{ color: '#071A2F' }}>
+              <div className="md:text-right shrink-0 flex items-baseline md:block gap-1 mt-0.5 md:mt-0">
+                <p className="font-display font-black text-navy dark:text-gold-light text-sm md:text-2xl leading-none">
                   {property.priceLabel}
                 </p>
-                <p className="text-ink-muted text-[10px] mt-1 font-body">
+                <p className="text-ink-muted dark:text-white/60 text-[8px] md:text-[10px] mt-0.5 font-body">
                   ₹{Math.round(property.price / property.area).toLocaleString()}/sqft
                 </p>
               </div>
             </div>
 
-            <div className="flex items-center gap-1.5 text-ink-muted text-xs mb-3.5">
-              <MapPin className="w-3.5 h-3.5 shrink-0 text-gold" style={{ color: '#D4AF37' }} />
+            <div className="flex items-center gap-1 text-ink-muted dark:text-cream/80 text-[10px] md:text-xs mb-1.5 md:mb-3.5">
+              <MapPin className="w-3 h-3 md:w-3.5 md:h-3.5 shrink-0 text-gold" style={{ color: '#D4AF37' }} />
               <span className="truncate">{property.location}</span>
             </div>
 
-            <p className="text-ink-soft text-xs line-clamp-2 mb-4 leading-relaxed max-w-2xl">
+            <p className="text-ink-soft dark:text-white/50 text-[10px] md:text-xs line-clamp-2 mb-4 leading-relaxed max-w-2xl hidden md:block">
               {property.description || "An architectural masterpiece nestled in a highly coveted enclave, offering bespoke interiors, ultra-exclusive amenities, and sweeping views of the city skyline."}
             </p>
           </div>
 
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-4 border-t border-gray-100 mt-auto">
-            <div className="flex items-center gap-5 text-ink-muted text-xs">
+          <div className="flex flex-row items-center justify-between gap-4 pt-2 border-t border-gray-100 dark:border-white/10 mt-auto">
+            <div className="flex items-center gap-3 md:gap-5 text-ink-muted dark:text-white/60 text-[9px] md:text-xs">
               {[
-                { icon: <Bed className="w-3.5 h-3.5 text-gold/80" />, val: `${property.bedrooms} Beds` },
-                { icon: <Bath className="w-3.5 h-3.5 text-gold/80" />, val: `${property.bathrooms} Baths` },
-                { icon: <Square className="w-3.5 h-3.5 text-gold/80" />, val: `${property.area.toLocaleString()} sqft` },
+                { icon: <Bed className="w-3 h-3 md:w-3.5 md:h-3.5 text-gold/80" />, val: `${property.bedrooms} Beds` },
+                { icon: <Bath className="w-3 h-3 md:w-3.5 md:h-3.5 text-gold/80" />, val: `${property.bathrooms} Baths` },
+                { icon: <Square className="w-3 h-3 md:w-3.5 md:h-3.5 text-gold/80" />, val: `${property.area.toLocaleString()} sqft` },
               ].map((s, i) => (
-                <div key={i} className="flex items-center gap-1.5">
+                <div key={i} className="flex items-center gap-1">
                   {s.icon}
-                  <span className="font-semibold text-navy/80">{s.val}</span>
+                  <span className="font-semibold text-navy/80 dark:text-cream/90">
+                    {s.val.split(' ')[0]}
+                    <span className="hidden md:inline"> {s.val.split(' ')[1]}</span>
+                  </span>
                 </div>
               ))}
             </div>
 
-            <div className="flex items-center gap-3 self-end sm:self-auto">
+            <div className="flex items-center gap-2 md:gap-3 shrink-0">
               <button
                 onClick={(e) => {
                   e.preventDefault();
@@ -110,17 +113,17 @@ export default function PropertyCard({ property, view = 'grid' }) {
                   }
                   toggleWishlist(property);
                 }}
-                className={`w-9 h-9 rounded-full flex items-center justify-center transition-all duration-250 ${
+                className={`w-7 h-7 md:w-9 md:h-9 rounded-full flex items-center justify-center transition-all duration-250 ${
                   wished
                     ? 'bg-red-500 text-white shadow-[0_4px_14px_rgba(239,68,68,0.4)]'
                     : 'bg-gray-100 text-gray-400 hover:text-red-500 hover:bg-red-50'
                 }`}
               >
-                <Heart className={`w-4 h-4 ${wished ? 'fill-current animate-pulse' : ''}`} />
+                <Heart className={`w-3.5 h-3.5 md:w-4 md:h-4 ${wished ? 'fill-current animate-pulse' : ''}`} />
               </button>
 
               <span
-                className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-white text-xs font-bold transition-all duration-300 group-hover:bg-navy/90"
+                className="hidden md:flex items-center gap-1.5 px-4 py-2 rounded-xl text-white text-xs font-bold transition-all duration-300 group-hover:bg-navy/90"
                 style={{ background: '#071A2F' }}
               >
                 View Details <ArrowRight className="w-3.5 h-3.5 text-gold group-hover:translate-x-1 transition-transform" style={{ color: '#D4AF37' }} />
@@ -134,10 +137,10 @@ export default function PropertyCard({ property, view = 'grid' }) {
 
   return (
     <Tilt
-      className="bg-white rounded-3xl overflow-hidden shadow-card card-shine glow-border group cursor-pointer relative"
+      className="bg-white dark:bg-navy-light rounded-3xl overflow-hidden shadow-card card-shine glow-border dark:border-white/20 group cursor-pointer relative"
       style={{ willChange: 'transform' }}
     >
-      <div onClick={() => navigate(`/properties/${property.id}`)} className="rounded-3xl overflow-hidden">
+      <div onClick={() => navigate(`/properties/${property._id || property.id}`)} className="rounded-3xl overflow-hidden">
         {/* ── Image ── */}
         <div className="relative overflow-hidden rounded-t-3xl" style={{ height: '260px' }}>
           {/* Skeleton loader */}
@@ -215,20 +218,20 @@ export default function PropertyCard({ property, view = 'grid' }) {
         </div>
 
         {/* ── Body ── */}
-        <div className="p-5 relative z-[3] bg-white rounded-b-3xl">
+        <div className="p-5 relative z-[3] bg-white dark:bg-navy-light rounded-b-3xl transition-colors duration-300">
           <div className="flex items-start justify-between gap-2 mb-2">
-            <h3 className="font-display font-bold text-navy text-base leading-snug group-hover:text-gold-muted transition-colors duration-250 line-clamp-1">
+            <h3 className="font-display font-bold text-navy dark:text-white text-base leading-snug group-hover:text-gold-muted transition-colors duration-250 line-clamp-1">
               {property.title}
             </h3>
             <span className="badge-gold shrink-0">{property.type}</span>
           </div>
 
-          <div className="flex items-center gap-1.5 text-ink-muted text-xs mb-4">
+          <div className="flex items-center gap-1.5 text-ink-muted dark:text-cream/80 text-xs mb-4">
             <MapPin className="w-3.5 h-3.5 shrink-0" style={{ color: '#D4AF37' }} />
             <span className="truncate">{property.location}</span>
           </div>
 
-          <div className="flex items-center justify-between text-ink-muted text-xs pt-4 border-t border-gray-100">
+          <div className="flex items-center justify-between text-ink-muted dark:text-white/60 text-xs pt-4 border-t border-gray-100 dark:border-white/20">
             {[
               { icon: <Bed className="w-3.5 h-3.5" />, val: `${property.bedrooms} Beds` },
               { icon: <Bath className="w-3.5 h-3.5" />, val: `${property.bathrooms} Baths` },

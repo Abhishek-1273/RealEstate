@@ -18,7 +18,7 @@ export default function FloatingCTA() {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.7, y: 16 }}
               transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
-              onClick={() => { setExpanded(false); navigate('/contact'); }}
+              onClick={() => { setExpanded(false); navigate('/contact', { state: { subject: 'Book a Site Visit' } }); }}
               className="flex items-center gap-2.5 pl-4 pr-5 py-3 rounded-full text-navy font-semibold text-sm shadow-gold transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_12px_32px_rgba(212,175,55,0.45)]"
               style={{ background: 'linear-gradient(135deg, #D4AF37, #E8C84A)' }}
             >

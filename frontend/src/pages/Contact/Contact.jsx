@@ -1,11 +1,13 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useLocation } from 'react-router-dom';
 import { Phone, Mail, MapPin, Clock, ChevronDown, ChevronUp, ArrowRight } from 'lucide-react';
 import { fadeUp, fadeLeft, fadeRight, staggerContainer, viewportOnce } from '../../animations/variants';
 import { faqs } from '../../data/index';
 import SectionHeader from '../../components/common/SectionHeader';
 import PremiumIcon from '../../components/common/PremiumIcon';
 import { useAuth } from '../../contexts';
+import { submitEnquiry } from '../../utils/api';
 
 const CONTACTS = [
   { icon: <MapPin className="w-5 h-5" />, label: 'Visit Us', val: 'Level 12, Panchshil Tech Park\nYerwada, Pune 411006', href: '#' },
@@ -14,15 +16,105 @@ const CONTACTS = [
   { icon: <Clock className="w-5 h-5" />, label: 'Office Hours', val: 'Mon–Sat: 9:00 AM – 7:00 PM\nSunday: 10:00 AM – 4:00 PM', href: null },
 ];
 
-export default function Contact() {
-  const { user, openAuth } = useAuth();
-  const [form, setForm] = useState({ name: '', phone: '', email: '', subject: '', message: '' });
-  const [submitted, setSubmitted] = useState(false);
-  const [openFaq, setOpenFaq] = useState(null);
-  const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+function CustomSelect({ value, onChange, options, placeholder, className = "" }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+
+  useEffect(() => {
+    const handleOutside = (e) => {
+      if (ref.current && !ref.current.contains(e.target)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleOutside);
+    return () => document.removeEventListener('mousedown', handleOutside);
+  }, []);
+
+  const selectedOption = options.find(o => typeof o === 'object' ? o.value === value : o === value);
+  const displayText = selectedOption 
+    ? (typeof selectedOption === 'object' ? selectedOption.label : selectedOption) 
+    : placeholder;
 
   return (
-    <div className="min-h-screen bg-surface pt-20">
+    <div className="relative" ref={ref}>
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className={`w-full flex items-center justify-between input-luxury text-left ${className}`}
+      >
+        <span className={value ? "text-navy dark:text-white" : "text-zinc-400 dark:text-white/35"}>
+          {displayText}
+        </span>
+        <ChevronDown className={`w-4 h-4 text-ink-soft dark:text-white/40 transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
+      </button>
+
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            data-lenis-prevent
+            initial={{ opacity: 0, y: -4, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -4, scale: 0.98 }}
+            transition={{ duration: 0.12, ease: 'easeOut' }}
+            className="absolute left-0 right-0 mt-1.5 max-h-60 overflow-y-auto bg-white/95 dark:bg-navy/95 backdrop-blur-md border border-gray-150 dark:border-white/10 rounded-2xl shadow-luxury z-50 py-1.5 no-scrollbar"
+          >
+            {options.map((opt) => {
+              const val = typeof opt === 'object' ? opt.value : opt;
+              const label = typeof opt === 'object' ? opt.label : opt;
+              const active = value === val;
+
+              return (
+                <button
+                  key={val}
+                  type="button"
+                  onClick={() => {
+                    onChange(val);
+                    setOpen(false);
+                  }}
+                  className={`w-full text-left px-4 py-2.5 text-xs font-semibold transition-colors flex items-center justify-between ${
+                    active
+                      ? 'bg-gold/10 text-gold-dark dark:text-gold'
+                      : 'text-ink-muted dark:text-cream/80 hover:bg-gray-50 dark:hover:bg-white/5 hover:text-navy dark:hover:text-white'
+                  }`}
+                >
+                  <span>{label}</span>
+                  {active && <span className="text-gold text-[10px]">●</span>}
+                </button>
+              );
+            })}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+export default function Contact() {
+  const { user, openAuth } = useAuth();
+  const location = useLocation();
+  const [form, setForm] = useState({
+    name: '',
+    phone: '',
+    email: '',
+    subject: location.state?.subject || '',
+    message: '',
+    timezone: 'Dubai (GST)',
+    preferredTime: ''
+  });
+  const [submitted, setSubmitted]   = useState(false);
+  const [loading, setLoading]       = useState(false);
+  const [serverError, setServerError] = useState('');
+  const [openFaq, setOpenFaq]         = useState(null);
+  const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+
+  useEffect(() => {
+    if (location.state?.subject) {
+      setForm(f => ({ ...f, subject: location.state.subject }));
+    }
+  }, [location.state]);
+
+  return (
+    <div className="min-h-screen bg-surface dark:bg-navy-dark pt-20 transition-colors duration-300">
 
       {/* Hero */}
       <div className="bg-mesh-dark py-24 relative overflow-hidden">
@@ -58,17 +150,16 @@ export default function Contact() {
           {CONTACTS.map((c, i) => (
             <motion.div key={i} variants={fadeUp}>
               <div
-                className="p-6 rounded-2xl h-full transition-all duration-300 hover:-translate-y-1"
-                style={{ background: 'white', border: '1px solid rgba(7,26,47,0.07)', boxShadow: '0 2px 20px rgba(7,26,47,0.06)' }}
+                className="p-6 rounded-2xl h-full bg-white dark:bg-navy-light border border-gray-100 dark:border-white/10 shadow-card transition-all duration-300 hover:-translate-y-1"
               >
                 <PremiumIcon icon={c.icon} variant="gold" size="md" className="mb-4" />
-                <p className="font-display font-bold text-navy text-sm mb-2.5">{c.label}</p>
+                <p className="font-display font-bold text-navy dark:text-white text-sm mb-2.5">{c.label}</p>
                 {c.href ? (
-                  <a href={c.href} className="text-ink-muted text-xs leading-[1.85] whitespace-pre-line hover:text-gold transition-colors">
+                  <a href={c.href} className="text-ink-muted dark:text-cream/80 text-xs leading-[1.85] whitespace-pre-line hover:text-gold transition-colors">
                     {c.val}
                   </a>
                 ) : (
-                  <p className="text-ink-muted text-xs leading-[1.85] whitespace-pre-line">{c.val}</p>
+                  <p className="text-ink-muted dark:text-cream/80 text-xs leading-[1.85] whitespace-pre-line">{c.val}</p>
                 )}
               </div>
             </motion.div>
@@ -79,51 +170,119 @@ export default function Contact() {
         <div className="grid lg:grid-cols-2 gap-10">
           {/* Form */}
           <motion.div variants={fadeLeft} initial="hidden" whileInView="visible" viewport={viewportOnce}>
-            <div className="rounded-3xl p-8"
-              style={{ background: 'white', border: '1px solid rgba(7,26,47,0.07)', boxShadow: '0 8px 40px rgba(7,26,47,0.08)' }}>
-              <h2 className="font-display font-bold text-navy text-2xl mb-1.5">Send Us a Message</h2>
-              <p className="text-ink-muted text-sm mb-7">We typically respond within 2 hours during business hours.</p>
+            <div className="rounded-3xl p-8 bg-white dark:bg-navy-light border border-gray-100 dark:border-white/10 shadow-card transition-all duration-300"
+            >
+              <h2 className="font-display font-bold text-navy dark:text-white text-2xl mb-1.5">Send Us a Message</h2>
+              <p className="text-ink-muted dark:text-white/60 text-sm mb-7">We typically respond within 2 hours during business hours.</p>
               {!submitted ? (
-                <form onSubmit={e => {
+                <form onSubmit={async (e) => {
                   e.preventDefault();
-                  if (!user) {
-                    openAuth();
-                    return;
+                  if (!user) { openAuth(); return; }
+                  setLoading(true);
+                  setServerError('');
+                  try {
+                    let finalMessage = form.message;
+                    if (form.subject === 'Book a Site Visit' || form.subject === 'NRI Desk Consultation') {
+                      finalMessage += `\n\n[Timezone: ${form.timezone} | Preferred Slot: ${form.preferredTime || 'Not Specified'}]`;
+                    }
+                    
+                    await submitEnquiry({
+                      type: 'contact',
+                      name: form.name,
+                      phone: form.phone,
+                      email: form.email,
+                      subject: form.subject,
+                      message: finalMessage,
+                      isNRI: form.phone.startsWith('+') && !form.phone.startsWith('+91'),
+                    });
+                    setSubmitted(true);
+                  } catch (err) {
+                    setServerError(err.message || 'Something went wrong. Please try again.');
+                  } finally {
+                    setLoading(false);
                   }
-                  setSubmitted(true);
                 }} className="space-y-4">
                   <div className="grid sm:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-xs font-bold text-navy mb-1.5">Full Name *</label>
+                      <label className="block text-xs font-bold text-navy dark:text-white mb-1.5">Full Name *</label>
                       <input value={form.name} onChange={e => set('name', e.target.value)} required
                         placeholder="Vikram Singhania" className="input-luxury" />
                     </div>
                     <div>
-                      <label className="block text-xs font-bold text-navy mb-1.5">Mobile Number *</label>
+                      <label className="block text-xs font-bold text-navy dark:text-white mb-1.5">Mobile Number *</label>
                       <input value={form.phone} onChange={e => set('phone', e.target.value)} required
                         placeholder="+91 98765 43210" className="input-luxury" />
                     </div>
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-navy mb-1.5">Email Address</label>
+                    <label className="block text-xs font-bold text-navy dark:text-white mb-1.5">Email Address</label>
                     <input value={form.email} onChange={e => set('email', e.target.value)} type="email"
                       placeholder="vikram@company.com" className="input-luxury" />
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-navy mb-1.5">Subject</label>
-                    <select value={form.subject} onChange={e => set('subject', e.target.value)} className="input-luxury">
-                      <option value="">Select a subject</option>
-                      {['Buy Property in Pune', 'Sell My Property', 'Lease / Rental Enquiry', 'Property Management', 'Book a Site Visit', 'Investment Advice', 'Other'].map(s => <option key={s}>{s}</option>)}
-                    </select>
+                    <label className="block text-xs font-bold text-navy dark:text-white mb-1.5">Subject</label>
+                    <CustomSelect
+                      value={form.subject}
+                      onChange={val => set('subject', val)}
+                      placeholder="Select a subject"
+                      options={[
+                        'Buy Property in Pune',
+                        'Sell My Property',
+                        'Lease / Rental Enquiry',
+                        'Property Management',
+                        'Book a Site Visit',
+                        'NRI Desk Consultation',
+                        'Other'
+                      ]}
+                    />
                   </div>
+
+                  {(form.subject === 'Book a Site Visit' || form.subject === 'NRI Desk Consultation') && (
+                    <motion.div 
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      className="grid sm:grid-cols-2 gap-4 pt-1"
+                    >
+                      <div>
+                        <label className="block text-xs font-bold text-navy dark:text-white mb-1.5">Preferred Timezone</label>
+                        <CustomSelect
+                          value={form.timezone}
+                          onChange={val => set('timezone', val)}
+                          placeholder="Select timezone"
+                          options={[
+                            'Dubai (GST - UTC+4)',
+                            'London (BST - UTC+1)',
+                            'Toronto (EST - UTC-5)',
+                            'Singapore (SGT - UTC+8)',
+                            'San Francisco (PST - UTC-8)',
+                            'India (IST - UTC+5:30)'
+                          ]}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-navy dark:text-white mb-1.5">Preferred Date & Time</label>
+                        <input 
+                          type="datetime-local" 
+                          value={form.preferredTime} 
+                          onChange={e => set('preferredTime', e.target.value)} 
+                          className="input-luxury" 
+                        />
+                      </div>
+                    </motion.div>
+                  )}
                   <div>
-                    <label className="block text-xs font-bold text-navy mb-1.5">Message</label>
+                    <label className="block text-xs font-bold text-navy dark:text-white mb-1.5">Message</label>
                     <textarea value={form.message} onChange={e => set('message', e.target.value)} rows={4}
                       placeholder="Tell us how we can help you today..."
                       className="input-luxury resize-none" />
                   </div>
-                  <button type="submit" className="btn-primary w-full justify-center">
-                    Send Message <ArrowRight className="w-4 h-4" />
+                  {serverError && (
+                    <div className="bg-red-50 border border-red-200 text-red-600 text-xs px-4 py-3 rounded-xl">
+                      {serverError}
+                    </div>
+                  )}
+                  <button type="submit" disabled={loading} className="btn-primary w-full justify-center disabled:opacity-60 disabled:cursor-not-allowed">
+                    {loading ? 'Sending...' : <> Send Message <ArrowRight className="w-4 h-4" /> </>}
                   </button>
                 </form>
               ) : (
@@ -132,8 +291,8 @@ export default function Contact() {
                     style={{ background: 'linear-gradient(135deg, #D4AF37, #E8C84A)', boxShadow: '0 0 40px rgba(212,175,55,0.3)' }}>
                     ✓
                   </div>
-                  <h3 className="font-display font-bold text-navy text-2xl mb-3">Message Sent!</h3>
-                  <p className="text-ink-muted text-sm">Our advisor will call you within 2 hours.</p>
+                  <h3 className="font-display font-bold text-navy dark:text-white text-2xl mb-3">Message Sent!</h3>
+                  <p className="text-ink-muted dark:text-white/60 text-sm">Our advisor will call you within 2 hours.</p>
                 </div>
               )}
             </div>
@@ -149,7 +308,7 @@ export default function Contact() {
                 <PremiumIcon icon={MapPin} variant="gold" size="xl" />
                 <div className="text-center">
                   <p className="text-white font-display font-bold text-sm">HyperRelestix Pune HQ</p>
-                  <p className="text-white/50 text-xs mt-1">Level 12, Panchshil Tech Park, Yerwada</p>
+                  <p className="text-white/55 text-xs mt-1">Level 12, Panchshil Tech Park, Yerwada</p>
                 </div>
                 <a
                   href="https://maps.google.com/?q=Panchshil+Tech+Park+Pune"
@@ -185,7 +344,7 @@ export default function Contact() {
       </div>
 
       {/* FAQ */}
-      <div className="bg-white py-24">
+      <div className="bg-white dark:bg-navy py-24 transition-colors duration-300">
         <div className="container-luxury max-w-3xl">
           <SectionHeader label="FAQ" title={<>Frequently Asked <span style={{ color: '#D4AF37' }}>Questions</span></>} align="center" className="mb-12" />
           <div className="space-y-3">
@@ -193,14 +352,14 @@ export default function Contact() {
               <motion.div key={faq.id} variants={fadeUp} initial="hidden" whileInView="visible" viewport={viewportOnce}>
                 <button
                   onClick={() => setOpenFaq(openFaq === i ? null : i)}
-                  className="w-full text-left p-5 rounded-2xl transition-all duration-300"
-                  style={{
-                    background: openFaq === i ? 'rgba(212,175,55,0.05)' : 'rgba(7,26,47,0.02)',
-                    border: openFaq === i ? '1.5px solid rgba(212,175,55,0.3)' : '1px solid rgba(7,26,47,0.07)',
-                  }}
+                  className={`w-full text-left p-5 rounded-2xl transition-all duration-300 border ${
+                    openFaq === i
+                      ? 'bg-gold/5 dark:bg-gold/10 border-gold/40'
+                      : 'bg-black/5 dark:bg-white/5 border-gray-100 dark:border-white/10'
+                  }`}
                 >
                   <div className="flex items-center justify-between gap-4">
-                    <span className="font-display font-bold text-navy text-sm">{faq.question}</span>
+                    <span className="font-display font-bold text-navy dark:text-white text-sm">{faq.question}</span>
                     {openFaq === i
                       ? <ChevronUp className="w-4 h-4 shrink-0" style={{ color: '#D4AF37' }} />
                       : <ChevronDown className="w-4 h-4 shrink-0 text-ink-soft" />
@@ -215,7 +374,7 @@ export default function Contact() {
                         transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
                         className="overflow-hidden"
                       >
-                        <p className="text-ink-muted text-sm leading-[1.85] pt-3">{faq.answer}</p>
+                        <p className="text-ink-muted dark:text-white/60 text-sm leading-[1.85] pt-3">{faq.answer}</p>
                       </motion.div>
                     )}
                   </AnimatePresence>

@@ -5,11 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
     <!-- Primary Meta -->
-    <title>HyperRelestix — Luxury Real Estate Pune | Premium Villas, Apartments & Penthouses</title>
+    <title>HyperRelestix — Luxury Real Estate Pune | Premium Villas, Apartments &amp; Penthouses</title>
     <meta name="description" content="HyperRelestix is Pune's most trusted luxury real estate platform. Discover premium villas, penthouses and apartments in Koregaon Park, Baner, Kharadi, Kalyani Nagar, Wakad and Balewadi. RERA verified listings." />
     <meta name="keywords" content="luxury real estate pune, luxury apartments pune, villas baner, penthouse koregaon park, kharadi property, kalyani nagar flats, hyperrelestix" />
     <meta name="author" content="HyperRelestix Realty Pvt. Ltd." />
     <meta name="theme-color" content="#071A2F" />
+    <meta name="robots" content="index, follow" />
     <link rel="canonical" href="https://www.hyperrelestix.in/" />
 
     <!-- Open Graph -->
@@ -29,13 +30,27 @@
     <!-- Favicon (inline SVG) -->
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23D4AF37'/%3E%3Ctext x='50%25' y='54%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='14' font-weight='900' fill='%23071A2F'%3EHR%3C/text%3E%3C/svg%3E" />
 
-    <!-- Google Fonts preconnect (fonts loaded in globals.css) -->
+    <!-- Web App Manifest -->
+    <link rel="manifest" href="/manifest.json" />
+
+    <!-- DNS Prefetch & Preconnect -->
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
+    <link rel="dns-prefetch" href="https://fonts.gstatic.com" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 
-    <!-- Preload critical font -->
-    <link rel="preload" as="style"
-      href="https://fonts.googleapis.com/css2?family=Manrope:wght@700;800&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap" />
+    <!--
+      Google Fonts — display=swap prevents FOIT (Flash of Invisible Text).
+      The browser renders text in a fallback font immediately, then swaps
+      to the custom font once loaded — no render blocking.
+    -->
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+
+    <!--
+      NOTE: Leaflet CSS is intentionally NOT loaded here.
+      It is dynamically imported inside InteractiveMap.jsx and InteractiveGlobe.jsx
+      so it is only loaded on pages that actually use the map (~40KB savings on all other pages).
+    -->
 
     <!-- Structured Data -->
     <script type="application/ld+json">
@@ -58,6 +73,20 @@
       "areaServed": "Pune, Maharashtra, India",
       "priceRange": "₹₹₹₹"
     }
+    </script>
+
+    <!-- Theme initialization — runs synchronously before first paint to prevent flash -->
+    <script>
+      (function() {
+        try {
+          var theme = localStorage.getItem('theme');
+          if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+          } else {
+            document.documentElement.classList.remove('dark');
+          }
+        } catch(e) { /* localStorage may be blocked in private mode */ }
+      })();
     </script>
   </head>
   <body>

@@ -103,11 +103,13 @@ export const cardHover = {
   },
 };
 
-/* ─── Page Transition ─── */
 export const pageTransition = {
-  initial: { opacity: 0, y: 20 },
-  animate: { opacity: 1, y: 0, transition: { duration: 0.55, ease } },
-  exit: { opacity: 0, y: -14, transition: { duration: 0.3 } },
+  initial: { opacity: 0 },
+  animate: {
+    opacity: 1,
+    transition: { duration: 0.45, ease },
+  },
+  exit: { opacity: 0, transition: { duration: 0.25 } },
 };
 
 /* ─── Slide Panels ─── */

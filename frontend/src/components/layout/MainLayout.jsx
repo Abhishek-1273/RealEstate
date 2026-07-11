@@ -6,7 +6,7 @@ import Footer from './Footer';
 import AuthModal from '../common/AuthModal';
 import SearchModal from '../common/SearchModal';
 import ScrollProgress from '../common/ScrollProgress';
-import FloatingCTA from '../common/FloatingCTA';
+import AIChatbot from '../common/AIChatbot';
 import { useAuth, useSearch } from '../../contexts';
 import { pageTransition } from '../../animations/variants';
 
@@ -20,6 +20,10 @@ const MainLayout = () => {
   useEffect(() => {
     let lenis = null;
     let rafId = null;
+
+    if ('scrollRestoration' in window.history) {
+      window.history.scrollRestoration = 'manual';
+    }
 
     const initLenis = async () => {
       try {
@@ -59,6 +63,12 @@ const MainLayout = () => {
         lenisRef.current.destroy();
         window.lenis = null;
       }
+      // Force clean up scroll locks and Lenis side-effect styles
+      document.body.style.overflow = '';
+      document.documentElement.style.overflow = '';
+      document.documentElement.classList.remove('lenis');
+      document.documentElement.classList.remove('lenis-smooth');
+      document.documentElement.classList.remove('lenis-stopped');
     };
   }, []);
 
@@ -73,8 +83,17 @@ const MainLayout = () => {
 
   // ── Scroll to top on route change ──
   useEffect(() => {
+    // Reset immediately
     if (lenisRef.current) lenisRef.current.scrollTo(0, { immediate: true });
-    else window.scrollTo(0, 0);
+    window.scrollTo(0, 0);
+
+    // Reset again after transition exit completes (100ms) to ensure new content starts at top
+    const timer = setTimeout(() => {
+      if (lenisRef.current) lenisRef.current.scrollTo(0, { immediate: true });
+      window.scrollTo(0, 0);
+    }, 100);
+
+    return () => clearTimeout(timer);
   }, [location.pathname]);
 
   return (
@@ -96,7 +115,7 @@ const MainLayout = () => {
       </main>
 
       <Footer />
-      <FloatingCTA />
+      <AIChatbot />
       {showAuthModal && <AuthModal />}
       {showSearch && <SearchModal />}
     </div>

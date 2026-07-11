@@ -9,7 +9,7 @@ export default function Wishlist() {
   const { wishlist, clearWishlist } = useWishlist();
 
   return (
-    <div className="min-h-screen bg-surface pt-20">
+    <div className="min-h-screen bg-surface dark:bg-navy-dark pt-20 transition-colors duration-300">
       {/* Header */}
       <div className="bg-mesh-dark py-20 relative overflow-hidden">
         <div className="absolute inset-0 pointer-events-none"
@@ -34,7 +34,7 @@ export default function Wishlist() {
               </div>
               {wishlist.length > 0 && (
                 <button onClick={clearWishlist}
-                  className="flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-semibold text-red-400 transition-all hover:bg-red-500/10 border border-red-500/20">
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-semibold text-red-400 transition-all hover:bg-red-500/10 border border-red-500/20 dark:border-red-500/30">
                   <Trash2 className="w-4 h-4" /> Clear All
                 </button>
               )}
@@ -52,7 +52,7 @@ export default function Wishlist() {
             className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-7"
           >
             {wishlist.map(p => (
-              <motion.div key={p.id} variants={fadeUp}>
+              <motion.div key={p._id || p.id} variants={fadeUp}>
                 <PropertyCard property={p} />
               </motion.div>
             ))}
@@ -66,8 +66,8 @@ export default function Wishlist() {
             >
               <Heart className="w-20 h-20" style={{ color: '#D4AF37', fill: 'rgba(212,175,55,0.15)' }} />
             </motion.div>
-            <h2 className="font-display font-bold text-navy text-3xl mb-3">Your wishlist is empty</h2>
-            <p className="text-ink-muted text-base max-w-sm mx-auto leading-relaxed mb-8">
+            <h2 className="font-display font-bold text-navy dark:text-white text-3xl mb-3">Your wishlist is empty</h2>
+            <p className="text-ink-muted dark:text-white/55 text-base max-w-sm mx-auto leading-relaxed mb-8">
               Browse our curated Pune luxury properties and save your favourites by clicking the heart icon.
             </p>
             <Link to="/properties" className="btn-primary">

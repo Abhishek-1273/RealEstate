@@ -22,7 +22,14 @@ export default function InteractiveGlobe({ onSelectCity, activeCity }) {
   useEffect(() => {
     activeCityRef.current = activeCity;
     if (activeCity) {
-      const city = CITIES_DATA.find(c => c.name === activeCity);
+      let city = CITIES_DATA.find(c => c.name === activeCity);
+      if (!city) {
+        // If it is a Pune locality, fallback to Pune coordinates
+        const puneLocalities = ['Koregaon Park', 'Baner', 'Aundh', 'Hinjewadi', 'Wakad', 'Boat Club Road', 'Kalyani Nagar', 'Viman Nagar', 'Bavdhan', 'NIBM', 'Magarpatta', 'Hadapsar', 'Balewadi', 'Kharadi'];
+        if (puneLocalities.some(loc => loc.toLowerCase() === activeCity.toLowerCase())) {
+          city = CITIES_DATA.find(c => c.name === 'Pune');
+        }
+      }
       if (city) {
         // Compute target rotation angles to align selected city with camera
         const phi = (90 - city.lat) * (Math.PI / 180);
@@ -112,13 +119,6 @@ export default function InteractiveGlobe({ onSelectCity, activeCity }) {
             if (child.material) {
               const materials = Array.isArray(child.material) ? child.material : [child.material];
               materials.forEach((mat) => {
-                console.log('Inspecting material of mesh:', child.name, {
-                  hasMap: !!mat.map,
-                  mapValue: mat.map,
-                  color: mat.color ? mat.color.getHexString() : null,
-                  roughness: mat.roughness,
-                  metalness: mat.metalness
-                });
                 // Let the model's realistic textures load and look gorgeous
                 mat.roughness = Math.min(mat.roughness || 0.5, 0.6);
                 if (mat.map) {
@@ -212,7 +212,13 @@ export default function InteractiveGlobe({ onSelectCity, activeCity }) {
 
     // Initial positioning facing activeCity
     if (activeCityRef.current) {
-      const city = CITIES_DATA.find(c => c.name === activeCityRef.current);
+      let city = CITIES_DATA.find(c => c.name === activeCityRef.current);
+      if (!city) {
+        const puneLocalities = ['Koregaon Park', 'Baner', 'Aundh', 'Hinjewadi', 'Wakad', 'Boat Club Road', 'Kalyani Nagar', 'Viman Nagar', 'Bavdhan', 'NIBM', 'Magarpatta', 'Hadapsar', 'Balewadi', 'Kharadi'];
+        if (puneLocalities.some(loc => loc.toLowerCase() === activeCityRef.current.toLowerCase())) {
+          city = CITIES_DATA.find(c => c.name === 'Pune');
+        }
+      }
       if (city) {
         const phi = (90 - city.lat) * (Math.PI / 180);
         const theta = (city.lon + 180) * (Math.PI / 180);
@@ -223,11 +229,22 @@ export default function InteractiveGlobe({ onSelectCity, activeCity }) {
       }
     }
 
+    // --- Viewport Visibility Observer ---
+    let isVisible = true;
+    const observer = new IntersectionObserver(([entry]) => {
+      isVisible = entry.isIntersecting;
+    }, { threshold: 0.05 });
+
+    if (containerRef.current) {
+      observer.observe(containerRef.current);
+    }
+
     // --- Animation loop ---
     let frameId;
 
     const animate = () => {
       frameId = requestAnimationFrame(animate);
+      if (!isVisible) return; // Skip CPU/GPU calculation and frame renders when not visible!
 
       // Lerp smooth rotations
       globeGroup.rotation.x += (targetRotationRef.current.x - globeGroup.rotation.x) * 0.05;
@@ -266,6 +283,7 @@ export default function InteractiveGlobe({ onSelectCity, activeCity }) {
 
     return () => {
       cancelAnimationFrame(frameId);
+      observer.disconnect();
       window.removeEventListener('resize', handleResize);
       window.removeEventListener('pointermove', handlePointerMove);
       window.removeEventListener('pointerup', handlePointerUp);

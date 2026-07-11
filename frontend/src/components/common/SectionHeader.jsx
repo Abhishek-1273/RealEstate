@@ -40,7 +40,7 @@ export default function SectionHeader({
       {title && (
         <div
           className={`font-display font-bold leading-[1.1] mb-5 ${
-            light ? 'text-white' : 'text-navy'
+            light ? 'text-white' : 'text-navy dark:text-white'
           }`}
           style={{ fontSize: 'clamp(2rem, 4vw, 3.25rem)' }}
         >
@@ -52,7 +52,7 @@ export default function SectionHeader({
         <p
           className={`font-body text-base leading-[1.9] ${
             center ? 'mx-auto max-w-2xl' : 'max-w-xl'
-          } ${light ? 'text-white/65' : 'text-ink-muted'}`}
+          } ${light ? 'text-white/65' : 'text-ink-muted dark:text-white/60'}`}
         >
           {description}
         </p>

@@ -19,12 +19,28 @@ const userSchema = new mongoose.Schema(
       lowercase: true,
       default: '',
     },
+
+    // ── Role-based access ──────────────────────────────────────────────────────
+    role: {
+      type: String,
+      enum: ['client', 'management', 'admin'],
+      default: 'client',
+    },
+
+    // ── Employee-specific ──────────────────────────────────────────────────────
+    isActive:   { type: Boolean, default: true },
+    department: { type: String, default: '' },   // Sales, Rentals, Management…
+    avatar:     { type: String, default: '' },   // initials fallback on frontend
+
+    // ── User Wishlist ──────────────────────────────────────────────────────────
+    wishlist:   [{ type: mongoose.Schema.Types.ObjectId, ref: 'Property' }],
   },
   {
-    timestamps: true, // createdAt, updatedAt auto
+    timestamps: true,
   }
 );
 
-const User = mongoose.model('User', userSchema);
+userSchema.index({ role: 1, isActive: 1 });
 
+const User = mongoose.model('User', userSchema);
 export default User;

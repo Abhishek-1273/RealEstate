@@ -1,10 +1,12 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Bed, Bath, Square, MapPin, Heart, Share2, Phone, Mail,
   ChevronLeft, ChevronRight, X, CheckCircle2, Shield, Star,
-  Car, Calendar, Layers, Sparkles
+  Car, Calendar, Layers, Sparkles, Loader2,
+  GraduationCap, TrainFront, Activity, ShoppingBag, Locate,
+  ChevronDown
 } from 'lucide-react';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation, Pagination, Thumbs, FreeMode } from 'swiper/modules';
@@ -16,13 +18,78 @@ import 'swiper/css/free-mode';
 import { useWishlist, useAuth } from '../../contexts';
 import { properties } from '../../data/properties';
 import PropertyCard from '../../components/common/PropertyCard';
-import InteractiveFloorPlan from '../../components/common/InteractiveFloorPlan';
+import { fetchPropertyById } from '../../utils/api';
 import { fadeUp, fadeLeft, fadeRight, staggerContainer, viewportOnce } from '../../animations/variants';
+import InteractiveMap from '../../components/common/InteractiveMap';
+
+function generateNearbyAmenities(lat, lng) {
+  if (!lat || !lng) return {};
+
+  const categories = {
+    education: [
+      { name: 'Delhi Public School', offsetLat: 0.006, offsetLng: -0.005 },
+      { name: 'International Institute of Technology', offsetLat: -0.009, offsetLng: 0.007 },
+      { name: 'Royal Orchid Preschool', offsetLat: 0.003, offsetLng: 0.005 },
+      { name: 'Oakridge International School', offsetLat: -0.005, offsetLng: -0.006 }
+    ],
+    transit: [
+      { name: 'Metro Station - Line 1', offsetLat: 0.004, offsetLng: 0.002 },
+      { name: 'Central Bus Terminal', offsetLat: -0.005, offsetLng: -0.003 },
+      { name: 'Prestige Auto Stand', offsetLat: 0.002, offsetLng: -0.001 },
+      { name: 'Railway Junction Station', offsetLat: 0.012, offsetLng: -0.011 }
+    ],
+    medical: [
+      { name: 'Max Super Speciality Hospital', offsetLat: -0.003, offsetLng: 0.004 },
+      { name: 'Apollo Pharmacy & Wellness', offsetLat: 0.001, offsetLng: 0.002 },
+      { name: 'Fortis Memorial Health Institute', offsetLat: 0.008, offsetLng: -0.005 },
+      { name: 'LifeCare Diagnostic Clinic', offsetLat: -0.002, offsetLng: -0.003 }
+    ],
+    shopping: [
+      { name: 'Phoenix Marketcity Mall', offsetLat: -0.006, offsetLng: -0.008 },
+      { name: 'The Galleria Luxury Highstreet', offsetLat: 0.003, offsetLng: 0.003 },
+      { name: 'Gourmet World Supermarket', offsetLat: -0.001, offsetLng: 0.001 },
+      { name: 'Starbucks Coffee & Roastery', offsetLat: 0.001, offsetLng: 0.002 }
+    ]
+  };
+
+  const getDistance = (lat1, lon1, lat2, lon2) => {
+    const R = 6371; // km
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+      Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+  };
+
+  const result = {};
+  Object.keys(categories).forEach(cat => {
+    result[cat] = categories[cat].map(item => {
+      const itemLat = lat + item.offsetLat;
+      const itemLng = lng + item.offsetLng;
+      const dist = getDistance(lat, lng, itemLat, itemLng);
+      return {
+        name: item.name,
+        distance: dist < 1 ? `${Math.round(dist * 1000)} m` : `${dist.toFixed(1)} km`,
+        distanceVal: dist,
+        coordinates: { lat: itemLat, lng: itemLng }
+      };
+    }).sort((a, b) => a.distanceVal - b.distanceVal);
+  });
+
+  return result;
+}
 
 export default function PropertyDetails() {
   const { id } = useParams();
   const { toggleWishlist, isWishlisted } = useWishlist();
   const { user, openAuth } = useAuth();
+
+  const [amenityCategory, setAmenityCategory] = useState('education');
+  const [mapCenter, setMapCenter] = useState(null);
+  const [mapZoom, setMapZoom] = useState(14);
   const [thumbsSwiper, setThumbsSwiper] = useState(null);
   const [mainSwiper, setMainSwiper] = useState(null);
   const [copied, setCopied] = useState(false);
@@ -31,7 +98,79 @@ export default function PropertyDetails() {
   const [rate, setRate] = useState(8.5);
   const [years, setYears] = useState(20);
 
-  const property = properties.find(p => p.id === Number(id));
+  const [property, setProperty] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [currency, setCurrency] = useState('INR');
+  const [currencyOpen, setCurrencyOpen] = useState(false);
+  const currencyRef = useRef(null);
+
+  useEffect(() => {
+    const handleOutside = (e) => {
+      if (currencyRef.current && !currencyRef.current.contains(e.target)) {
+        setCurrencyOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleOutside);
+    return () => document.removeEventListener('mousedown', handleOutside);
+  }, []);
+
+  const currenciesList = [
+    { value: 'INR', label: 'INR (₹)' },
+    { value: 'USD', label: 'USD ($)' },
+    { value: 'AED', label: 'AED (Dh)' },
+    { value: 'GBP', label: 'GBP (£)' },
+    { value: 'CAD', label: 'CAD (C$)' },
+  ];
+
+  const formatPrice = (price, curr) => {
+    const rates = {
+      INR: { rate: 1, symbol: '₹' },
+      USD: { rate: 1 / 83.5, symbol: '$' },
+      AED: { rate: 1 / 22.7, symbol: 'AED ' },
+      GBP: { rate: 1 / 106.2, symbol: '£' },
+      CAD: { rate: 1 / 61.2, symbol: 'C$' }
+    };
+    const { rate, symbol } = rates[curr];
+    const converted = price * rate;
+    if (curr === 'INR') {
+      return property?.priceLabel;
+    }
+    if (converted >= 1000000) {
+      return `${symbol}${(converted / 1000000).toFixed(2)} M`;
+    }
+    return `${symbol}${Math.round(converted).toLocaleString()}`;
+  };
+
+  useEffect(() => {
+    let active = true;
+    setLoading(true);
+    const getProperty = async () => {
+      try {
+        const data = await fetchPropertyById(id);
+        if (active) {
+          setProperty(data);
+          setLoading(false);
+        }
+      } catch (err) {
+        // Fallback to static properties
+        const staticProp = properties.find(p => String(p.id) === String(id));
+        if (active) {
+          setProperty(staticProp || null);
+          setLoading(false);
+        }
+      }
+    };
+    getProperty();
+    return () => { active = false; };
+  }, [id]);
+
+  useEffect(() => {
+    if (property?.coordinates?.lat && property?.coordinates?.lng) {
+      setMapCenter([property.coordinates.lat, property.coordinates.lng]);
+    } else {
+      setMapCenter([19.0178, 72.8173]); // default fallback: Worli, Mumbai
+    }
+  }, [property]);
 
   const handleShare = async () => {
     const shareData = {
@@ -44,7 +183,7 @@ export default function PropertyDetails() {
       try {
         await navigator.share(shareData);
       } catch (err) {
-        console.log('Share canceled/failed:', err);
+        // Share was canceled or failed — this is expected user behavior, not an error
       }
     } else {
       try {
@@ -57,60 +196,56 @@ export default function PropertyDetails() {
     }
   };
 
-  const related = properties.filter(p => p.id !== Number(id)).slice(0, 3);
-  const wished = isWishlisted(Number(id));
+  // Related: same city > same type > anything else — always 3 results
+  const { related, relatedLabel } = (() => {
+    const others = properties.filter(p => String(p.id) !== String(id) && p._id !== id);
+    const sameCity = others.filter(p => p.city === property?.city);
+    if (sameCity.length >= 3) return { related: sameCity.slice(0, 3), relatedLabel: `More in ${property?.city}` };
+    if (sameCity.length > 0) {
+      const sameType = others.filter(p => p.type === property?.type && !sameCity.includes(p));
+      const merged = [...sameCity, ...sameType].slice(0, 3);
+      if (merged.length >= 3) return { related: merged, relatedLabel: `Similar ${property?.type}s` };
+    }
+    const sameType = others.filter(p => p.type === property?.type);
+    if (sameType.length >= 3) return { related: sameType.slice(0, 3), relatedLabel: `Similar ${property?.type}s` };
+    return { related: others.slice(0, 3), relatedLabel: 'You May Also Like' };
+  })();
+  const wished = isWishlisted(property?._id || property?.id || id);
+
+  if (loading) return (
+    <div className="min-h-screen flex items-center justify-center bg-[#071A2F]">
+      <Loader2 className="w-8 h-8 animate-spin text-gold" style={{ color: '#D4AF37' }} />
+    </div>
+  );
 
   if (!property) return (
-    <div className="min-h-screen flex items-center justify-center bg-surface">
+    <div className="min-h-screen flex items-center justify-center bg-surface dark:bg-navy-dark transition-colors duration-300">
       <div className="text-center">
-        <h2 className="font-display font-bold text-navy text-3xl mb-4">Property not found</h2>
+        <h2 className="font-display font-bold text-navy dark:text-white text-3xl mb-4">Property not found</h2>
         <Link to="/properties" className="btn-primary">Back to Listings</Link>
       </div>
     </div>
   );
 
   const emi = Math.round((loan * (rate / 1200) * Math.pow(1 + rate / 1200, years * 12)) / (Math.pow(1 + rate / 1200, years * 12) - 1));
+  
+  const galleryImages = property.images && property.images.length > 0 
+    ? property.images 
+    : (property.image ? [property.image] : ['https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1200']);
 
   return (
-    <div className="min-h-screen bg-surface pt-20">
+    <div className="min-h-screen bg-surface dark:bg-navy-dark pt-20 transition-colors duration-300">
       
-      {/* ── Custom Swiper Localized Styles Injection ── */}
-      <style dangerouslySetInnerHTML={{ __html: `
-        .main-swiper-gallery .swiper-pagination-bullet {
-          background: rgba(255, 255, 255, 0.45) !important;
-          opacity: 1 !important;
-          width: 8px !important;
-          height: 8px !important;
-          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-        }
-        .main-swiper-gallery .swiper-pagination-bullet-active {
-          background: #D4AF37 !important;
-          width: 24px !important;
-          border-radius: 4px !important;
-        }
-        .thumbs-swiper-gallery .swiper-slide {
-          border: 2px solid transparent !important;
-          border-radius: 12px !important;
-          overflow: hidden !important;
-          transition: all 0.3s ease !important;
-        }
-        .thumbs-swiper-gallery .swiper-slide-thumb-active {
-          border-color: #D4AF37 !important;
-          transform: scale(0.96);
-        }
-        .thumbs-swiper-gallery .swiper-slide-thumb-active img {
-          opacity: 1 !important;
-        }
-      `}} />
+      {/* Swiper gallery styles are in globals.css — .main-swiper-gallery, .thumbs-swiper-gallery */}
 
       {/* ── Breadcrumb ── */}
-      <div className="bg-white" style={{ borderBottom: '1px solid rgba(7,26,47,0.06)' }}>
-        <div className="container-luxury py-4 flex items-center gap-2.5 text-[10px] text-ink-muted font-accent uppercase tracking-widest font-bold">
+      <div className="bg-white dark:bg-navy border-b border-gray-100 dark:border-white/10 transition-colors">
+        <div className="container-luxury py-4 flex items-center gap-2.5 text-[10px] text-ink-muted dark:text-cream/80 font-accent uppercase tracking-widest font-bold">
           <Link to="/" className="hover:text-gold transition-colors">Home</Link>
-          <span className="text-neutral-300 font-normal">/</span>
+          <span className="text-neutral-300 dark:text-white/20 font-normal">/</span>
           <Link to="/properties" className="hover:text-gold transition-colors">Properties</Link>
-          <span className="text-neutral-300 font-normal">/</span>
-          <span className="text-navy truncate font-black">{property.title}</span>
+          <span className="text-neutral-300 dark:text-white/20 font-normal">/</span>
+          <span className="text-navy dark:text-white truncate font-black">{property.title}</span>
         </div>
       </div>
 
@@ -138,7 +273,7 @@ export default function PropertyDetails() {
               thumbs={{ swiper: thumbsSwiper && !thumbsSwiper.destroyed ? thumbsSwiper : null }}
               className="h-full main-swiper-gallery"
             >
-              {property.images.map((img, i) => (
+              {galleryImages.map((img, i) => (
                 <SwiperSlide key={i}>
                   <img
                     src={img}
@@ -207,7 +342,7 @@ export default function PropertyDetails() {
                   }
                   toggleWishlist(property);
                 }}
-                className="w-8.5 h-8.5 md:w-11 md:h-11 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95 shadow-lg border"
+                className="w-9 h-9 md:w-11 md:h-11 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95 shadow-lg border"
                 style={{
                   background: wished ? 'rgba(239, 68, 68, 0.95)' : 'rgba(7, 26, 47, 0.5)',
                   borderColor: wished ? '#EF4444' : 'rgba(255, 255, 255, 0.2)',
@@ -219,7 +354,7 @@ export default function PropertyDetails() {
               </button>
               <button 
                 onClick={handleShare}
-                className="w-8.5 h-8.5 md:w-11 md:h-11 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95 shadow-lg border text-white hover:text-gold"
+                className="w-9 h-9 md:w-11 md:h-11 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95 shadow-lg border text-white hover:text-gold"
                 style={{ 
                   background: 'rgba(7, 26, 47, 0.5)', 
                   borderColor: 'rgba(255, 255, 255, 0.2)',
@@ -307,21 +442,69 @@ export default function PropertyDetails() {
               {/* Title + Price */}
               <div className="flex flex-wrap items-start justify-between gap-4 mb-6">
                 <div>
-                  <h1 className="font-display font-black text-navy text-3xl md:text-4xl leading-tight">{property.title}</h1>
-                  <div className="flex items-center gap-2 mt-2 text-sm text-ink-muted">
+                  <h1 className="font-display font-black text-navy dark:text-white text-3xl md:text-4xl leading-tight">{property.title}</h1>
+                  <div className="flex items-center gap-2 mt-2 text-sm text-ink-muted dark:text-cream/80">
                     <MapPin className="w-4 h-4" style={{ color: '#D4AF37' }} />
                     <span>{property.location}</span>
                   </div>
                 </div>
-                <div className="text-right">
-                  <p className="font-display font-black text-4xl" style={{ color: '#8A6A18' }}>{property.priceLabel}</p>
-                  <p className="text-ink-soft text-sm">₹{Math.round(property.price / property.area).toLocaleString()}/sqft</p>
+                <div className="w-full md:w-auto text-right flex flex-col items-end">
+                  <div className="relative" ref={currencyRef}>
+                    <button
+                      type="button"
+                      onClick={() => setCurrencyOpen(!currencyOpen)}
+                      className="mb-2 flex items-center gap-1.5 bg-black/5 dark:bg-white/5 border border-gray-150 dark:border-white/10 rounded-full px-2.5 py-0.5 text-navy dark:text-white transition-all hover:bg-black/10 dark:hover:bg-white/10"
+                    >
+                      <span className="text-[9px] text-ink-soft dark:text-white/40 uppercase font-bold tracking-wider">Currency:</span>
+                      <span className="text-[9px] font-bold tracking-wide uppercase flex items-center gap-0.5">
+                        {currency} <ChevronDown className={`w-2.5 h-2.5 transition-transform duration-200 ${currencyOpen ? 'rotate-180' : ''}`} />
+                      </span>
+                    </button>
+
+                    <AnimatePresence>
+                      {currencyOpen && (
+                        <motion.div
+                          initial={{ opacity: 0, y: -4, scale: 0.95 }}
+                          animate={{ opacity: 1, y: 0, scale: 1 }}
+                          exit={{ opacity: 0, y: -4, scale: 0.95 }}
+                          transition={{ duration: 0.12 }}
+                          className="absolute right-0 mt-1 min-w-[100px] bg-white/95 dark:bg-navy-light/95 backdrop-blur-md border border-gray-150 dark:border-white/10 rounded-xl shadow-luxury z-30 py-1 overflow-hidden"
+                        >
+                          {currenciesList.map((c) => (
+                            <button
+                              key={c.value}
+                              type="button"
+                              onClick={() => {
+                                setCurrency(c.value);
+                                setCurrencyOpen(false);
+                              }}
+                              className={`w-full text-left px-3 py-1.5 text-[10px] font-semibold transition-colors flex items-center justify-between ${
+                                currency === c.value
+                                  ? 'bg-gold/10 text-gold-dark dark:text-gold'
+                                  : 'text-ink-muted dark:text-cream/80 hover:bg-gray-50 dark:hover:bg-white/5 hover:text-navy dark:hover:text-white'
+                              }`}
+                            >
+                              {c.label}
+                            </button>
+                          ))}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                  <p className="font-display font-black text-3xl md:text-4xl" style={{ color: '#8A6A18' }}>
+                    {formatPrice(property.price, currency)}
+                  </p>
+                  <p className="text-ink-soft dark:text-white/55 text-[11px] mt-1">
+                    {currency === 'INR' 
+                      ? `₹${Math.round(property.price / property.area).toLocaleString()}/sqft`
+                      : `${currency} ${Math.round((property.price * (currency === 'USD' ? 1/83.5 : currency === 'AED' ? 1/22.7 : currency === 'GBP' ? 1/106.2 : 1/61.2)) / property.area).toLocaleString()}/sqft`
+                    }
+                  </p>
                 </div>
               </div>
 
               {/* Specs */}
-              <div className="flex flex-wrap gap-4 p-5 rounded-2xl mb-8"
-                style={{ background: 'white', border: '1px solid rgba(7,26,47,0.07)', boxShadow: '0 2px 16px rgba(7,26,47,0.05)' }}>
+              <div className="flex flex-wrap gap-4 p-5 rounded-2xl mb-8 bg-white dark:bg-navy border border-gray-100 dark:border-white/10 shadow-card transition-colors duration-300">
                 {[
                   { icon: <Bed className="w-5 h-5" />, label: 'Bedrooms', val: property.bedrooms },
                   { icon: <Bath className="w-5 h-5" />, label: 'Bathrooms', val: property.bathrooms },
@@ -331,13 +514,12 @@ export default function PropertyDetails() {
                   { icon: <Layers className="w-5 h-5" />, label: 'Furnishing', val: property.furnishing },
                 ].map((s, i) => (
                   <div key={i} className="flex items-center gap-3 min-w-[130px]">
-                    <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
-                      style={{ background: 'rgba(212,175,55,0.1)', color: '#D4AF37' }}>
+                    <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 bg-gold/10 text-gold">
                       {s.icon}
                     </div>
                     <div>
-                      <p className="text-[10px] text-ink-soft">{s.label}</p>
-                      <p className="font-bold text-navy text-sm">{s.val}</p>
+                      <p className="text-[10px] text-ink-soft dark:text-white/40">{s.label}</p>
+                      <p className="font-bold text-navy dark:text-white text-sm">{s.val}</p>
                     </div>
                   </div>
                 ))}
@@ -345,17 +527,17 @@ export default function PropertyDetails() {
 
               {/* Description */}
               <div className="mb-8">
-                <h2 className="font-display font-bold text-navy text-xl mb-4">About This Property</h2>
-                <p className="text-ink-muted text-sm leading-[1.95]">{property.description}</p>
+                <h2 className="font-display font-bold text-navy dark:text-white text-xl mb-4">About This Property</h2>
+                <p className="text-ink-muted dark:text-white/60 text-sm leading-[1.95]">{property.description}</p>
               </div>
 
               {/* Amenities */}
               <div className="mb-8">
-                <h2 className="font-display font-bold text-navy text-xl mb-5">Amenities</h2>
+                <h2 className="font-display font-bold text-navy dark:text-white text-xl mb-5">Amenities</h2>
                 <div className="flex flex-wrap gap-2.5">
                   {property.amenities.map((a, i) => (
-                    <span key={i} className="flex items-center gap-2 px-4 py-2 rounded-full text-xs font-semibold"
-                      style={{ background: 'rgba(212,175,55,0.07)', border: '1px solid rgba(212,175,55,0.2)', color: '#8A6A18' }}>
+                    <span key={i} className="flex items-center gap-2 px-4 py-2 rounded-full text-xs font-semibold bg-gold/5 dark:bg-gold/10 border border-gold/20 text-gold-dark dark:text-gold-light"
+                    >
                       <CheckCircle2 className="w-3 h-3" />
                       {a}
                     </span>
@@ -365,8 +547,9 @@ export default function PropertyDetails() {
 
               {/* Details table */}
               <div className="mb-8">
-                <h2 className="font-display font-bold text-navy text-xl mb-5">Property Details</h2>
-                <div className="rounded-2xl overflow-hidden" style={{ border: '1px solid rgba(7,26,47,0.08)' }}>
+                <h2 className="font-display font-bold text-navy dark:text-white text-xl mb-5">Property Details</h2>
+                <div className="rounded-2xl overflow-hidden border border-gray-200 dark:border-white/10"
+                >
                   {[
                     ['Property Type', property.type],
                     ['Category', property.category],
@@ -375,74 +558,70 @@ export default function PropertyDetails() {
                     ['RERA Number', property.rera || 'P52100046789'],
                     ['Status', property.status],
                   ].map(([k, v], i) => (
-                    <div key={i} className="flex items-center justify-between px-5 py-3.5 text-sm"
-                      style={{ background: i % 2 === 0 ? 'white' : 'rgba(7,26,47,0.02)', borderBottom: i < 5 ? '1px solid rgba(7,26,47,0.05)' : 'none' }}>
-                      <span className="text-ink-muted">{k}</span>
-                      <span className="font-semibold text-navy">{v}</span>
+                    <div key={i} className={`flex items-center justify-between px-5 py-3.5 text-sm ${i % 2 === 0 ? 'bg-white dark:bg-navy' : 'bg-black/5 dark:bg-white/5'} ${i < 5 ? 'border-b border-gray-100 dark:border-white/10' : ''}`}
+                    >
+                      <span className="text-ink-muted dark:text-cream/80">{k}</span>
+                      <span className="font-semibold text-navy dark:text-white">{v}</span>
                     </div>
                   ))}
                 </div>
               </div>
 
-              {/* Interactive Floor Plan */}
-              <div className="mb-10">
-                <InteractiveFloorPlan />
-              </div>
-
               {/* EMI Calculator */}
-              <div className="rounded-3xl p-7 mb-8"
-                style={{ background: 'white', border: '1px solid rgba(7,26,47,0.07)', boxShadow: '0 4px 24px rgba(7,26,47,0.06)' }}>
-                <h2 className="font-display font-bold text-navy text-xl mb-6 flex items-center gap-2.5">
+              <div className="rounded-3xl p-7 mb-8 bg-white dark:bg-navy border border-gray-100 dark:border-white/10 shadow-card transition-colors duration-300"
+              >
+                <h2 className="font-display font-bold text-navy dark:text-white text-xl mb-6 flex items-center gap-2.5">
                   Home Loan Calculator
                 </h2>
                 <div className="space-y-6">
                   <div>
                     <div className="flex justify-between text-sm mb-2">
-                      <span className="text-ink-muted">Loan Amount</span>
-                      <span className="font-bold text-navy">₹{(loan / 10000000).toFixed(2)} Cr</span>
+                      <span className="text-ink-muted dark:text-cream/80">Loan Amount</span>
+                      <span className="font-bold text-navy dark:text-white">₹{(loan / 10000000).toFixed(2)} Cr</span>
                     </div>
                     <input type="range" min={1000000} max={property.price} step={100000}
-                      value={loan} onChange={e => setLoan(Number(e.target.value))} className="w-full" />
+                      value={loan} onChange={e => setLoan(Number(e.target.value))} className="w-full animate-slider" />
                   </div>
                   <div>
                     <div className="flex justify-between text-sm mb-2">
-                      <span className="text-ink-muted">Interest Rate</span>
-                      <span className="font-bold text-navy">{rate}% p.a.</span>
+                      <span className="text-ink-muted dark:text-cream/80">Interest Rate</span>
+                      <span className="font-bold text-navy dark:text-white">{rate}% p.a.</span>
                     </div>
                     <input type="range" min={6} max={14} step={0.25}
                       value={rate} onChange={e => setRate(Number(e.target.value))} className="w-full" />
                   </div>
                   <div>
                     <div className="flex justify-between text-sm mb-2">
-                      <span className="text-ink-muted">Loan Tenure</span>
-                      <span className="font-bold text-navy">{years} years</span>
+                      <span className="text-ink-muted dark:text-cream/80">Loan Tenure</span>
+                      <span className="font-bold text-navy dark:text-white">{years} years</span>
                     </div>
                     <input type="range" min={5} max={30} step={1}
                       value={years} onChange={e => setYears(Number(e.target.value))} className="w-full" />
                   </div>
-                  <div className="pt-4 rounded-2xl px-5 py-4 text-center"
-                    style={{ background: 'linear-gradient(135deg, rgba(212,175,55,0.08), rgba(212,175,55,0.04))', border: '1px solid rgba(212,175,55,0.2)' }}>
-                    <p className="text-ink-muted text-xs mb-1">Estimated Monthly EMI</p>
-                    <p className="font-display font-black text-3xl" style={{ color: '#8A6A18' }}>₹{emi.toLocaleString()}</p>
-                    <p className="text-ink-soft text-[11px] mt-1">Consult your bank for exact rates</p>
+                  <div className="pt-4 rounded-2xl px-5 py-4 text-center bg-gradient-to-br from-gold/10 to-gold/5 dark:from-gold/20 dark:to-gold/10 border border-gold/25"
+                  >
+                    <p className="text-ink-muted dark:text-cream/80 text-xs mb-1">Estimated Monthly EMI</p>
+                    <p className="font-display font-black text-3xl text-gold-dark dark:text-gold">₹{emi.toLocaleString()}</p>
+                    <p className="text-ink-soft dark:text-white/40 text-[11px] mt-1">Consult your bank for exact rates</p>
                   </div>
                 </div>
               </div>
             </motion.div>
           </div>
 
-          {/* ── Right Column (Sticky) ── */}
-          <motion.div
-            variants={fadeRight}
-            initial="hidden"
-            animate="visible"
-            className="lg:sticky lg:top-24 lg:self-start space-y-4"
-          >
+          {/* ── Right Column ── */}
+          <div className="lg:col-span-1">
+            <div className="lg:sticky lg:top-28 space-y-4">
+              <motion.div
+                variants={fadeRight}
+                initial="hidden"
+                animate="visible"
+              >
             {/* Booking Card */}
-            <div className="rounded-3xl p-6"
-              style={{ background: 'white', border: '1px solid rgba(7,26,47,0.08)', boxShadow: '0 8px 40px rgba(7,26,47,0.10)' }}>
-              <p className="font-display font-black text-navy text-2xl mb-0.5">{property.priceLabel}</p>
-              <p className="text-ink-soft text-xs mb-6">Negotiable · RERA Verified</p>
+            <div className="rounded-3xl p-6 bg-white dark:bg-navy border border-gray-100 dark:border-white/10 shadow-card transition-colors duration-300"
+            >
+              <p className="font-display font-black text-navy dark:text-white text-2xl mb-0.5">{property.priceLabel}</p>
+              <p className="text-ink-soft dark:text-white/40 text-xs mb-6">Negotiable · RERA Verified</p>
 
               <div className="flex flex-col gap-3 mb-5">
                 <Link to="/contact"
@@ -460,19 +639,20 @@ export default function PropertyDetails() {
                   <Calendar className="w-4 h-4" /> Book a Site Visit
                 </Link>
                 <a href={`tel:${property.agent.phone}`}
-                  className="w-full py-3 rounded-2xl text-sm font-semibold flex items-center justify-center gap-2 border-2 border-navy text-navy hover:bg-navy hover:text-white transition-all duration-250">
+                  className="w-full py-3 rounded-2xl text-sm font-semibold flex items-center justify-center gap-2 border-2 border-navy dark:border-white text-navy dark:text-white hover:bg-navy dark:hover:bg-white hover:text-white dark:hover:text-navy transition-all duration-250"
+                >
                   <Phone className="w-4 h-4" /> Call Agent
                 </a>
               </div>
 
-              <div className="flex items-center gap-3 p-3.5 rounded-2xl"
-                style={{ background: 'rgba(7,26,47,0.03)' }}>
+              <div className="flex items-center gap-3 p-3.5 rounded-2xl bg-black/5 dark:bg-white/5"
+              >
                 <div className="w-11 h-11 rounded-xl overflow-hidden shrink-0">
                   <img src={`https://ui-avatars.com/api/?name=${property.agent.name}&background=D4AF37&color=071A2F&font-size=0.5`} alt="" className="w-full h-full object-cover" />
                 </div>
                 <div>
-                  <p className="font-bold text-navy text-sm">{property.agent.name}</p>
-                  <p className="text-ink-soft text-xs">Luxury Property Advisor</p>
+                  <p className="font-bold text-navy dark:text-white text-sm">{property.agent.name}</p>
+                  <p className="text-ink-soft dark:text-white/40 text-xs">Luxury Property Advisor</p>
                   <div className="flex gap-0.5 mt-0.5">
                     {[...Array(5)].map((_, i) => <Star key={i} className="w-3 h-3 fill-gold text-gold" />)}
                   </div>
@@ -487,27 +667,150 @@ export default function PropertyDetails() {
                   WhatsApp Agent
                 </a>
                 <a href={`mailto:${property.agent.email || 'hello@hyperrelestix.in'}`}
-                  className="w-full py-2.5 rounded-2xl text-xs font-semibold flex items-center justify-center gap-2 text-ink-muted hover:text-navy transition-colors">
+                  className="w-full py-2.5 rounded-2xl text-xs font-semibold flex items-center justify-center gap-2 text-ink-muted dark:text-cream/80 hover:text-navy dark:hover:text-white transition-colors"
+                >
                   <Mail className="w-3.5 h-3.5" /> Send Email
                 </a>
               </div>
             </div>
 
             {/* RERA badge */}
-            <div className="rounded-2xl p-4 flex items-center gap-3"
-              style={{ background: 'rgba(212,175,55,0.06)', border: '1px solid rgba(212,175,55,0.18)' }}>
+            <div className="rounded-2xl p-4 flex items-center gap-3 bg-gold/5 dark:bg-gold/10 border border-gold/20"
+            >
               <Shield className="w-5 h-5 shrink-0" style={{ color: '#D4AF37' }} />
               <div>
-                <p className="text-navy text-xs font-bold">RERA Registered</p>
-                <p className="text-ink-soft text-[11px]">{property.rera || 'P52100046789'}</p>
+                <p className="text-navy dark:text-white text-xs font-bold">RERA Registered</p>
+                <p className="text-ink-soft dark:text-white/40 text-[11px]">{property.rera || 'P52100046789'}</p>
               </div>
             </div>
           </motion.div>
         </div>
+      </div>
+    </div>
+
+        {/* ── Location & Neighborhood ── */}
+        <div className="mt-16 bg-white dark:bg-navy border border-gray-100 dark:border-white/10 rounded-3xl p-6 md:p-8 shadow-card transition-colors duration-300">
+          <div className="flex flex-col lg:flex-row gap-8">
+            {/* Map Column */}
+            <div className="flex-1 min-h-[350px] md:min-h-[450px] relative rounded-2xl overflow-hidden border border-gray-100 dark:border-white/5">
+              <InteractiveMap
+                properties={[property]}
+                center={mapCenter}
+                zoom={mapZoom}
+                activePropertyId={property._id || property.id}
+                showAmenities={
+                  generateNearbyAmenities(
+                    property?.coordinates?.lat || 19.0178,
+                    property?.coordinates?.lng || 72.8173
+                  )[amenityCategory] || []
+                }
+                amenityCategory={amenityCategory}
+              />
+            </div>
+
+            {/* Amenities Sidebar Column */}
+            <div className="w-full lg:w-[380px] shrink-0 flex flex-col justify-between">
+              <div>
+                <span className="h-px w-8 bg-gold inline-block mb-3" style={{ background: '#D4AF37' }} />
+                <h3 className="font-display font-black text-navy dark:text-white text-2xl tracking-tight mb-2">
+                  Location & Neighborhood
+                </h3>
+                <p className="text-xs text-ink-soft dark:text-white/40 mb-6">
+                  Verify nearby landmarks and travel convenience.
+                </p>
+
+                {/* Tabs */}
+                <div className="grid grid-cols-2 gap-2 mb-6">
+                  {[
+                    { id: 'education', label: 'Education', icon: <GraduationCap className="w-3.5 h-3.5" /> },
+                    { id: 'transit', label: 'Transit', icon: <TrainFront className="w-3.5 h-3.5" /> },
+                    { id: 'medical', label: 'Medical', icon: <Activity className="w-3.5 h-3.5" /> },
+                    { id: 'shopping', label: 'Shopping', icon: <ShoppingBag className="w-3.5 h-3.5" /> }
+                  ].map((tab) => {
+                    const isActive = amenityCategory === tab.id;
+                    return (
+                      <button
+                        key={tab.id}
+                        onClick={() => setAmenityCategory(tab.id)}
+                        className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-bold border transition-all duration-200 ${
+                          isActive
+                            ? 'bg-gold/10 text-gold-dark dark:text-gold border-gold'
+                            : 'bg-black/5 dark:bg-white/5 text-ink-muted dark:text-cream/80 border-transparent hover:bg-black/10 dark:hover:bg-white/10'
+                        }`}
+                        style={isActive ? { borderColor: '#D4AF37', color: '#D4AF37' } : {}}
+                      >
+                        {tab.icon}
+                        {tab.label}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Amenity items list */}
+                <div className="space-y-3.5">
+                  {(() => {
+                    const items = generateNearbyAmenities(
+                      property?.coordinates?.lat || 19.0178,
+                      property?.coordinates?.lng || 72.8173
+                    )[amenityCategory] || [];
+                    return items.map((item, idx) => (
+                      <div
+                        key={idx}
+                        onClick={() => {
+                          if (item.coordinates) {
+                            setMapCenter([item.coordinates.lat, item.coordinates.lng]);
+                            setMapZoom(16);
+                          }
+                        }}
+                        className="flex items-start justify-between gap-3 p-3 rounded-xl bg-black/5 dark:bg-white/5 hover:bg-gold/5 dark:hover:bg-gold/5 border border-transparent hover:border-gold/20 transition-all duration-200 cursor-pointer group"
+                      >
+                        <div className="flex gap-2.5 items-start min-w-0">
+                          <div className={`p-1.5 rounded-lg shrink-0 ${
+                            amenityCategory === 'education' ? 'bg-emerald-500/10 text-emerald-500' :
+                            amenityCategory === 'transit' ? 'bg-blue-500/10 text-blue-500' :
+                            amenityCategory === 'medical' ? 'bg-red-500/10 text-red-500' :
+                            'bg-amber-500/10 text-amber-500'
+                          }`}>
+                            {amenityCategory === 'education' ? <GraduationCap className="w-3.5 h-3.5" /> :
+                             amenityCategory === 'transit' ? <TrainFront className="w-3.5 h-3.5" /> :
+                             amenityCategory === 'medical' ? <Activity className="w-3.5 h-3.5" /> :
+                             <ShoppingBag className="w-3.5 h-3.5" />}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-xs font-bold text-navy dark:text-white truncate group-hover:text-gold transition-colors">
+                              {item.name}
+                            </p>
+                            <p className="text-[10px] text-ink-soft dark:text-white/40">Landmark</p>
+                          </div>
+                        </div>
+                        <span className="text-[10px] font-black text-gold self-center shrink-0 uppercase tracking-wider" style={{ color: '#D4AF37' }}>
+                          {item.distance}
+                        </span>
+                      </div>
+                    ));
+                  })()}
+                </div>
+              </div>
+
+              {/* Reset to property center */}
+              <button
+                onClick={() => {
+                  if (property?.coordinates) {
+                    setMapCenter([property.coordinates.lat, property.coordinates.lng]);
+                    setMapZoom(14);
+                  }
+                }}
+                className="mt-6 flex items-center justify-center gap-1.5 w-full py-2.5 text-[10px] font-accent font-black uppercase tracking-widest text-ink-muted dark:text-cream/80 hover:text-gold transition-colors border border-dashed border-gray-200 dark:border-white/10 hover:border-gold/30 rounded-xl"
+              >
+                <Locate className="w-3.5 h-3.5 text-gold" style={{ color: '#D4AF37' }} /> Recenter on Property
+              </button>
+            </div>
+          </div>
+        </div>
 
         {/* ── Related Properties ── */}
         <div className="mt-20">
-          <h2 className="font-display font-bold text-navy text-2xl mb-8">Similar Luxury Properties</h2>
+          <h2 className="font-display font-bold text-navy dark:text-white text-2xl mb-8">{relatedLabel}</h2>
           <motion.div
             variants={staggerContainer}
             initial="hidden"

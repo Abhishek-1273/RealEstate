@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
@@ -24,19 +24,20 @@ import 'swiper/css/pagination';
 import Hero from '../../components/common/Hero';
 import SectionHeader from '../../components/common/SectionHeader';
 import PropertyCard from '../../components/common/PropertyCard';
-import InteractiveGlobe from '../../components/common/InteractiveGlobe';
+const InteractiveGlobe = lazy(() => import('../../components/common/InteractiveGlobe'));
 import PremiumIcon from '../../components/common/PremiumIcon';
 import { featuredProperties } from '../../data/properties';
 import { testimonials, cities, stats, blogs, categories, developerLogos, companyLogos } from '../../data/index';
+import { submitEnquiry, fetchProperties, fetchPropertyCounts } from '../../utils/api';
 import { fadeUp, fadeLeft, scaleIn, staggerContainer, staggerFast, viewportOnce } from '../../animations/variants';
 
 /* ══════════════════════════════════════════════════════════════════════════
    TRUST MARQUEE
 ══════════════════════════════════════════════════════════════════════════ */
 function TrustMarquee() {
-  const logos = [...companyLogos, ...companyLogos, ...companyLogos];
+  const logos = [...companyLogos, ...companyLogos]; // doubled is sufficient for seamless -50% scroll
   return (
-    <section className="py-16 bg-white border-y border-gray-100">
+    <section className="py-16 bg-white dark:bg-navy-dark border-y border-gray-100 dark:border-white/10 transition-colors duration-300">
       <div className="container-luxury mb-8 text-center">
         <p className="text-[11px] font-accent text-gold font-bold tracking-[0.28em] uppercase mb-1">
           Trusted Financing Partners
@@ -48,17 +49,17 @@ function TrustMarquee() {
           {logos.map((l, i) => (
             <div
               key={i}
-              className="inline-flex items-center justify-center px-8 py-4.5 bg-white border border-gray-200/60 rounded-2xl shadow-[0_4px_16px_rgba(10,25,47,0.02)] transition-all duration-300 hover:border-gold/30 hover:shadow-[0_12px_24px_rgba(229,193,125,0.12)] hover:-translate-y-1 group cursor-pointer"
+              className="inline-flex items-center justify-center px-8 py-4.5 bg-white dark:bg-navy border border-gray-200/60 dark:border-white/10 rounded-2xl shadow-[0_4px_16px_rgba(10,25,47,0.02)] transition-all duration-300 hover:border-gold/30 hover:shadow-[0_12px_24px_rgba(229,193,125,0.12)] hover:-translate-y-1 group cursor-pointer"
             >
-              <span className="font-display font-extrabold text-sm tracking-widest uppercase text-navy/45 group-hover:text-gold transition-colors duration-300">
+              <span className="font-display font-extrabold text-sm tracking-widest uppercase text-navy/45 dark:text-cream/50 group-hover:text-gold transition-colors duration-300">
                 {l.name}
               </span>
             </div>
           ))}
         </div>
         {/* Fade edges */}
-        <div className="absolute inset-y-0 left-0 w-32 pointer-events-none bg-gradient-to-r from-white to-transparent z-10" />
-        <div className="absolute inset-y-0 right-0 w-32 pointer-events-none bg-gradient-to-l from-white to-transparent z-10" />
+        <div className="absolute inset-y-0 left-0 w-32 pointer-events-none bg-gradient-to-r from-white dark:from-navy-dark to-transparent z-10" />
+        <div className="absolute inset-y-0 right-0 w-32 pointer-events-none bg-gradient-to-l from-white dark:from-navy-dark to-transparent z-10" />
       </div>
     </section>
   );
@@ -68,8 +69,26 @@ function TrustMarquee() {
    FEATURED PROPERTIES
 ══════════════════════════════════════════════════════════════════════════ */
 function FeaturedProperties() {
+  const [list, setList] = useState(featuredProperties.slice(0, 6));
+
+  useEffect(() => {
+    let active = true;
+    const getFeatured = async () => {
+      try {
+        const data = await fetchProperties({ featured: 'true', limit: 6 });
+        if (active && data?.properties?.length > 0) {
+          setList(data.properties);
+        }
+      } catch (err) {
+        // Fallback already matches static featuredProperties
+      }
+    };
+    getFeatured();
+    return () => { active = false; };
+  }, []);
+
   return (
-    <section className="section-pad bg-surface-alt">
+    <section className="section-pad bg-surface-alt dark:bg-navy transition-colors duration-300">
       <div className="container-luxury">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-16">
           <SectionHeader
@@ -77,7 +96,7 @@ function FeaturedProperties() {
             title={<>Featured <span style={{ color: '#D4AF37' }}>Properties</span></>}
             description="Every listing personally vetted by our senior advisors. These represent the finest available in India right now."
           />
-          <Link to="/properties" className="btn-outline shrink-0">
+          <Link to="/properties" className="btn-outline shrink-0 hidden md:inline-flex">
             View All <ArrowRight className="w-4 h-4" />
           </Link>
         </div>
@@ -88,12 +107,19 @@ function FeaturedProperties() {
           viewport={viewportOnce}
           className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-7"
         >
-          {featuredProperties.slice(0, 6).map((p) => (
-            <motion.div key={p.id} variants={fadeUp}>
+          {list.map((p) => (
+            <motion.div key={p._id || p.id} variants={fadeUp}>
               <PropertyCard property={p} />
             </motion.div>
           ))}
         </motion.div>
+
+        {/* Mobile View All at bottom */}
+        <div className="flex justify-center mt-10 md:hidden">
+          <Link to="/properties" className="btn-outline w-full text-center justify-center">
+            View All <ArrowRight className="w-4 h-4" />
+          </Link>
+        </div>
       </div>
     </section>
   );
@@ -134,20 +160,20 @@ function StatsStrip() {
 /* ══════════════════════════════════════════════════════════════════════════
    EXPLORE LUXURY CITIES
 ══════════════════════════════════════════════════════════════════════════ */
-function ExploreCities() {
-  const [activeCity, setActiveCity] = useState('Mumbai');
+function ExploreCities({ counts = {} }) {
+  const [activeCity, setActiveCity] = useState('Koregaon Park');
   const activeCityData = cities.find((c) => c.name === activeCity) || cities[0];
 
   return (
-    <section className="section-pad bg-white relative overflow-hidden">
+    <section className="section-pad bg-white dark:bg-navy-dark relative overflow-hidden transition-colors duration-300">
       {/* Ambient */}
       <div className="absolute inset-0 pointer-events-none opacity-30"
         style={{ background: 'radial-gradient(ellipse at 50% 100%, rgba(212,175,55,0.08) 0%, transparent 60%)' }} />
 
       <div className="container-luxury relative">
         <SectionHeader
-          label="Explore by City"
-          title={<>India's Most Coveted <span style={{ color: '#D4AF37' }}>Luxury Cities</span></>}
+          label="Explore by Locality"
+          title={<>Pune's Most Coveted <span style={{ color: '#D4AF37' }}>Luxury Localities</span></>}
           align="center"
           className="mb-16"
         />
@@ -155,7 +181,14 @@ function ExploreCities() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
           {/* Left Column — 3D Globe */}
           <div className="hidden md:block lg:col-span-7">
-            <InteractiveGlobe onSelectCity={setActiveCity} activeCity={activeCity} />
+            <Suspense fallback={
+              <div className="relative w-full h-[450px] flex flex-col items-center justify-center bg-transparent gap-3">
+                <div className="w-8 h-8 border-4 border-gold border-t-transparent rounded-full animate-spin" style={{ borderColor: '#D4AF37', borderTopColor: 'transparent' }} />
+                <p className="text-xs font-semibold tracking-widest uppercase text-gold" style={{ color: '#D4AF37' }}>Loading 3D Earth...</p>
+              </div>
+            }>
+              <InteractiveGlobe onSelectCity={setActiveCity} activeCity={activeCity} />
+            </Suspense>
           </div>
 
           {/* Right Column — City Details Card & Selector */}
@@ -167,13 +200,10 @@ function ExploreCities() {
                   <button
                     key={city.id}
                     onClick={() => setActiveCity(city.name)}
-                    className="px-4 py-2 rounded-full text-xs font-semibold border transition-all duration-300"
-                    style={{
-                      borderColor: activeCity === city.name ? '#D4AF37' : 'rgba(7,26,47,0.08)',
-                      background: activeCity === city.name ? 'rgba(212,175,55,0.06)' : 'transparent',
-                      color: activeCity === city.name ? '#D4AF37' : '#52525B',
-                      boxShadow: activeCity === city.name ? '0 4px 12px rgba(212,175,55,0.1)' : 'none',
-                    }}
+                    className={`px-4 py-2 rounded-full text-xs font-semibold border transition-all duration-300 ${activeCity === city.name
+                      ? 'border-gold bg-gold/10 text-gold shadow-[0_4px_12px_rgba(212,175,55,0.15)]'
+                      : 'border-gray-100 dark:border-white/10 bg-transparent text-ink-muted dark:text-cream/80 hover:bg-gray-50 dark:hover:bg-white/5'
+                      }`}
                   >
                     {city.name}
                   </button>
@@ -205,7 +235,9 @@ function ExploreCities() {
                   <h3 className="font-display font-black text-white text-3xl leading-tight">{activeCityData.name}</h3>
 
                   <div className="flex items-center justify-between mt-3.5 pt-4" style={{ borderTop: '1px solid rgba(255,255,255,0.12)' }}>
-                    <p className="text-white/70 text-sm font-semibold">{activeCityData.properties}+ Verified Properties</p>
+                    <p className="text-white/70 text-sm font-semibold">
+                      {counts[activeCityData.name] || 0} {counts[activeCityData.name] === 1 ? 'Verified Property' : 'Verified Properties'}
+                    </p>
                     <Link
                       to={`/properties?city=${activeCityData.name}`}
                       className="flex items-center gap-1.5 px-4 py-2 rounded-full text-navy text-xs font-bold transition-transform group-hover:-translate-y-0.5"
@@ -227,9 +259,9 @@ function ExploreCities() {
 /* ══════════════════════════════════════════════════════════════════════════
    PROPERTY CATEGORIES
 ══════════════════════════════════════════════════════════════════════════ */
-function Categories() {
+function Categories({ counts = {} }) {
   return (
-    <section className="section-pad-sm bg-surface-alt">
+    <section className="section-pad-sm bg-surface-alt dark:bg-navy transition-colors duration-300">
       <div className="container-luxury">
         <SectionHeader
           label="Browse by Type"
@@ -260,7 +292,9 @@ function Categories() {
                     <PremiumIcon icon={CATEGORY_ICON_MAP[cat.name]} variant="glass-light" size="md" animate={false} />
                   </span>
                   <p className="text-white font-display font-bold text-xs leading-snug mt-2">{cat.name}</p>
-                  <p className="text-white/50 text-[10px] mt-0.5">{cat.count}+</p>
+                  <p className="text-white/50 text-[10px] mt-0.5">
+                    {counts[cat.name] || 0} {counts[cat.name] === 1 ? 'Property' : 'Properties'}
+                  </p>
                 </div>
               </Link>
             </motion.div>
@@ -352,7 +386,7 @@ function BuyingJourney() {
   ];
 
   return (
-    <section className="section-pad bg-white">
+    <section className="section-pad bg-white dark:bg-navy-dark transition-colors duration-300">
       <div className="container-luxury">
         <SectionHeader
           label="Simple Process"
@@ -384,8 +418,8 @@ function BuyingJourney() {
                     {s.step}
                   </span>
                 </div>
-                <h3 className="font-display font-bold text-navy text-lg mb-2">{s.title}</h3>
-                <p className="text-ink-muted text-sm leading-[1.8]">{s.desc}</p>
+                <h3 className="font-display font-bold text-navy dark:text-white text-lg mb-2">{s.title}</h3>
+                <p className="text-ink-muted dark:text-white/60 text-sm leading-[1.8]">{s.desc}</p>
               </motion.div>
             ))}
           </motion.div>
@@ -400,7 +434,7 @@ function BuyingJourney() {
 ══════════════════════════════════════════════════════════════════════════ */
 function Testimonials() {
   return (
-    <section className="section-pad bg-surface-alt">
+    <section className="section-pad bg-surface-alt dark:bg-navy transition-colors duration-300">
       <div className="container-luxury">
         <SectionHeader
           label="Client Stories"
@@ -420,24 +454,19 @@ function Testimonials() {
           {testimonials.map((t) => (
             <SwiperSlide key={t.id}>
               <div
-                className="rounded-3xl p-8 h-full flex flex-col transition-all duration-400 hover:-translate-y-1"
-                style={{
-                  background: 'white',
-                  border: '1px solid rgba(7,26,47,0.06)',
-                  boxShadow: '0 2px 24px rgba(7,26,47,0.06)',
-                }}
+                className="rounded-3xl p-8 h-full flex flex-col transition-all duration-400 hover:-translate-y-1 bg-white dark:bg-navy-light border border-gray-100 dark:border-white/10 shadow-card"
               >
                 <div className="flex gap-1 mb-5">
                   {[...Array(t.rating)].map((_, i) => (
                     <Star key={i} className="w-4 h-4 fill-gold text-gold" />
                   ))}
                 </div>
-                <p className="text-ink-muted text-sm font-body leading-[1.95] mb-6 italic flex-1">"{t.text}"</p>
-                <div className="flex items-center gap-3.5 pt-5" style={{ borderTop: '1px solid rgba(7,26,47,0.06)' }}>
+                <p className="text-ink-muted dark:text-cream/80 text-sm font-body leading-[1.95] mb-6 italic flex-1">"{t.text}"</p>
+                <div className="flex items-center gap-3.5 pt-5 border-t border-gray-100 dark:border-white/10">
                   <img src={t.image} alt={t.name} className="w-11 h-11 rounded-full object-cover" />
                   <div>
-                    <p className="font-display font-bold text-navy text-sm">{t.name}</p>
-                    <p className="text-ink-soft text-xs mt-0.5">{t.role}</p>
+                    <p className="font-display font-bold text-navy dark:text-white text-sm">{t.name}</p>
+                    <p className="text-ink-soft dark:text-white/50 text-xs mt-0.5">{t.role}</p>
                     <p className="text-[10px] mt-0.5 font-accent tracking-wide" style={{ color: '#D4AF37' }}>{t.property}</p>
                   </div>
                 </div>
@@ -454,14 +483,14 @@ function Testimonials() {
    DEVELOPER PARTNERS
 ══════════════════════════════════════════════════════════════════════════ */
 function DeveloperPartners() {
-  const doubled = [...developerLogos, ...developerLogos, ...developerLogos];
+  const doubled = [...developerLogos, ...developerLogos]; // doubled is sufficient for seamless -50% scroll
   return (
-    <section className="py-20 bg-white border-y border-gray-100">
+    <section className="py-20 bg-white dark:bg-navy-dark border-y border-gray-100 dark:border-white/10 transition-colors duration-300">
       <div className="container-luxury mb-10 text-center">
         <p className="text-[11px] font-accent text-gold font-bold tracking-[0.28em] uppercase mb-2">
           Premium Developer Partners
         </p>
-        <p className="text-ink-muted text-sm font-body">We work exclusively with India's most trusted developers</p>
+        <p className="text-ink-muted dark:text-white/60 text-sm font-body">We work exclusively with India's most trusted developers</p>
         <div className="h-[2px] w-12 bg-gold/50 mx-auto mt-3 rounded-full" />
       </div>
       <div className="relative overflow-hidden py-2">
@@ -469,16 +498,16 @@ function DeveloperPartners() {
           {doubled.map((d, i) => (
             <div
               key={i}
-              className="inline-flex items-center justify-center px-8 py-4.5 bg-white border border-gray-200/60 rounded-2xl shadow-[0_4px_16px_rgba(10,25,47,0.02)] transition-all duration-300 hover:border-gold/30 hover:shadow-[0_12px_24px_rgba(229,193,125,0.12)] hover:-translate-y-1 group cursor-pointer"
+              className="inline-flex items-center justify-center px-8 py-4.5 bg-white dark:bg-navy border border-gray-200/60 dark:border-white/10 rounded-2xl shadow-[0_4px_16px_rgba(10,25,47,0.02)] transition-all duration-300 hover:border-gold/30 hover:shadow-[0_12px_24px_rgba(229,193,125,0.12)] hover:-translate-y-1 group cursor-pointer"
             >
-              <span className="font-display font-extrabold text-sm tracking-widest uppercase text-navy/45 group-hover:text-gold transition-colors duration-300">
+              <span className="font-display font-extrabold text-sm tracking-widest uppercase text-navy/45 dark:text-cream/50 group-hover:text-gold transition-colors duration-300">
                 {d.name}
               </span>
             </div>
           ))}
         </div>
-        <div className="absolute inset-y-0 left-0 w-32 pointer-events-none bg-gradient-to-r from-white to-transparent z-10" />
-        <div className="absolute inset-y-0 right-0 w-32 pointer-events-none bg-gradient-to-l from-white to-transparent z-10" />
+        <div className="absolute inset-y-0 left-0 w-32 pointer-events-none bg-gradient-to-r from-white dark:from-navy-dark to-transparent z-10" />
+        <div className="absolute inset-y-0 right-0 w-32 pointer-events-none bg-gradient-to-l from-white dark:from-navy-dark to-transparent z-10" />
       </div>
     </section>
   );
@@ -489,14 +518,14 @@ function DeveloperPartners() {
 ══════════════════════════════════════════════════════════════════════════ */
 function BlogPreview() {
   return (
-    <section className="section-pad bg-surface-alt">
+    <section className="section-pad bg-surface-alt dark:bg-navy transition-colors duration-300">
       <div className="container-luxury">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-16">
           <SectionHeader
             label="Insights & Trends"
             title={<>Latest from Our <span style={{ color: '#D4AF37' }}>Blog</span></>}
           />
-          <Link to="/blog" className="btn-outline shrink-0">All Articles <ArrowRight className="w-4 h-4" /></Link>
+          <Link to="/blog" className="btn-outline shrink-0 hidden md:inline-flex">All Articles <ArrowRight className="w-4 h-4" /></Link>
         </div>
         <motion.div
           variants={staggerContainer}
@@ -509,24 +538,23 @@ function BlogPreview() {
             <motion.div key={b.id} variants={fadeUp}>
               <Link
                 to={`/blog/${b.id}`}
-                className="group block bg-white rounded-3xl overflow-hidden transition-all duration-400 hover:-translate-y-1"
-                style={{ boxShadow: '0 2px 24px rgba(7,26,47,0.07)' }}
+                className="group block bg-white dark:bg-navy-light rounded-3xl overflow-hidden transition-all duration-400 hover:-translate-y-1 border border-gray-100 dark:border-white/10 shadow-card"
               >
                 <div className="relative h-52 overflow-hidden">
                   <img src={b.image} alt={b.title} loading="lazy" className="w-full h-full object-cover transition-transform duration-600 group-hover:scale-108" />
                   <span className="absolute top-4 left-4 badge-gold">{b.category}</span>
                 </div>
                 <div className="p-6">
-                  <div className="flex items-center gap-2 text-[11px] text-ink-soft mb-3">
+                  <div className="flex items-center gap-2 text-[11px] text-ink-soft dark:text-white/50 mb-3">
                     <span>{b.date}</span><span>·</span><span>{b.readTime}</span>
                   </div>
-                  <h3 className="font-display font-bold text-navy text-base leading-snug mb-3 group-hover:text-gold-muted transition-colors line-clamp-2">
+                  <h3 className="font-display font-bold text-navy dark:text-white text-base leading-snug mb-3 group-hover:text-gold-muted transition-colors line-clamp-2">
                     {b.title}
                   </h3>
-                  <p className="text-ink-muted text-sm line-clamp-2 leading-relaxed mb-5">{b.excerpt}</p>
-                  <div className="flex items-center gap-2.5 pt-4" style={{ borderTop: '1px solid rgba(7,26,47,0.06)' }}>
+                  <p className="text-ink-muted dark:text-white/60 text-sm line-clamp-2 leading-relaxed mb-5">{b.excerpt}</p>
+                  <div className="flex items-center gap-2.5 pt-4 border-t border-gray-100 dark:border-white/10">
                     <img src={b.author.image} alt="" className="w-7 h-7 rounded-full object-cover" />
-                    <span className="text-ink-muted text-xs font-semibold">{b.author.name}</span>
+                    <span className="text-ink-muted dark:text-cream/80 text-xs font-semibold">{b.author.name}</span>
                     <ArrowRight className="w-3.5 h-3.5 ml-auto group-hover:translate-x-1 transition-transform" style={{ color: '#D4AF37' }} />
                   </div>
                 </div>
@@ -534,6 +562,13 @@ function BlogPreview() {
             </motion.div>
           ))}
         </motion.div>
+
+        {/* Mobile All Articles at bottom */}
+        <div className="flex justify-center mt-10 md:hidden">
+          <Link to="/blog" className="btn-outline w-full text-center justify-center">
+            All Articles <ArrowRight className="w-4 h-4" />
+          </Link>
+        </div>
       </div>
     </section>
   );
@@ -543,6 +578,34 @@ function BlogPreview() {
    NEWSLETTER
 ══════════════════════════════════════════════════════════════════════════ */
 function Newsletter() {
+  const [email, setEmail] = useState('');
+  const [name, setName] = useState('');
+  const [phone, setPhone] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleSubscribe = async () => {
+    if (!email) { setError('Please enter your email address.'); return; }
+    if (!name) { setError('Please enter your name.'); return; }
+    if (!phone) { setError('Please enter your phone number.'); return; }
+    setError('');
+    setLoading(true);
+    try {
+      await submitEnquiry({
+        type: 'newsletter',
+        name,
+        phone,
+        email,
+      });
+      setSubmitted(true);
+    } catch (err) {
+      setError(err.message || 'Subscription failed. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <section className="section-pad-sm bg-mesh-dark relative overflow-hidden">
       <div className="absolute top-0 right-0 w-[600px] h-[600px] rounded-full pointer-events-none -translate-y-1/2 translate-x-1/3"
@@ -560,17 +623,53 @@ function Newsletter() {
           <p className="text-white/50 max-w-lg mx-auto font-body mb-10 leading-relaxed">
             Be first to know about new luxury listings, market insights, and investment opportunities from India's premium locations — curated weekly.
           </p>
-          <div className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
-            <input
-              type="email"
-              placeholder="Your email address"
-              className="flex-1 px-5 py-4 rounded-2xl font-body text-sm text-white placeholder-white/35 focus:outline-none transition-all duration-200"
-              style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.14)' }}
-            />
-            <button className="btn-primary shrink-0">
-              Subscribe <ArrowRight className="w-4 h-4" />
-            </button>
-          </div>
+
+          {submitted ? (
+            <div className="max-w-md mx-auto py-6">
+              <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl"
+                style={{ background: 'linear-gradient(135deg, #D4AF37, #E8C84A)', boxShadow: '0 0 30px rgba(212,175,55,0.3)' }}>
+                ✓
+              </div>
+              <p className="text-white font-display font-bold text-lg mb-1">You're subscribed!</p>
+              <p className="text-white/50 text-sm">You'll receive our next luxury property update soon.</p>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-3 max-w-md mx-auto">
+              <input
+                type="text"
+                value={name}
+                onChange={e => setName(e.target.value)}
+                placeholder="Your name"
+                className="px-5 py-4 rounded-2xl font-body text-sm text-white placeholder-white/35 focus:outline-none transition-all duration-200"
+                style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.14)' }}
+              />
+              <input
+                type="tel"
+                value={phone}
+                onChange={e => setPhone(e.target.value)}
+                placeholder="Mobile number (+91 98765 43210)"
+                className="px-5 py-4 rounded-2xl font-body text-sm text-white placeholder-white/35 focus:outline-none transition-all duration-200"
+                style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.14)' }}
+              />
+              <div className="flex flex-col sm:flex-row gap-3">
+                <input
+                  type="email"
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  placeholder="Your email address"
+                  className="flex-1 px-5 py-4 rounded-2xl font-body text-sm text-white placeholder-white/35 focus:outline-none transition-all duration-200"
+                  style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.14)' }}
+                />
+                <button onClick={handleSubscribe} disabled={loading} className="btn-primary shrink-0 disabled:opacity-60 disabled:cursor-not-allowed rounded-2xl">
+                  {loading ? 'Subscribing…' : <> Subscribe <ArrowRight className="w-4  h-4" /> </>}
+                </button>
+              </div>
+              {error && (
+                <p className="text-red-400 text-xs text-left px-1">{error}</p>
+              )}
+            </div>
+          )}
+
           <p className="text-white/30 text-xs mt-5">No spam. Unsubscribe anytime.</p>
         </motion.div>
       </div>
@@ -582,14 +681,32 @@ function Newsletter() {
    HOME PAGE
 ══════════════════════════════════════════════════════════════════════════ */
 export default function Home() {
+  const [counts, setCounts] = useState({ typeCounts: {}, localityCounts: {} });
+
+  useEffect(() => {
+    let active = true;
+    const getCounts = async () => {
+      try {
+        const data = await fetchPropertyCounts();
+        if (active) {
+          setCounts(data);
+        }
+      } catch (err) {
+        console.error('Failed to load dynamic counts:', err);
+      }
+    };
+    getCounts();
+    return () => { active = false; };
+  }, []);
+
   return (
     <>
       <Hero />
       <TrustMarquee />
       <FeaturedProperties />
       <StatsStrip />
-      <ExploreCities />
-      <Categories />
+      <ExploreCities counts={counts.localityCounts} />
+      <Categories counts={counts.typeCounts} />
       <WhyUs />
       <BuyingJourney />
       <Testimonials />

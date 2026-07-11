@@ -1,5 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -15,15 +13,22 @@
   html {
     scroll-behavior: smooth;
     font-size: 16px;
+    overflow-x: clip;
   }
 
   body {
     font-family: 'Plus Jakarta Sans', sans-serif;
     background-color: #FAFAFA;
     color: #1A1A2E;
-    overflow-x: hidden;
+    overflow-x: clip;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    @apply transition-colors duration-300;
+  }
+
+  .dark body {
+    background-color: #030E1B;
+    color: #FAFAFA;
   }
 
   h1,
@@ -42,16 +47,21 @@
   }
 
   ::-webkit-scrollbar {
-    width: 4px;
+    width: 5px;
+    height: 5px;
   }
 
   ::-webkit-scrollbar-track {
-    background: #F4F0EA;
+    background: transparent;
+  }
+
+  .dark ::-webkit-scrollbar-track {
+    background: transparent;
   }
 
   ::-webkit-scrollbar-thumb {
-    background: linear-gradient(180deg, #D4AF37, #A8882B);
-    border-radius: 4px;
+    background: linear-gradient(135deg, #D4AF37, #A8882B);
+    border-radius: 9999px;
   }
 }
 
@@ -83,7 +93,7 @@
   }
 
   .btn-outline {
-    @apply inline-flex items-center justify-center gap-2 border-2 border-navy text-navy font-semibold px-7 py-3.5 rounded-full transition-all duration-300 hover:bg-navy hover:text-white hover:-translate-y-0.5 whitespace-nowrap;
+    @apply inline-flex items-center justify-center gap-2 border-2 border-navy text-navy font-semibold px-7 py-3.5 rounded-full transition-all duration-300 hover:bg-navy hover:text-white hover:-translate-y-0.5 whitespace-nowrap dark:border-white/80 dark:text-white dark:hover:bg-white dark:hover:text-navy;
   }
 
   .btn-outline-gold {
@@ -223,7 +233,7 @@
   ═══════════════════════════════════════ */
 
   .input-luxury {
-    @apply w-full px-5 py-4 rounded-2xl border border-gray-200 bg-white font-body text-navy placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-gold/25 focus:border-gold transition-all duration-200;
+    @apply w-full px-5 py-4 rounded-2xl border border-gray-200 bg-white font-body text-navy placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-gold/25 focus:border-gold transition-all duration-200 dark:bg-navy dark:border-white/10 dark:text-white dark:placeholder-white/35;
   }
 
   .input-glass {
@@ -348,26 +358,7 @@
     scrollbar-width: none;
   }
 
-  .line-clamp-2 {
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
-
-  .line-clamp-3 {
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
-
-  .line-clamp-1 {
-    display: -webkit-box;
-    -webkit-line-clamp: 1;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
+  /* line-clamp utilities are built-in to Tailwind CSS v3+ — no manual definition needed */
 
   /* ─── Backgrounds ─── */
   .bg-surface {
@@ -607,4 +598,37 @@ html.lenis body {
 
 .glow-border:hover::before {
   opacity: 1;
+}
+/* ═══════════════════════════════════════
+   PROPERTY DETAILS — GALLERY SWIPER
+   (replaces dangerouslySetInnerHTML in PropertyDetails.jsx)
+═══════════════════════════════════════ */
+.main-swiper-gallery .swiper-pagination-bullet {
+  background: rgba(255, 255, 255, 0.45) !important;
+  opacity: 1 !important;
+  width: 8px !important;
+  height: 8px !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.main-swiper-gallery .swiper-pagination-bullet-active {
+  background: #D4AF37 !important;
+  width: 24px !important;
+  border-radius: 4px !important;
+}
+
+.thumbs-swiper-gallery .swiper-slide {
+  border: 2px solid transparent !important;
+  border-radius: 12px !important;
+  overflow: hidden !important;
+  transition: all 0.3s ease !important;
+}
+
+.thumbs-swiper-gallery .swiper-slide-thumb-active {
+  border-color: #D4AF37 !important;
+  transform: scale(0.96);
+}
+
+.thumbs-swiper-gallery .swiper-slide-thumb-active img {
+  opacity: 1 !important;
 }
