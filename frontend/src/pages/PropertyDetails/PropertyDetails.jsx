@@ -616,9 +616,10 @@ export default function PropertyDetails() {
                 variants={fadeRight}
                 initial="hidden"
                 animate="visible"
+                className="space-y-4"
               >
             {/* Booking Card */}
-            <div className="rounded-3xl p-6 bg-white dark:bg-navy border border-gray-100 dark:border-white/10 shadow-card transition-colors duration-300"
+            <div className="rounded-3xl p-6 bg-white dark:bg-navy-light border border-gray-100 dark:border-white/10 shadow-card transition-colors duration-300"
             >
               <p className="font-display font-black text-navy dark:text-white text-2xl mb-0.5">{property.priceLabel}</p>
               <p className="text-ink-soft dark:text-white/40 text-xs mb-6">Negotiable · RERA Verified</p>

@@ -103,8 +103,7 @@ function FeaturedProperties() {
         <motion.div
           variants={staggerContainer}
           initial="hidden"
-          whileInView="visible"
-          viewport={viewportOnce}
+          animate="visible"
           className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-7"
         >
           {list.map((p) => (
