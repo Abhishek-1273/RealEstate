@@ -40,6 +40,41 @@ export const sendEmail = async ({ to, subject, text, html }) => {
     }
   }
 
+  // 2. Try Brevo (Sendinblue) HTTP API (does NOT require custom domain, sends to anyone!)
+  const { BREVO_API_KEY } = process.env;
+  if (BREVO_API_KEY) {
+    try {
+      const senderEmail = SMTP_FROM && SMTP_FROM.includes('<')
+        ? SMTP_FROM.match(/<([^>]+)>/)?.[1]
+        : (SMTP_USER && SMTP_USER.includes('@') ? SMTP_USER : 'akaygill64@gmail.com');
+
+      const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+        method: 'POST',
+        headers: {
+          'accept': 'application/json',
+          'api-key': BREVO_API_KEY,
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+          sender: { name: 'HyperRelestix', email: senderEmail },
+          to: [{ email: to }],
+          subject: subject,
+          htmlContent: html,
+        }),
+      });
+
+      const data = await response.json();
+      if (response.ok) {
+        console.info(`✉️ Email sent successfully via Brevo to ${to}. Message ID: ${data.messageId}`);
+        return true;
+      } else {
+        console.error(`❌ Brevo API failed:`, data.message || JSON.stringify(data));
+      }
+    } catch (err) {
+      console.error(`❌ Brevo sending to ${to} failed:`, err.message);
+    }
+  }
+
   if (SMTP_HOST && SMTP_USER && SMTP_PASS) {
     try {
       const transporter = nodemailer.createTransport({
