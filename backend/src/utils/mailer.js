@@ -21,6 +21,9 @@ export const sendEmail = async ({ to, subject, text, html }) => {
           user: SMTP_USER,
           pass: SMTP_PASS,
         },
+        connectionTimeout: 5000, // 5 seconds
+        greetingTimeout: 5000,   // 5 seconds
+        socketTimeout: 5000,     // 5 seconds
       });
 
       const info = await transporter.sendMail({
