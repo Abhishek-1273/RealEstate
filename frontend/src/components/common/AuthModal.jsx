@@ -337,13 +337,21 @@ export default function AuthModal() {
     if (pendingRedirect) navigate(pendingRedirect);
   };
 
+  const handleClose = () => {
+    closeAuth();
+    const gatedPaths = ['/services/buy', '/services/sell', '/services/lease', '/services/management'];
+    if (gatedPaths.includes(window.location.pathname)) {
+      navigate('/');
+    }
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-navy/80 backdrop-blur-md"
-      onClick={e => e.target === e.currentTarget && closeAuth()}
+      onClick={e => e.target === e.currentTarget && handleClose()}
     >
       <motion.div
         initial={{ opacity: 0, scale: 0.94, y: 30 }}
@@ -382,7 +390,7 @@ export default function AuthModal() {
           <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-gold to-transparent opacity-40" />
 
           <button
-            onClick={closeAuth}
+            onClick={handleClose}
             className="absolute top-4 right-4 p-2 rounded-full hover:bg-white/5 text-white/40 hover:text-white transition-colors z-20"
           >
             <X className="w-5 h-5" />

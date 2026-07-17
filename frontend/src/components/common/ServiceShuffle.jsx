@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../contexts';
 
 const SERVICES = [
   {
@@ -43,7 +44,9 @@ const SERVICES = [
 
 export default function ServiceShuffle() {
   const navigate = useNavigate();
+  const { user, openAuth } = useAuth();
   const [stack, setStack] = useState([0, 1, 2, 3]);
+  const [activeIdx, setActiveIdx] = useState(0);
   const [hoveredIdx, setHoveredIdx] = useState(null);
 
   // Mouse Move Tilt State for the Front Card
@@ -67,6 +70,7 @@ export default function ServiceShuffle() {
 
   // Shuffle callback to bring a clicked card to the front
   const handleCardClick = useCallback((idx) => {
+    setActiveIdx(idx);
     setStack(prev => {
       const next = [...prev];
       while (next[0] !== idx) {
@@ -84,6 +88,7 @@ export default function ServiceShuffle() {
   useEffect(() => {
     const timer = setInterval(() => {
       if (hoveredIdx === null) {
+        setActiveIdx(prev => (prev + 1) % SERVICES.length);
         setStack(prev => {
           const next = [...prev];
           const top = next.shift();
@@ -105,7 +110,7 @@ export default function ServiceShuffle() {
       // Pause if user scrolled/touched in last 5 seconds
       if (Date.now() - lastUserInteraction.current < 5000) return;
       if (!mobileScrollRef.current) return;
-      
+
       const nextIdx = (mobileCurrentIdx.current + 1) % total;
       mobileCurrentIdx.current = nextIdx;
       mobileScrollRef.current.scrollTo({ left: nextIdx * CARD_STEP, behavior: 'smooth' });
@@ -132,6 +137,14 @@ export default function ServiceShuffle() {
     setTiltX(0);
     setTiltY(0);
   };
+
+  const handleServiceClick = useCallback((link) => {
+    if (!user) {
+      openAuth(link);
+    } else {
+      navigate(link);
+    }
+  }, [user, openAuth, navigate]);
 
   // Dynamic layout calculations based on position in stack
   const getCardTransform = (pos, isCardHovered) => {
@@ -201,132 +214,137 @@ export default function ServiceShuffle() {
 
   return (
     <div className="w-full flex justify-center items-center">
-      {/* ── DESKTOP/TABLET: 3D Horizontal Ribbon Shuffle Stack ── */}
+      {/* ── DESKTOP/TABLET: 3D Single Card Slide/Fade Show ── */}
       <div
         className="hidden md:flex flex-col items-center justify-center relative w-full h-[500px]"
         style={{ perspective: '1600px', transformStyle: 'preserve-3d' }}
       >
-        {/* Explicitly wide box (w-[580px]) to capture all mouse clicks within the fanned-out area */}
-        {/* Slow organic floating animation makes the whole deck float like a luxury island */}
-        <motion.div
-          className="relative w-[580px] h-[380px] flex justify-center items-center"
-          style={{ transformStyle: 'preserve-3d', transform: 'translateX(-40px)' }}
-          animate={{ y: [0, -6, 0] }}
-          transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
+        <div
+          className="relative w-[420px] h-[500px] flex justify-center items-center"
+          style={{ transformStyle: 'preserve-3d', transform: 'translateX(90px)' }}
         >
-          {SERVICES.map((card, idx) => {
-            const pos = stack.indexOf(idx);
-            const isFront = pos === 0;
-            const isCardHovered = hoveredIdx === idx;
-
-            return (
+          <AnimatePresence mode="wait">
+            <div
+              key={activeIdx}
+              onMouseMove={(e) => handleMouseMove(e, true)}
+              onMouseEnter={() => setHoveredIdx(activeIdx)}
+              onMouseLeave={() => {
+                setHoveredIdx(null);
+                handleMouseLeaveCard();
+              }}
+              onClick={() => handleServiceClick(SERVICES[activeIdx].link)}
+              className="relative w-[360px] h-[480px] flex items-center justify-center cursor-pointer"
+            >
               <motion.div
-                key={card.id}
-                onMouseMove={(e) => handleMouseMove(e, isFront)}
-                onMouseEnter={() => setHoveredIdx(idx)}
-                onMouseLeave={() => {
-                  setHoveredIdx(null);
-                  handleMouseLeaveCard();
+                initial={{ opacity: 0, x: 50, rotateX: 0, rotateY: 0, scale: 0.95 }}
+                animate={{
+                  opacity: 1,
+                  x: 0,
+                  scale: 1,
+                  rotateX: tiltX,
+                  rotateY: tiltY,
+                  rotateZ: 0,
+                  y: hoveredIdx === activeIdx ? -20 : 0,
                 }}
-                onClick={() => handleCardClick(isFront ? stack[1] : idx)}
-                className="absolute w-[260px] h-[360px] rounded-[30px] flex flex-col justify-end select-none cursor-pointer overflow-hidden transition-all duration-300 shadow-2xl"
+                exit={{ opacity: 0, x: -50, rotateX: 0, rotateY: 0, scale: 0.95 }}
+                transition={{ duration: 0.45, ease: 'easeOut' }}
+                onClick={() => handleServiceClick(SERVICES[activeIdx].link)}
+                className="absolute w-[360px] h-[480px] rounded-[30px] flex flex-col justify-end select-none cursor-pointer overflow-hidden"
                 style={{
-                  background: 'rgba(9, 18, 31, 0.98)', // Dark luxury solid card background
-                  backdropFilter: 'blur(24px)',
+                  background: 'linear-gradient(145deg, rgba(10, 25, 47, 0.96) 0%, rgba(5, 12, 24, 0.99) 100%)',
+                  backdropFilter: 'blur(30px)',
                   transformStyle: 'preserve-3d',
-                  // White border highlight only for active front card on hover
-                  border: isFront
-                    ? (isCardHovered ? '1px solid rgba(255, 255, 255, 0.22)' : '1px solid rgba(255, 255, 255, 0.12)')
-                    : '1px solid rgba(255, 255, 255, 0.03)',
-                  boxShadow: isFront
-                    ? (isCardHovered
-                      ? '0 35px 70px rgba(0,0,0,0.65), inset 0 1px 0 rgba(255,255,255,0.15)'
-                      : '0 30px 60px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.1)')
-                    : '0 15px 30px rgba(0,0,0,0.35)',
-                  zIndex: 40 - pos, // Set dynamic inline zIndex
-                }}
-                animate={getCardTransform(pos, isCardHovered)}
-                transition={{
-                  type: 'spring',
-                  stiffness: 150,
-                  damping: 18,
-                  mass: 1.1,
+                  WebkitBackfaceVisibility: 'hidden',
+                  backfaceVisibility: 'hidden',
+                  border: hoveredIdx === activeIdx
+                    ? '2px solid rgba(229, 193, 125, 0.45)'
+                    : '1px solid rgba(255, 255, 255, 0.12)',
+                  boxShadow: hoveredIdx === activeIdx
+                    ? '0 30px 60px rgba(0,0,0,0.65), 0 0 35px rgba(229, 193, 125, 0.25)'
+                    : '0 20px 40px rgba(0,0,0,0.45)',
+                  zIndex: 40,
                 }}
               >
-                {/* 1. Card Header Image with bottom gradient mask fading into dark background */}
-                {/* Zoom hover effect on image */}
-                <div className="absolute top-0 left-0 right-0 h-[200px] overflow-hidden z-0">
+                {/* Pulsing EXCLUSIVE tag over image */}
+                <div className="absolute top-4 left-4 z-10 flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-gold/30 bg-navy/85 backdrop-blur-md">
+                  <span className="w-1.5 h-1.5 rounded-full bg-gold animate-ping" />
+                  <span className="text-[9px] font-accent font-black tracking-widest text-gold uppercase">EXCLUSIVE SERVICE</span>
+                </div>
+
+                {/* 1. Card Header Image */}
+                <div className="absolute top-0 left-0 right-0 h-[260px] overflow-hidden z-0">
                   <motion.img
-                    src={card.image}
-                    alt={card.title}
+                    src={SERVICES[activeIdx].image}
+                    alt={SERVICES[activeIdx].title}
                     className="w-full h-full object-cover"
-                    animate={{ scale: isCardHovered ? 1.06 : 1 }}
+                    animate={{ scale: hoveredIdx === activeIdx ? 1.08 : 1 }}
                     transition={{ duration: 0.6 }}
                   />
                   <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#09121f]/50 to-[#09121f]" />
                 </div>
 
-                {/* Spotlight Flashlight tracking cursor (Only for Front active card - golden spotlight) */}
-                {isFront && (
-                  <div
-                    className="absolute inset-0 pointer-events-none transition-opacity duration-300 z-10"
-                    style={{
-                      opacity: hoveredIdx === idx ? 1 : 0,
-                      background: `radial-gradient(circle at ${spotlight.x}px ${spotlight.y}px, rgba(212, 175, 55, 0.08) 0%, transparent 65%)`
-                    }}
-                  />
-                )}
-
-                {/* 2. Card Info Area (Left-Aligned details) */}
+                {/* Spotlight Flashlight tracking cursor */}
                 <div
-                  className="p-5 w-full flex flex-col justify-end z-20 relative"
+                  className="absolute inset-0 pointer-events-none transition-opacity duration-300 z-10"
+                  style={{
+                    opacity: hoveredIdx === activeIdx ? 1 : 0,
+                    background: `radial-gradient(circle at ${spotlight.x}px ${spotlight.y}px, rgba(229, 193, 125, 0.12) 0%, transparent 60%)`
+                  }}
+                />
+
+                {/* 2. Card Info Area */}
+                <div
+                  className="p-6 w-full flex flex-col justify-end z-20 relative"
                   style={{ transform: 'translateZ(30px)' }}
                 >
                   {/* Title */}
-                  <h4 className="font-display font-bold text-lg text-white text-left tracking-wide leading-tight mt-1">
-                    {card.title}
+                  <h4 className="font-display font-bold text-xl text-white text-left tracking-wide leading-tight mt-1">
+                    {SERVICES[activeIdx].title}
                   </h4>
 
                   {/* Tagline description */}
-                  <p className="text-white/55 text-[10px] leading-relaxed font-body text-left mt-1.5 h-[32px] overflow-hidden line-clamp-2">
-                    {card.tagline}
+                  <p className="text-white/60 text-xs leading-relaxed font-body text-left mt-2 h-[36px] overflow-hidden line-clamp-2">
+                    {SERVICES[activeIdx].tagline}
                   </p>
 
                   {/* Rating & Context pill capsules */}
-                  <div className="flex gap-1.5 mt-3.5 text-white/70">
-                    <span className="text-[9px] px-2.5 py-1 rounded-full bg-white/[0.08] backdrop-blur-sm border border-white/5 flex items-center gap-1 font-semibold">
-                      {card.badge1}
+                  <div className="flex gap-1.5 mt-4 text-white/70">
+                    <span className="text-[9px] px-2.5 py-1 rounded-full bg-gold/10 border border-gold/20 flex items-center gap-1 font-semibold text-gold">
+                      {SERVICES[activeIdx].badge1}
                     </span>
-                    <span className="text-[9px] px-2.5 py-1 rounded-full bg-white/[0.08] backdrop-blur-sm border border-white/5 font-semibold">
-                      {card.badge2}
+                    <span className="text-[9px] px-2.5 py-1 rounded-full bg-white/[0.04] border border-white/10 text-white/80 font-semibold">
+                      {SERVICES[activeIdx].badge2}
                     </span>
                   </div>
 
-                  {/* Call-to-action button (Active front card is solid white, background cards are clean outlines) */}
-                  <div className="mt-4" style={{ transform: 'translateZ(15px)' }}>
+                  {/* Call-to-action button */}
+                  <div className="mt-4" style={{ transform: 'translateZ(60px)' }}>
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        navigate(card.link);
+                        handleServiceClick(SERVICES[activeIdx].link);
                       }}
-                      className={`w-full py-2.5 rounded-full font-bold text-xs transition-all duration-300 shadow-md ${isFront
-                        ? 'bg-white hover:bg-neutral-100 hover:scale-[1.04] text-[#09121f] cursor-pointer'
-                        : 'bg-white/[0.05] border border-white/10 hover:border-white/30 text-white/90 cursor-pointer'
-                        }`}
+                      className="w-full py-2.5 rounded-full font-display font-black text-xs text-navy tracking-wider transition-all duration-300 hover:scale-[1.03] active:scale-[0.98] shadow-lg cursor-pointer"
+                      style={{
+                        background: 'linear-gradient(135deg, #E5C17D 0%, #F5D797 50%, #C59D4E 100%)',
+                        boxShadow: hoveredIdx === activeIdx
+                          ? '0 8px 25px rgba(229,193,125,0.35)'
+                          : '0 4px 10px rgba(0,0,0,0.3)',
+                      }}
                     >
-                      {isFront ? 'Reserve now' : 'Explore'}
+                      RESERVE NOW
                     </button>
                   </div>
                 </div>
               </motion.div>
-            );
-          })}
-        </motion.div>
+            </div>
+          </AnimatePresence>
+        </div>
 
         {/* Carousel indicators dots */}
-        <div className="flex gap-2 mt-10 z-25 relative animate-pulse-slow" style={{ transform: 'translateX(-15px)' }}>
+        <div className="flex gap-2 mt-10 z-25 relative animate-pulse-slow">
           {SERVICES.map((_, idx) => {
-            const isActive = stack[0] === idx;
+            const isActive = activeIdx === idx;
             return (
               <button
                 key={idx}
@@ -342,67 +360,83 @@ export default function ServiceShuffle() {
         </div>
       </div>
 
-      {/* ── MOBILE: Swipe Carousel (auto-shuffling, centered) ── */}
-      <div className="md:hidden w-full">
-        <div
-          ref={mobileScrollRef}
-          onScroll={handleScroll}
-          className="flex gap-4 overflow-x-auto snap-x snap-mandatory pb-4"
-          style={{
-            scrollbarWidth: 'none',
-            msOverflowStyle: 'none',
-            width: '100vw',
-            marginLeft: 'calc(-50vw + 50%)',
-            marginRight: 'calc(-50vw + 50%)',
-            paddingLeft: 'calc((100vw - 275px) / 2)',
-            paddingRight: 'calc((100vw - 275px) / 2)',
-          }}
-        >
-          {SERVICES.map((card) => (
-            <div
-              key={card.id}
-              onClick={() => navigate(card.link)}
-              className="snap-center shrink-0 w-[275px] rounded-[30px] flex flex-col justify-end h-[340px] relative overflow-hidden shadow-xl border border-white/5 cursor-pointer"
+      {/* ── MOBILE: Single Card Slide/Fade Carousel (auto-shuffling) ── */}
+      <div className="md:hidden w-full flex flex-col items-center justify-center relative h-[450px]">
+        <div className="relative w-[300px] h-[400px] flex justify-center items-center">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeIdx}
+              initial={{ opacity: 0, x: 40, scale: 0.95 }}
+              animate={{ opacity: 1, x: 0, scale: 1 }}
+              exit={{ opacity: 0, x: -40, scale: 0.95 }}
+              transition={{ duration: 0.4, ease: 'easeOut' }}
+              onClick={() => handleServiceClick(SERVICES[activeIdx].link)}
+              className="absolute w-[280px] h-[390px] rounded-[30px] flex flex-col justify-end select-none cursor-pointer overflow-hidden shadow-xl border border-white/10"
               style={{
-                background: '#09121f',
+                background: 'linear-gradient(145deg, rgba(10, 25, 47, 0.96) 0%, rgba(5, 12, 24, 0.99) 100%)',
                 backdropFilter: 'blur(20px)',
-                boxShadow: '0 20px 40px rgba(0,0,0,0.4)',
               }}
             >
+              {/* Pulsing EXCLUSIVE tag over image */}
+              <div className="absolute top-3 left-3 z-10 flex items-center gap-1 px-2.5 py-1.5 rounded-full border border-gold/30 bg-navy/85 backdrop-blur-md">
+                <span className="w-1 h-1 rounded-full bg-gold animate-ping" />
+                <span className="text-[8px] font-accent font-black tracking-widest text-gold uppercase">EXCLUSIVE SERVICE</span>
+              </div>
+
               {/* Image background with gradient overlay */}
-              <div className="absolute top-0 left-0 right-0 h-[190px] overflow-hidden z-0">
-                <img src={card.image} alt={card.title} className="w-full h-full object-cover" />
+              <div className="absolute top-0 left-0 right-0 h-[210px] overflow-hidden z-0">
+                <img src={SERVICES[activeIdx].image} alt={SERVICES[activeIdx].title} className="w-full h-full object-cover" />
                 <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#09121f]/50 to-[#09121f]" />
               </div>
 
               {/* Card Info Area */}
               <div className="p-5 w-full flex flex-col justify-end z-20 relative">
                 <h4 className="font-display font-bold text-base text-white text-left tracking-wide leading-tight mt-1">
-                  {card.title}
+                  {SERVICES[activeIdx].title}
                 </h4>
                 <p className="text-white/60 text-[10px] leading-relaxed font-body text-left mt-1.5 h-[32px] overflow-hidden">
-                  {card.tagline}
+                  {SERVICES[activeIdx].tagline}
                 </p>
                 <div className="flex gap-1.5 mt-3 text-white/70">
-                  <span className="text-[9px] px-2.5 py-1 rounded-full bg-white/[0.08] backdrop-blur-sm border border-white/5 flex items-center gap-1 font-semibold">
-                    {card.badge1}
+                  <span className="text-[9px] px-2.5 py-1 rounded-full bg-gold/10 border border-gold/20 flex items-center gap-1 font-semibold text-gold">
+                    {SERVICES[activeIdx].badge1}
                   </span>
-                  <span className="text-[9px] px-2.5 py-1 rounded-full bg-white/[0.08] backdrop-blur-sm border border-white/5 font-semibold">
-                    {card.badge2}
+                  <span className="text-[9px] px-2.5 py-1 rounded-full bg-white/[0.04] border border-white/10 text-white/80 font-semibold">
+                    {SERVICES[activeIdx].badge2}
                   </span>
                 </div>
                 <div className="mt-4">
                   <button
-                    onClick={(e) => { e.stopPropagation(); navigate(card.link); }}
-                    className="w-full py-2 rounded-full font-bold text-xs text-[#09121f] transition-all duration-200"
-                    style={{ background: '#ffffff' }}
+                    onClick={(e) => { e.stopPropagation(); handleServiceClick(SERVICES[activeIdx].link); }}
+                    className="w-full py-2.5 rounded-full font-display font-black text-xs text-navy tracking-wider transition-all duration-300 active:scale-[0.98] shadow-md cursor-pointer"
+                    style={{
+                      background: 'linear-gradient(135deg, #E5C17D 0%, #F5D797 50%, #C59D4E 100%)',
+                    }}
                   >
-                    Reserve now
+                    RESERVE NOW
                   </button>
                 </div>
               </div>
-            </div>
-          ))}
+            </motion.div>
+          </AnimatePresence>
+        </div>
+
+        {/* Carousel indicators dots */}
+        <div className="flex gap-2 mt-6 z-25 relative animate-pulse-slow">
+          {SERVICES.map((_, idx) => {
+            const isActive = activeIdx === idx;
+            return (
+              <button
+                key={idx}
+                onClick={() => handleCardClick(idx)}
+                className="h-1.5 rounded-full transition-all duration-300 focus:outline-none"
+                style={{
+                  width: isActive ? '24px' : '8px',
+                  background: isActive ? '#D4AF37' : 'rgba(255,255,255,0.25)',
+                }}
+              />
+            );
+          })}
         </div>
       </div>
     </div>
