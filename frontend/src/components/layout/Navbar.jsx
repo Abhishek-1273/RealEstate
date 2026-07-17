@@ -86,7 +86,14 @@ export default function Navbar() {
   // ── Mobile body scroll lock ───────────────────────────────────────────────
   useEffect(() => {
     document.body.style.overflow = mobileOpen ? 'hidden' : '';
-    return () => { document.body.style.overflow = ''; };
+    if (window.lenis) {
+      if (mobileOpen) window.lenis.stop();
+      else window.lenis.start();
+    }
+    return () => {
+      document.body.style.overflow = '';
+      if (window.lenis) window.lenis.start();
+    };
   }, [mobileOpen]);
 
   const handleService = (link) => {
@@ -361,14 +368,14 @@ export default function Navbar() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setMobileOpen(false)}
-              className="fixed inset-0 z-[2000] bg-navy/70 backdrop-blur-sm"
+              className="fixed inset-0 z-[2000] w-full h-[100dvh] bg-navy/70 backdrop-blur-sm"
             />
             <motion.div
               initial={{ x: '100%' }}
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
               transition={{ type: 'spring', stiffness: 280, damping: 28 }}
-              className="fixed top-0 right-0 bottom-0 z-[2000] w-[310px] flex flex-col"
+              className="fixed top-0 right-0 z-[2000] w-[310px] h-[100dvh] flex flex-col"
               style={{ background: '#0A192F' }}
               data-lenis-prevent
             >

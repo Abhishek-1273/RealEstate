@@ -9,7 +9,36 @@ import nodemailer from 'nodemailer';
  * @param {string} options.html - HTML markup content
  */
 export const sendEmail = async ({ to, subject, text, html }) => {
-  const { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, SMTP_FROM } = process.env;
+  const { RESEND_API_KEY, SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, SMTP_FROM } = process.env;
+
+  // 1. Try Resend HTTP API first (bypasses SMTP port blocks on Render/Heroku)
+  if (RESEND_API_KEY) {
+    try {
+      const response = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${RESEND_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          from: SMTP_FROM || 'onboarding@resend.dev',
+          to,
+          subject,
+          html,
+        }),
+      });
+
+      const data = await response.json();
+      if (response.ok) {
+        console.info(`✉️ Email sent successfully via Resend to ${to}. ID: ${data.id}`);
+        return true;
+      } else {
+        console.error(`❌ Resend API failed:`, data.message || response.statusText);
+      }
+    } catch (err) {
+      console.error(`❌ Resend sending to ${to} failed:`, err.message);
+    }
+  }
 
   if (SMTP_HOST && SMTP_USER && SMTP_PASS) {
     try {
