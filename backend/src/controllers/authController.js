@@ -135,6 +135,8 @@ export const sendOtp = async (req, res) => {
     const code = String(Math.floor(100000 + Math.random() * 900000));
     const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
 
+    console.info(`🔑 [OTP SYSTEM] Target: ${target} | Code: ${code}`);
+
     // Upsert OTP
     await Otp.findOneAndUpdate(
       { target },
