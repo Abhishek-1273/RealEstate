@@ -1,5 +1,5 @@
 import { Outlet, useLocation } from 'react-router-dom';
-import { useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Navbar from './Navbar';
 import Footer from './Footer';
@@ -15,6 +15,14 @@ const MainLayout = () => {
   const { showSearch } = useSearch();
   const location = useLocation();
   const lenisRef = useRef(null);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 1024);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   // ── Lenis smooth scroll initialisation ──
   useEffect(() => {
@@ -102,16 +110,22 @@ const MainLayout = () => {
       <Navbar />
 
       <main className="flex-1">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={location.pathname}
-            initial={pageTransition.initial}
-            animate={pageTransition.animate}
-            exit={pageTransition.exit}
-          >
+        {isMobile ? (
+          <div>
             <Outlet />
-          </motion.div>
-        </AnimatePresence>
+          </div>
+        ) : (
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={location.pathname}
+              initial={pageTransition.initial}
+              animate={pageTransition.animate}
+              exit={pageTransition.exit}
+            >
+              <Outlet />
+            </motion.div>
+          </AnimatePresence>
+        )}
       </main>
 
       <Footer />
