@@ -15,6 +15,10 @@ import uploadRoutes   from './routes/upload.js';
 import partnerRoutes  from './routes/partner.js';
 
 const app = express();
+
+// Trust proxy for rate limiting (Render/reverse proxy setups)
+app.set('trust proxy', 1);
+
 const PORT = process.env.PORT || 5000;
 const isProd = process.env.NODE_ENV === 'production';
 

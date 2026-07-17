@@ -112,10 +112,11 @@ export default function About() {
 
             <motion.div variants={fadeRight} initial="hidden" whileInView="visible" viewport={viewportOnce}>
               <div
-                className="group relative rounded-3xl"
+                className="group relative rounded-3xl cursor-pointer"
                 style={{ height: '400px', perspective: '1500px' }}
                 onMouseEnter={() => setIsFlipped(true)}
                 onMouseLeave={() => setIsFlipped(false)}
+                onClick={() => setIsFlipped(!isFlipped)}
               >
                 <motion.div
                   className="relative w-full h-full"
