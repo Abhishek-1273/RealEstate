@@ -66,7 +66,7 @@ export default function Hero() {
   const showVideo = !isMobile && videoReady && !videoError;
 
   return (
-    <section className="relative lg:min-h-screen lg:flex lg:items-center overflow-x-hidden overflow-y-visible lg:overflow-hidden" style={{ maxWidth: '100vw' }}>
+    <section className="relative lg:min-h-screen lg:flex lg:items-center overflow-hidden" style={{ maxWidth: '100vw' }}>
 
       {/* ══ BACKGROUND ══════════════════════════════════════════════════════ */}
 
