@@ -89,3 +89,11 @@ export const fetchBlogBySlug = async (slug) => {
   if (!res.ok || !data.success) throw new Error(data.message || 'Article not found');
   return data.blog;
 };
+
+// ── Partners ──────────────────────────────────────────────────────────────────
+export const fetchPartners = async () => {
+  const res = await fetch(`${API_URL}/api/partners`);
+  const data = await res.json();
+  if (!res.ok || !data.success) throw new Error(data.message || 'Failed to fetch partners');
+  return data.partners;
+};

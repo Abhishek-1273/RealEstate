@@ -55,3 +55,11 @@ export const uploadImage      = async (file) => {
   if (!res.ok || !data.success) throw new Error(data.message || 'Upload failed');
   return data.url;
 };
+
+// ── Partners ──────────────────────────────────────────────────────────────────
+export const getPartnersAdmin = ()          => call('/api/partners/admin');
+export const deleteUser       = (id)          => call(`/api/auth/users/${id}`, { method: 'DELETE' });
+
+export const createPartner    = (body)      => call('/api/partners', { method: 'POST', body: JSON.stringify(body) });
+export const updatePartner    = (id, body)  => call(`/api/partners/${id}`, { method: 'PUT', body: JSON.stringify(body) });
+export const deletePartner    = (id)        => call(`/api/partners/${id}`, { method: 'DELETE' });

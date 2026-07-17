@@ -9,7 +9,6 @@ const links = {
   company: [
     { label: 'About Us', to: '/about' },
     { label: 'Our Team', to: '/about#team' },
-    { label: 'NRI Desk', to: '/nri-corner' },
     { label: 'Blog', to: '/blog' },
     { label: 'Contact Us', to: '/contact' },
     { label: 'My Wishlist', to: '/wishlist' },
@@ -28,11 +27,11 @@ const links = {
     { label: 'Commercial', to: '/properties?category=commercial' },
   ],
   locations: [
-    { label: 'Koregaon Park', to: '/properties?city=Koregaon Park' },
-    { label: 'Kalyani Nagar', to: '/properties?city=Kalyani Nagar' },
+    { label: 'Balewadi', to: '/properties?city=Balewadi' },
     { label: 'Baner', to: '/properties?city=Baner' },
     { label: 'Kharadi', to: '/properties?city=Kharadi' },
-    { label: 'Balewadi', to: '/properties?city=Balewadi' },
+    { label: 'Viman Nagar', to: '/properties?city=Viman Nagar' },
+    { label: 'Hadapsar', to: '/properties?city=Hadapsar' },
   ],
 };
 

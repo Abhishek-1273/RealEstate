@@ -16,13 +16,13 @@ export default function AdminLogin() {
   const { user }   = useAdmin();
   const navigate   = useNavigate();
 
-  const [form,    setForm]    = useState({ name: '', phone: '' });
+  const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
-  const [error,   setError]   = useState('');
+  const [error, setError] = useState('');
 
   const handleSubmit = async () => {
-    if (!form.name.trim() || !form.phone.trim()) {
-      setError('Name and phone are required');
+    if (!email.trim()) {
+      setError('Email address is required');
       return;
     }
     setError('');
@@ -32,12 +32,12 @@ export default function AdminLogin() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify(form),
+        body: JSON.stringify({ email: email.trim() }),
       });
       const data = await res.json();
       if (!res.ok || !data.success) throw new Error(data.message);
-      if (data.user.role === 'client') {
-        setError('Access denied. This portal is for staff only.');
+      if (data.user.role === 'client' || data.user.role === 'agent') {
+        setError('Access denied. This portal is for admin and management staff only.');
         return;
       }
       signIn(data.user);
@@ -72,27 +72,16 @@ export default function AdminLogin() {
 
         {/* Card */}
         <div className="rounded-3xl p-8" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', backdropFilter: 'blur(20px)' }}>
-          <div className="space-y-4">
+          <div className="space-y-5">
             <div>
-              <label className="block text-white/60 text-xs font-semibold mb-1.5 tracking-wider uppercase">Full Name</label>
+              <label className="block text-white/60 text-xs font-semibold mb-1.5 tracking-wider uppercase">Email Address</label>
               <input
-                value={form.name}
-                onChange={e => setForm(p => ({ ...p, name: e.target.value }))}
-                placeholder="Your name"
-                className="w-full px-4 py-3 rounded-xl text-white text-sm focus:outline-none transition-all"
-                style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.12)' }}
-                onKeyDown={e => e.key === 'Enter' && handleSubmit()}
-              />
-            </div>
-            <div>
-              <label className="block text-white/60 text-xs font-semibold mb-1.5 tracking-wider uppercase">Mobile Number</label>
-              <input
-                value={form.phone}
-                onChange={e => setForm(p => ({ ...p, phone: e.target.value }))}
-                placeholder="10-digit mobile number"
-                type="tel"
-                className="w-full px-4 py-3 rounded-xl text-white text-sm focus:outline-none transition-all"
-                style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.12)' }}
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                placeholder="staff@hyperrelestix.com"
+                type="email"
+                className="w-full px-4 py-3 rounded-xl text-white text-sm focus:outline-none transition-all focus:border-gold border border-white/10"
+                style={{ background: 'rgba(255,255,255,0.08)' }}
                 onKeyDown={e => e.key === 'Enter' && handleSubmit()}
               />
             </div>
@@ -104,7 +93,7 @@ export default function AdminLogin() {
             )}
 
             <button onClick={handleSubmit} disabled={loading}
-              className="w-full py-3.5 rounded-xl font-bold text-navy text-sm transition-all duration-200 disabled:opacity-60"
+              className="w-full py-3.5 rounded-xl font-bold text-navy text-sm transition-all duration-200 disabled:opacity-60 cursor-pointer"
               style={{ background: loading ? '#A8882B' : 'linear-gradient(135deg, #D4AF37, #E8C84A)', boxShadow: '0 4px 20px rgba(212,175,55,0.25)' }}>
               {loading ? 'Signing in…' : 'Sign In to Panel →'}
             </button>

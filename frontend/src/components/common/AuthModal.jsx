@@ -95,20 +95,18 @@ export default function AuthModal() {
 
     if (tab === 'login') {
       if (!loginTarget.trim()) {
-        e.loginTarget = 'Email or Mobile Number is required';
-      } else if (loginTarget.includes('@')) {
-        if (!/\S+@\S+\.\S+/.test(loginTarget)) {
-          e.loginTarget = 'Enter a valid email address';
-        }
-      } else {
-        if (!/^[6-9]\d{9}$/.test(loginTarget.replace(/\D/g, ''))) {
-          e.loginTarget = 'Enter a valid 10-digit mobile number';
-        }
+        e.loginTarget = 'Email Address is required';
+      } else if (!/\S+@\S+\.\S+/.test(loginTarget)) {
+        e.loginTarget = 'Enter a valid email address';
       }
     } else {
       if (!form.name.trim()) e.name = 'Name is required';
       if (!/^[6-9]\d{9}$/.test(form.phone)) e.phone = 'Enter valid 10-digit mobile number';
-      if (form.email && !/\S+@\S+\.\S+/.test(form.email)) e.email = 'Enter valid email address';
+      if (!form.email.trim()) {
+        e.email = 'Email Address is required';
+      } else if (!/\S+@\S+\.\S+/.test(form.email)) {
+        e.email = 'Enter valid email address';
+      }
     }
 
     setErrors(e);
@@ -123,7 +121,7 @@ export default function AuthModal() {
     setServerError('');
     setOtpSuccessMessage('');
 
-    const targetVal = tab === 'login' ? loginTarget.trim() : form.phone.trim();
+    const targetVal = tab === 'login' ? loginTarget.trim() : form.email.trim();
 
     try {
       const res = await fetch(`${API_URL}/api/auth/otp/send`, {
@@ -450,71 +448,78 @@ export default function AuthModal() {
 
                   <div className="space-y-3">
                     {tab === 'login' ? (
-                      /* Login view (Phone or Email) */
-                      <motion.div variants={itemVariants} className="group relative">
-                        <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30 transition-colors group-focus-within:text-gold" />
-                        <input
-                          type="text"
-                          placeholder="Email or Mobile Number *"
-                          value={loginTarget}
-                          onChange={e => setLoginTarget(e.target.value)}
-                          onKeyDown={e => e.key === 'Enter' && handleSendOtp()}
-                          className={`w-full pl-11 pr-4 py-2.5 bg-white/5 border ${
-                            errors.loginTarget ? 'border-red-500/40' : 'border-white/10 focus:border-gold/50'
-                          } rounded-2xl text-white placeholder-white/30 text-xs focus:outline-none focus:bg-white/8 transition-all`}
-                        />
-                        {errors.loginTarget && <p className="text-red-400 text-[9px] mt-1 ml-1">{errors.loginTarget}</p>}
+                      /* Login view (Email) */
+                      <motion.div variants={itemVariants} className="space-y-1">
+                        <div className="group relative">
+                          <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30 transition-colors group-focus-within:text-gold" />
+                          <input
+                            type="text"
+                            placeholder="Email Address *"
+                            value={loginTarget}
+                            onChange={e => setLoginTarget(e.target.value)}
+                            onKeyDown={e => e.key === 'Enter' && handleSendOtp()}
+                            className={`w-full pl-11 pr-4 py-2.5 bg-white/5 border ${
+                              errors.loginTarget ? 'border-red-500/40' : 'border-white/10 focus:border-gold/50'
+                            } rounded-2xl text-white placeholder-white/30 text-xs focus:outline-none focus:bg-white/8 transition-all`}
+                          />
+                        </div>
+                        {errors.loginTarget && <p className="text-red-400 text-[9px] mt-0.5 ml-1">{errors.loginTarget}</p>}
                       </motion.div>
                     ) : (
                       /* Signup view (Full details) */
                       <>
                         {/* Name */}
-                        <motion.div variants={itemVariants} className="group relative">
-                          <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30 transition-colors group-focus-within:text-gold" />
-                          <input
-                            type="text"
-                            placeholder="Full Name *"
-                            value={form.name}
-                            onChange={e => setForm(p => ({ ...p, name: e.target.value }))}
-                            onKeyDown={e => e.key === 'Enter' && handleSendOtp()}
-                            className={`w-full pl-11 pr-4 py-2.5 bg-white/5 border ${
-                              errors.name ? 'border-red-500/40' : 'border-white/10 focus:border-gold/50'
-                            } rounded-2xl text-white placeholder-white/30 text-xs focus:outline-none focus:bg-white/8 transition-all`}
-                          />
-                          {errors.name && <p className="text-red-400 text-[9px] mt-1 ml-1">{errors.name}</p>}
+                        <motion.div variants={itemVariants} className="space-y-1">
+                          <div className="group relative">
+                            <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30 transition-colors group-focus-within:text-gold" />
+                            <input
+                              type="text"
+                              placeholder="Full Name *"
+                              value={form.name}
+                              onChange={e => setForm(p => ({ ...p, name: e.target.value }))}
+                              onKeyDown={e => e.key === 'Enter' && handleSendOtp()}
+                              className={`w-full pl-11 pr-4 py-2.5 bg-white/5 border ${
+                                errors.name ? 'border-red-500/40' : 'border-white/10 focus:border-gold/50'
+                              } rounded-2xl text-white placeholder-white/30 text-xs focus:outline-none focus:bg-white/8 transition-all`}
+                            />
+                          </div>
+                          {errors.name && <p className="text-red-400 text-[9px] mt-0.5 ml-1">{errors.name}</p>}
                         </motion.div>
 
                         {/* Phone */}
-                        <motion.div variants={itemVariants} className="group relative">
-                          <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30 transition-colors group-focus-within:text-gold" />
-                          <input
-                            type="tel"
-                            placeholder="Mobile Number *"
-                            value={form.phone}
-                            maxLength={10}
-                            onChange={e => setForm(p => ({ ...p, phone: e.target.value.replace(/\D/g, '') }))}
-                            onKeyDown={e => e.key === 'Enter' && handleSendOtp()}
-                            className={`w-full pl-11 pr-4 py-2.5 bg-white/5 border ${
-                              errors.phone ? 'border-red-500/40' : 'border-white/10 focus:border-gold/50'
-                            } rounded-2xl text-white placeholder-white/30 text-xs focus:outline-none focus:bg-white/8 transition-all`}
-                          />
-                          {errors.phone && <p className="text-red-400 text-[9px] mt-1 ml-1">{errors.phone}</p>}
+                        <motion.div variants={itemVariants} className="space-y-1">
+                          <div className="group relative">
+                            <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30 transition-colors group-focus-within:text-gold" />
+                            <input
+                              type="tel"
+                              placeholder="Mobile Number *"
+                              value={form.phone}
+                              maxLength={10}
+                              onChange={e => setForm(p => ({ ...p, phone: e.target.value.replace(/\D/g, '') }))}
+                              onKeyDown={e => e.key === 'Enter' && handleSendOtp()}
+                              className={`w-full pl-11 pr-4 py-2.5 bg-white/5 border ${
+                                errors.phone ? 'border-red-500/40' : 'border-white/10 focus:border-gold/50'
+                              } rounded-2xl text-white placeholder-white/30 text-xs focus:outline-none focus:bg-white/8 transition-all`}
+                            />
+                          </div>
+                          {errors.phone && <p className="text-red-400 text-[9px] mt-0.5 ml-1">{errors.phone}</p>}
                         </motion.div>
-
                         {/* Email */}
-                        <motion.div variants={itemVariants} className="group relative">
-                          <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30 transition-colors group-focus-within:text-gold" />
-                          <input
-                            type="email"
-                            placeholder="Email Address (optional)"
-                            value={form.email}
-                            onChange={e => setForm(p => ({ ...p, email: e.target.value }))}
-                            onKeyDown={e => e.key === 'Enter' && handleSendOtp()}
-                            className={`w-full pl-11 pr-4 py-2.5 bg-white/5 border ${
-                              errors.email ? 'border-red-500/40' : 'border-white/10 focus:border-gold/50'
-                            } rounded-2xl text-white placeholder-white/30 text-xs focus:outline-none focus:bg-white/8 transition-all`}
-                          />
-                          {errors.email && <p className="text-red-400 text-[9px] mt-1 ml-1">{errors.email}</p>}
+                        <motion.div variants={itemVariants} className="space-y-1">
+                          <div className="group relative">
+                            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30 transition-colors group-focus-within:text-gold" />
+                            <input
+                              type="email"
+                              placeholder="Email Address *"
+                              value={form.email}
+                              onChange={e => setForm(p => ({ ...p, email: e.target.value }))}
+                              onKeyDown={e => e.key === 'Enter' && handleSendOtp()}
+                              className={`w-full pl-11 pr-4 py-2.5 bg-white/5 border ${
+                                errors.email ? 'border-red-500/40' : 'border-white/10 focus:border-gold/50'
+                              } rounded-2xl text-white placeholder-white/30 text-xs focus:outline-none focus:bg-white/8 transition-all`}
+                            />
+                          </div>
+                          {errors.email && <p className="text-red-400 text-[9px] mt-0.5 ml-1">{errors.email}</p>}
                         </motion.div>
                       </>
                     )}

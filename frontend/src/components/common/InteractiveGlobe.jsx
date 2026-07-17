@@ -4,12 +4,7 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import earthModelUrl from '../../assets/3d/earth_converted.glb?url';
 
 const CITIES_DATA = [
-  { name: 'Mumbai', lat: 19.0760, lon: 72.8777, description: 'Financial Capital — Sea-facing penthouses and premium apartments' },
-  { name: 'Delhi NCR', lat: 28.7041, lon: 77.1025, description: 'Power Address — Sprawling Lutyens mansions and Gurugram high-rises' },
-  { name: 'Bengaluru', lat: 12.9716, lon: 77.5946, description: 'Silicon Valley — Ultra-premium tech corridor villas and sky residences' },
-  { name: 'Hyderabad', lat: 17.3850, lon: 78.4867, description: 'Elite Enclaves — Regal mansions and luxury villas in Jubilee Hills' },
-  { name: 'Pune', lat: 18.5204, lon: 73.8567, description: 'Cultural & Tech Hub — Elegant estates in Koregaon Park and Baner' },
-  { name: 'Goa', lat: 15.2993, lon: 74.1240, description: 'Luxury Beach Retreats — Exquisite beachfront villas and designer suites' },
+  { name: 'Pune', lat: 18.5204, lon: 73.8567, description: 'Pune Real Estate Hub — Premium properties across all major localities' },
 ];
 
 export default function InteractiveGlobe({ onSelectCity, activeCity }) {
@@ -25,7 +20,7 @@ export default function InteractiveGlobe({ onSelectCity, activeCity }) {
       let city = CITIES_DATA.find(c => c.name === activeCity);
       if (!city) {
         // If it is a Pune locality, fallback to Pune coordinates
-        const puneLocalities = ['Koregaon Park', 'Baner', 'Aundh', 'Hinjewadi', 'Wakad', 'Boat Club Road', 'Kalyani Nagar', 'Viman Nagar', 'Bavdhan', 'NIBM', 'Magarpatta', 'Hadapsar', 'Balewadi', 'Kharadi'];
+        const puneLocalities = ['Balewadi', 'Hadapsar', 'KP', 'NIBM Road', 'Viman Nagar', 'Kharadi', 'Punewadi', 'Kothrud', 'Karve Nagar', 'Shewalewadi Road', 'Baner', 'Pashan', 'Bawadhan', 'MG Road', 'JM Road', 'F.C. Road', 'Hinjewadi Phase I, II', 'Ravet', 'Ganga Dham Chownk', 'Swargate', 'Katraj', 'Prabhat Road'];
         if (puneLocalities.some(loc => loc.toLowerCase() === activeCity.toLowerCase())) {
           city = CITIES_DATA.find(c => c.name === 'Pune');
         }
@@ -214,7 +209,7 @@ export default function InteractiveGlobe({ onSelectCity, activeCity }) {
     if (activeCityRef.current) {
       let city = CITIES_DATA.find(c => c.name === activeCityRef.current);
       if (!city) {
-        const puneLocalities = ['Koregaon Park', 'Baner', 'Aundh', 'Hinjewadi', 'Wakad', 'Boat Club Road', 'Kalyani Nagar', 'Viman Nagar', 'Bavdhan', 'NIBM', 'Magarpatta', 'Hadapsar', 'Balewadi', 'Kharadi'];
+        const puneLocalities = ['Balewadi', 'Hadapsar', 'KP', 'NIBM Road', 'Viman Nagar', 'Kharadi', 'Punewadi', 'Kothrud', 'Karve Nagar', 'Shewalewadi Road', 'Baner', 'Pashan', 'Bawadhan', 'MG Road', 'JM Road', 'F.C. Road', 'Hinjewadi Phase I, II', 'Ravet', 'Ganga Dham Chownk', 'Swargate', 'Katraj', 'Prabhat Road'];
         if (puneLocalities.some(loc => loc.toLowerCase() === activeCityRef.current.toLowerCase())) {
           city = CITIES_DATA.find(c => c.name === 'Pune');
         }

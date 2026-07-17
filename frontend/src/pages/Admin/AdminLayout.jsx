@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { NavLink, Link, Outlet, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, Users, Building2, Inbox,
@@ -7,27 +7,47 @@ import {
 import { useAdmin } from './AdminContext';
 
 const ROLE_COLOR = {
-  admin:        '#7C3AED',
+  admin:        '#D4AF37',
   management:   '#D4AF37',
+  agent:        '#D4AF37',
 };
 
 const ROLE_LABEL = {
   admin:        'Admin',
   management:   'Management',
+  agent:        'Agent',
 };
 
 const NAV = [
-  { to: '/admin/dashboard',  label: 'Dashboard',    Icon: LayoutDashboard, roles: ['admin', 'management'] },
-  { to: '/admin/properties', label: 'Properties',   Icon: Building2,        roles: ['admin', 'management'] },
-  { to: '/admin/blogs',      label: 'Blog Manager', Icon: FileText,         roles: ['admin', 'management'] },
-  { to: '/admin/leads',      label: 'All Leads',    Icon: Inbox,            roles: ['admin', 'management'] },
-  { to: '/admin/users',      label: 'Users',        Icon: Users,            roles: ['admin'] },
+  { to: '/admin/dashboard',  label: 'Dashboard',       Icon: LayoutDashboard, roles: ['admin', 'management'] },
+  { to: '/admin/properties', label: 'Properties',      Icon: Building2,        roles: ['admin', 'management'] },
+  { to: '/admin/blogs',      label: 'Blog Manager',    Icon: FileText,         roles: ['admin', 'management'] },
+  { to: '/admin/partners',   label: 'Partners',        Icon: Globe,            roles: ['admin', 'management'] },
+  { to: '/admin/users',      label: 'Staff Directory', Icon: Users,            roles: ['admin'] },
 ];
 
 export default function AdminLayout() {
   const { user, signOut, isStaff } = useAdmin();
   const navigate  = useNavigate();
   const [open, setOpen] = useState(false);
+
+  // Safeguard: Ensure scrollbars and body overflows are fully enabled inside the admin layout
+  useEffect(() => {
+    document.body.style.overflow = 'unset';
+    document.documentElement.style.overflow = 'unset';
+    document.documentElement.classList.remove('lenis');
+    document.documentElement.classList.remove('lenis-smooth');
+    document.documentElement.classList.remove('lenis-stopped');
+
+    if (window.lenis) {
+      try {
+        window.lenis.destroy();
+        window.lenis = null;
+      } catch (err) {
+        console.log("Lenis cleanup bypass:", err);
+      }
+    }
+  }, []);
 
   if (!isStaff) {
     navigate('/admin/login');
@@ -115,7 +135,7 @@ export default function AdminLayout() {
   );
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[#F5F5F4] dark:bg-[#080F1A] transition-colors duration-300" style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
+    <div className="fixed inset-0 flex overflow-hidden bg-[#F5F5F4] dark:bg-[#080F1A] transition-colors duration-300" style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
       {/* Desktop sidebar — stays dark navy always */}
       <aside className="hidden md:flex flex-col w-60 shrink-0 overflow-hidden" style={{ background: '#071A2F' }}>
         <SidebarContent />

@@ -255,7 +255,27 @@ export default function LeadDetail() {
                 {fields.map(f => (
                   <InfoRow key={f} label={f.replace(/([A-Z])/g, ' $1').trim()} value={lead[f]} />
                 ))}
+                {lead.propertyTitle && <InfoRow label="Inquired Property" value={lead.propertyTitle} />}
                 {lead.notes && <InfoRow label="Notes" value={lead.notes} />}
+
+                {lead.images && lead.images.length > 0 && (
+                  <div className="mt-4 pt-4 border-t border-gray-100 dark:border-white/5">
+                    <span className="text-[11px] font-bold text-gray-400 dark:text-white/35 uppercase tracking-wider block mb-2.5">Uploaded Property Photos</span>
+                    <div className="flex flex-wrap gap-2.5">
+                      {lead.images.map((img, idx) => (
+                        <a 
+                          key={idx} 
+                          href={img} 
+                          target="_blank" 
+                          rel="noopener noreferrer" 
+                          className="relative block w-20 h-20 rounded-xl overflow-hidden border border-gray-250 dark:border-white/10 hover:border-gold dark:hover:border-gold/50 transition-all duration-200"
+                        >
+                          <img src={img} alt={`Property ${idx + 1}`} className="w-full h-full object-cover" />
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -369,7 +389,7 @@ export default function LeadDetail() {
                 value={lead.assignedTo?._id || ""}
                 onChange={handleAssign}
                 placeholder={lead.assignedTo ? "Reassign to…" : "Assign to employee…"}
-                options={employees.map(emp => ({ value: emp.id, label: emp.name }))}
+                options={employees.map(emp => ({ value: emp.id, label: `${emp.name} (${emp.email || 'No email'})` }))}
               />
             </div>
           )}

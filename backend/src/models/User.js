@@ -23,13 +23,15 @@ const userSchema = new mongoose.Schema(
     // ── Role-based access ──────────────────────────────────────────────────────
     role: {
       type: String,
-      enum: ['client', 'management', 'admin'],
+      enum: ['client', 'agent', 'management', 'admin'],
       default: 'client',
     },
 
     // ── Employee-specific ──────────────────────────────────────────────────────
     isActive:   { type: Boolean, default: true },
     department: { type: String, default: '' },   // Sales, Rentals, Management…
+    expertise:  { type: String, default: '' },   // Localities they specialize in, e.g. "Koregaon Park"
+    qualities:  { type: String, default: '' },   // Agent qualities / special tags, e.g. "Luxury specialist, Great negotiator"
     avatar:     { type: String, default: '' },   // initials fallback on frontend
 
     // ── User Wishlist ──────────────────────────────────────────────────────────

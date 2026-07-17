@@ -4,8 +4,9 @@ import { ArrowRight, ArrowLeft } from 'lucide-react';
 import { fadeUp } from '../../animations/variants';
 import { Link } from 'react-router-dom';
 import { submitEnquiry } from '../../utils/api';
+import SearchableSelect from '../../components/common/SearchableSelect';
 
-const localities = ['Baner', 'Balewadi', 'Kharadi', 'Koregaon Park', 'Kalyani Nagar', 'Wakad', 'Hinjawadi', 'Viman Nagar', 'Bavdhan', 'NIBM', 'Other'];
+const localities = ['Balewadi', 'Hadapsar', 'KP', 'NIBM Road', 'Viman Nagar', 'Kharadi', 'Punewadi', 'Kothrud', 'Karve Nagar', 'Shewalewadi Road', 'Baner', 'Pashan', 'Bawadhan', 'MG Road', 'JM Road', 'F.C. Road', 'Hinjewadi Phase I, II', 'Ravet', 'Ganga Dham Chownk', 'Swargate', 'Katraj', 'Prabhat Road', 'Bibwewadi', 'Bhekrai Nagar', 'Pimple Gurav', 'Pimple Saudagar', 'Dhayari', 'Kondhwa', 'Undri', 'Muhamad wadi', 'Handewadi', 'Wakad', 'Shivaji Nagar', 'Parvati Hill', 'Sukhsagar Nagar', 'Singhgad Road', 'Camp', 'Pimpri Gaon', 'Chinchwad Gaon', 'Bhosari', 'Nigdi', 'Bhugaon', 'Man', 'Sus', 'Malwadi', 'Warje', 'Fursungi', 'Wagholi', 'Manjari', 'Lohgaon', 'Vishrantwadi', 'Khadki', 'Nanded City', 'Other'];
 const rentRanges = ['Under ₹30K/month', '₹30K–60K/month', '₹60K–1L/month', '₹1L–2L/month', '₹2L+/month'];
 const durations = ['3 months', '6 months', '11 months', '1 year', '2+ years'];
 
@@ -82,19 +83,12 @@ export default function LeaseProperty() {
             }} className="space-y-5">
               <div>
                 <label className="block text-xs font-bold text-navy dark:text-white mb-2">Preferred Locality</label>
-                <div className="flex flex-wrap gap-2">
-                  {localities.map(l => (
-                    <button key={l} type="button" onClick={() => set('locality', l)}
-                      className={`px-3.5 py-2 rounded-full text-xs font-semibold transition-all duration-200 border ${
-                        form.locality === l
-                          ? 'bg-gold/10 dark:bg-gold/20 border-gold text-gold-text dark:text-gold-light'
-                          : 'bg-white dark:bg-navy-light text-ink-muted dark:text-cream/80 border-gray-100 dark:border-white/10 hover:bg-black/5 dark:hover:bg-white/5'
-                      }`}
-                    >
-                      {l}
-                    </button>
-                  ))}
-                </div>
+                <SearchableSelect
+                  value={form.locality}
+                  onChange={val => set('locality', val)}
+                  options={localities}
+                  placeholder="Choose locality (e.g. Balewadi, KP, Sus...)"
+                />
               </div>
               <div className="grid sm:grid-cols-2 gap-4">
                 <div>

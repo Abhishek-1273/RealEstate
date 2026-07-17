@@ -1,136 +1,351 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { TrendingUp, Inbox, Building2, Users, ArrowRight, Loader2 } from 'lucide-react';
-import { getStats, getEnquiries, getProperties, getUsers } from '../../utils/adminApi';
+import { Link as RouterLink } from 'react-router-dom';
+import { TrendingUp, Inbox, Building2, Users, ArrowRight, Loader2, Calendar, FileText, Globe, Pencil } from 'lucide-react';
+import { getProperties, getUsers, getPartnersAdmin, getEnquiries } from '../../utils/adminApi';
+import { fetchBlogs } from '../../utils/api';
 import { useAdmin } from './AdminContext';
 
-const STATUS_COLOR = {
-  new:       { bg: '#DBEAFE', text: '#1E40AF', darkBg: 'rgba(30,64,175,0.18)', darkText: '#93B4F7' },
-  contacted: { bg: '#FEF9C3', text: '#854D0E', darkBg: 'rgba(133,77,14,0.18)',  darkText: '#FBD07A' },
-  visited:   { bg: '#EDE9FE', text: '#5B21B6', darkBg: 'rgba(91,33,182,0.18)',  darkText: '#C4B5FD' },
-  qualified: { bg: '#D1FAE5', text: '#065F46', darkBg: 'rgba(6,95,70,0.18)',    darkText: '#6EE7B7' },
-  converted: { bg: '#DCFCE7', text: '#14532D', darkBg: 'rgba(20,83,45,0.18)',   darkText: '#86EFAC' },
-  lost:      { bg: '#FEE2E2', text: '#7F1D1D', darkBg: 'rgba(127,29,29,0.18)', darkText: '#FCA5A5' },
-};
-
-function StatCard({ icon: Icon, label, value, sub, color }) {
+function StatCard({ icon: Icon, label, value, sub, color, trend }) {
   return (
-    <div className="bg-white dark:bg-[#0E1A2B] rounded-2xl p-5 border border-gray-100 dark:border-white/10 shadow-sm transition-colors duration-300">
-      <div className="flex items-start justify-between mb-3">
-        <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: `${color}18` }}>
+    <div className="bg-white dark:bg-[#0E1A2B] rounded-2xl p-5 border border-gray-150 dark:border-white/10 shadow-sm hover:shadow-md hover:border-gold/30 dark:hover:border-gold/20 transition-all duration-300 group relative overflow-hidden">
+      {/* Decorative gradient corner glow */}
+      <div className="absolute -top-10 -right-10 w-24 h-24 rounded-full blur-2xl opacity-0 group-hover:opacity-10 transition-opacity duration-500" style={{ backgroundColor: color }} />
+      
+      <div className="flex items-start justify-between mb-4">
+        <div className="w-10 h-10 rounded-xl flex items-center justify-center transition-transform duration-300 group-hover:scale-105" style={{ background: `${color}15` }}>
           <Icon className="w-5 h-5" style={{ color }} />
         </div>
+        
+        {/* Trend badge */}
+        {trend && (
+          <span className="px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-wider border transition-all duration-300"
+            style={{
+              backgroundColor: `${color}08`,
+              color: color,
+              borderColor: `${color}15`
+            }}>
+            {trend}
+          </span>
+        )}
       </div>
-      <p className="text-2xl font-black text-navy dark:text-white mb-0.5" style={{ fontFamily: 'Manrope,sans-serif' }}>{value ?? '—'}</p>
-      <p className="text-xs font-semibold text-gray-500 dark:text-white/45">{label}</p>
-      {sub && <p className="text-[11px] text-gray-400 dark:text-white/30 mt-1">{sub}</p>}
+      
+      <div className="relative z-10">
+        <p className="text-3xl font-black text-navy dark:text-white mb-0.5 tracking-tight" style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
+          {value ?? '—'}
+        </p>
+        <p className="text-[10px] font-extrabold text-gray-400 dark:text-white/30 uppercase tracking-wider">{label}</p>
+        {sub && (
+          <p className="text-[10px] text-gray-450 dark:text-white/25 mt-2.5 flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            {sub}
+          </p>
+        )}
+      </div>
     </div>
   );
 }
 
 export default function Dashboard() {
-  const { isMgmt } = useAdmin();
-  const [stats,  setStats]  = useState(null);
-  const [leads,  setLeads]  = useState([]);
-  const [counts, setCounts] = useState({});
+  const { user, isMgmt } = useAdmin();
+  const isAgent = user?.role === 'agent';
+  const [counts, setCounts] = useState({ properties: 0, blogs: 0, partners: 0, users: 0, myLeads: 0 });
+  const [recentProperties, setRecentProperties] = useState([]);
+  const [recentBlogs, setRecentBlogs] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Detect dark mode for status color
+  // Detect dark mode for styles
   const isDark = document.documentElement.classList.contains('dark');
 
   useEffect(() => {
     (async () => {
       try {
-        const [s, l, p, u] = await Promise.all([
-          getStats(),
-          getEnquiries({ limit: 8 }),
-          getProperties({ limit: 1 }),
-          isMgmt ? getUsers() : Promise.resolve({ count: null }),
-        ]);
-        setStats(s.stats);
-        setLeads(l.enquiries);
-        setCounts({ properties: p.total, users: u.count });
-      } catch (e) { console.error(e); }
-      finally { setLoading(false); }
-    })();
-  }, [isMgmt]);
+        const pData = await getProperties({ limit: 3 });
+        setRecentProperties(pData.properties || []);
 
-  const byStatus = stats ? Object.fromEntries(stats.byStatus.map(s => [s._id, s.count])) : {};
+        let bData = { blogs: [] };
+        let partnersData = { partners: [] };
+        let userData = { users: [] };
+        let myLeadsData = { enquiries: [] };
+
+        if (!isAgent) {
+          const [bRes, pRes, uRes] = await Promise.all([
+            fetchBlogs({ limit: 3 }).catch(() => ({ blogs: [] })),
+            getPartnersAdmin().catch(() => ({ partners: [] })),
+            isMgmt ? getUsers().catch(() => ({ users: [] })) : Promise.resolve({ users: [] })
+          ]);
+          bData = bRes || { blogs: [] };
+          partnersData = pRes || { partners: [] };
+          userData = uRes || { users: [] };
+          setRecentBlogs(bData.blogs || []);
+        } else {
+          myLeadsData = await getEnquiries({ limit: 100 }).catch(() => ({ enquiries: [] }));
+        }        setCounts({
+          properties: pData.total || pData.properties?.length || 0,
+          blogs: bData.blogs ? bData.blogs.length : (Array.isArray(bData) ? bData.length : 0),
+          partners: partnersData.partners ? partnersData.partners.length : 0,
+          users: userData.users ? userData.users.filter(x => x.role !== 'client').length : 0,
+          myLeads: myLeadsData.enquiries ? myLeadsData.enquiries.length : 0
+        });
+        
+        // Handle array or object wrapper response for blogs
+        const blogsArray = bData.blogs || (Array.isArray(bData) ? bData : []);
+        setRecentBlogs(blogsArray);
+      } catch (e) {
+        console.error("Dashboard metrics fetch failed:", e);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [isMgmt, isAgent]);
 
   if (loading) return (
-    <div className="flex items-center justify-center h-64">
+    <div className="flex items-center justify-center h-96">
       <Loader2 className="w-8 h-8 animate-spin text-gold" style={{ color: '#D4AF37' }} />
     </div>
   );
 
   return (
-    <div>
-      <div className="mb-7">
-        <h1 className="text-2xl font-black text-navy dark:text-white mb-1" style={{ fontFamily: 'Manrope,sans-serif' }}>Dashboard</h1>
-        <p className="text-gray-500 dark:text-white/40 text-sm">Overview of all activity</p>
-      </div>
-
-      {/* Stat cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-7">
-        <StatCard icon={Inbox}     label="Total Leads"      value={stats?.total}      sub={`+${stats?.recentWeek ?? 0} this week`} color="#D4AF37" />
-        <StatCard icon={TrendingUp} label="Converted"       value={byStatus.converted ?? 0} sub="Closed deals"   color="#059669" />
-        <StatCard icon={Building2}  label="Properties"      value={counts.properties}  sub="Live listings"  color="#7C3AED" />
-        {isMgmt && <StatCard icon={Users} label="Staff Members" value={counts.users}  sub="Active accounts" color="#0891B2" />}
-      </div>
-
-      {/* Status breakdown */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-7">
-        {['new','contacted','visited','qualified','converted','lost'].map(s => {
-          const c = STATUS_COLOR[s];
-          return (
-            <div key={s} className="bg-white dark:bg-[#0E1A2B] rounded-xl p-4 border border-gray-100 dark:border-white/10 text-center transition-colors duration-300">
-              <p className="text-xl font-black mb-1" style={{ fontFamily: 'Manrope,sans-serif', color: isDark ? c.darkText : c.text }}>
-                {byStatus[s] ?? 0}
-              </p>
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full capitalize"
-                style={{ background: isDark ? c.darkBg : c.bg, color: isDark ? c.darkText : c.text }}>
-                {s}
+    <div className="animate-fade-in pb-8">
+      
+      {/* Welcome Hero Banner */}
+      <div className="relative overflow-hidden rounded-3xl p-6 md:p-8 mb-7 border border-transparent dark:border-white/5 shadow-lg bg-[#071A2F]"
+        style={{
+          background: 'linear-gradient(135deg, #071A2F 0%, #0c2543 50%, #051324 100%)'
+        }}>
+        {/* Glowing visual ambient blobs */}
+        <div className="absolute top-0 right-0 w-[400px] h-[400px] rounded-full blur-[100px] opacity-10 pointer-events-none"
+          style={{ background: 'radial-gradient(circle, #D4AF37 0%, transparent 70%)' }} />
+        
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div>
+            <div className="flex items-center gap-2 mb-3">
+              <span className="px-2 py-0.5 rounded-md bg-gold/10 text-gold text-[9px] font-black uppercase tracking-widest border border-gold/15">
+                Internal Portal
+              </span>
+              <span className="text-white/30 text-[10px] flex items-center gap-1">
+                <Calendar className="w-3 h-3" />
+                {new Date().toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' })}
               </span>
             </div>
-          );
-        })}
+            
+            <h1 className="text-2xl md:text-3xl font-black text-white leading-tight mb-2 tracking-tight" style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
+              Welcome back, <span style={{ color: '#D4AF37' }}>{user?.name || 'Administrator'}</span>
+            </h1>
+            <p className="text-white/60 text-xs md:text-sm max-w-xl leading-relaxed font-medium">
+              Here is the live activity overview for the HyperRelestix luxury portfolio. Optimize listings, manage active customer leads, and oversee operations.
+            </p>
+          </div>
+
+          {isAgent ? (
+            <div className="flex items-center gap-4 shrink-0 bg-white/[0.03] border border-white/5 p-4 rounded-2xl backdrop-blur-md">
+              <div className="text-center border-r border-white/10 pr-4">
+                <p className="text-gold text-lg font-black">{counts.properties}</p>
+                <p className="text-[9px] text-white/40 uppercase font-bold tracking-wider">Listings</p>
+              </div>
+              <div className="text-center">
+                <p className="text-cyan-400 text-lg font-black">{counts.myLeads}</p>
+                <p className="text-[9px] text-white/40 uppercase font-bold tracking-wider">My Leads</p>
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-center gap-4 shrink-0 bg-white/[0.03] border border-white/5 p-4 rounded-2xl backdrop-blur-md">
+              <div className="text-center border-r border-white/10 pr-4">
+                <p className="text-gold text-lg font-black">{counts.properties}</p>
+                <p className="text-[9px] text-white/40 uppercase font-bold tracking-wider">Listings</p>
+              </div>
+              <div className="text-center border-r border-white/10 pr-4">
+                <p className="text-purple-400 text-lg font-black">{counts.blogs}</p>
+                <p className="text-[9px] text-white/40 uppercase font-bold tracking-wider">Blogs</p>
+              </div>
+              <div className="text-center pr-4 border-r border-white/10">
+                <p className="text-emerald-400 text-lg font-black">{counts.partners}</p>
+                <p className="text-[9px] text-white/40 uppercase font-bold tracking-wider">Partners</p>
+              </div>
+              <div className="text-center">
+                <p className="text-cyan-400 text-lg font-black">{counts.users}</p>
+                <p className="text-[9px] text-white/40 uppercase font-bold tracking-wider">Staff</p>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* Recent leads */}
-      <div className="bg-white dark:bg-[#0E1A2B] rounded-2xl border border-gray-100 dark:border-white/10 shadow-sm overflow-hidden transition-colors duration-300">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-white/10">
-          <h2 className="font-bold text-navy dark:text-white text-sm">Recent Leads</h2>
-          <Link to="/admin/leads" className="text-xs font-semibold flex items-center gap-1 hover:gap-2 transition-all" style={{ color: '#D4AF37' }}>
-            View all <ArrowRight className="w-3.5 h-3.5" />
-          </Link>
+      {isAgent ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-7">
+          <StatCard 
+            icon={Building2}  
+            label="Luxury Listings"      
+            value={counts.properties}  
+            sub="Live on public site"  
+            color="#D4AF37" 
+            trend="Active"
+          />
+          <StatCard 
+            icon={Inbox} 
+            label="My Assigned Leads"       
+            value={counts.myLeads} 
+            sub="Assigned enquiries"   
+            color="#7C3AED" 
+            trend="Active"
+          />
         </div>
-        <div className="divide-y divide-gray-50 dark:divide-white/5">
-          {leads.length === 0 ? (
-            <p className="px-6 py-8 text-center text-gray-400 dark:text-white/30 text-sm">No leads yet</p>
-          ) : leads.map(l => {
-            const sc = STATUS_COLOR[l.status] || STATUS_COLOR.new;
-            return (
-              <Link key={l._id} to={`/admin/leads/${l._id}`}
-                className="flex items-center gap-4 px-6 py-3.5 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors group">
-                <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 font-bold text-xs"
-                  style={{ background: '#EEF2FF', color: '#3730A3' }}>
-                  {l.name.charAt(0).toUpperCase()}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-navy dark:text-white truncate">{l.name}</p>
-                  <p className="text-[11px] text-gray-400 dark:text-white/35 truncate">{l.phone} · {l.type}</p>
-                </div>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 capitalize"
-                  style={{ background: isDark ? sc.darkBg : sc.bg, color: isDark ? sc.darkText : sc.text }}>
-                  {l.status}
-                </span>
-                <span className="text-[11px] text-gray-400 dark:text-white/30 hidden sm:block shrink-0">
-                  {new Date(l.createdAt).toLocaleDateString('en-IN', { day:'numeric', month:'short' })}
-                </span>
-              </Link>
-            );
-          })}
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-7">
+          <StatCard 
+            icon={Building2}  
+            label="Luxury Listings"      
+            value={counts.properties}  
+            sub="Live on public site"  
+            color="#D4AF37" 
+            trend="+12% growth"
+          />
+          <StatCard 
+            icon={FileText} 
+            label="Editorial Blogs"       
+            value={counts.blogs} 
+            sub="Published articles"   
+            color="#7C3AED" 
+            trend="Weekly"
+          />
+          <StatCard 
+            icon={Globe}     
+            label="Developer Partners"      
+            value={counts.partners}      
+            sub="Featured builders" 
+            color="#059669" 
+            trend="Verified"
+          />
+          {isMgmt && (
+            <StatCard 
+              icon={Users} 
+              label="Staff Directory" 
+              value={counts.users}  
+              sub="Active team accounts" 
+              color="#0891B2" 
+              trend="Active"
+            />
+          )}
         </div>
+      )}
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        
+        {/* Left Column: Recent Properties */}
+        <div className="bg-white dark:bg-[#0E1A2B] rounded-3xl border border-gray-150 dark:border-white/10 shadow-sm overflow-hidden flex flex-col justify-between">
+          <div>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-6 py-5 border-b border-gray-100 dark:border-white/10 bg-gray-50/30 dark:bg-white/[0.01]">
+              <div>
+                <h3 className="font-bold text-navy dark:text-white text-sm" style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}>Recent Luxury Listings</h3>
+                <p className="text-[10px] text-gray-400 dark:text-white/35">Latest premium properties added to database</p>
+              </div>
+              <RouterLink to="/admin/properties" className="text-xs font-bold text-gold hover:text-gold-light flex items-center gap-1 group transition-colors shrink-0">
+                <span>Manage listings</span>
+                <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+              </RouterLink>
+            </div>
+
+            <div className="p-4 space-y-3.5">
+              {recentProperties.length === 0 ? (
+                <p className="text-center py-10 text-xs text-gray-400 dark:text-white/20">No properties available.</p>
+              ) : (
+                recentProperties.map(p => (
+                  <div key={p._id} className="flex items-center gap-3 p-2 rounded-2xl hover:bg-gray-50 dark:hover:bg-white/[0.02] transition-colors group">
+                    {p.image ? (
+                      <img src={p.image} alt={p.title} className="w-14 h-14 rounded-xl object-cover shrink-0 bg-gray-100 dark:bg-white/10" />
+                    ) : (
+                      <div className="w-14 h-14 rounded-xl bg-gray-100 dark:bg-white/10 flex items-center justify-center shrink-0">
+                        <Building2 className="w-5 h-5 text-gray-400 dark:text-white/30" />
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs md:text-sm font-semibold text-navy dark:text-white truncate group-hover:text-gold transition-colors">
+                        {p.title}
+                      </p>
+                      <p className="text-[10px] text-gray-400 dark:text-white/30 truncate mt-0.5">{p.location}</p>
+                      <div className="flex items-center gap-2 mt-1.5">
+                        <span className="text-[9px] font-black text-navy dark:text-white px-2 py-0.5 rounded bg-gray-100 dark:bg-white/10 uppercase">
+                          {p.priceLabel || `₹${(p.price/10000000).toFixed(1)} Cr`}
+                        </span>
+                        <span className={`text-[8px] font-black uppercase px-2 py-0.5 rounded-full ${
+                          p.status === 'Ready to Move' ? 'bg-green-500/10 text-green-500' :
+                          p.status === 'Under Construction' ? 'bg-yellow-500/10 text-yellow-500' :
+                          'bg-gray-500/10 text-gray-400'
+                        }`}>
+                          {p.status}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+          
+          <div className="p-4 border-t border-gray-100 dark:border-white/5 bg-gray-50/20 dark:bg-white/[0.01] text-center">
+            <RouterLink to="/admin/properties" className="text-xs font-semibold text-gray-500 dark:text-white/40 hover:text-navy dark:hover:text-white transition-colors">
+              Configure inventory and upload details
+            </RouterLink>
+          </div>
+        </div>
+
+        {/* Right Column: Recent Blogs (Only shown for non-agents) */}
+        {!isAgent && (
+          <div className="bg-white dark:bg-[#0E1A2B] rounded-3xl border border-gray-100 dark:border-white/10 shadow-sm overflow-hidden flex flex-col justify-between">
+            <div>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-6 py-5 border-b border-gray-100 dark:border-white/10 bg-gray-50/30 dark:bg-white/[0.01]">
+                <div>
+                  <h3 className="font-bold text-navy dark:text-white text-sm" style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}>Recent Editorial Blogs</h3>
+                  <p className="text-[10px] text-gray-400 dark:text-white/35">Latest published guides and market studies</p>
+                </div>
+                <RouterLink to="/admin/blogs" className="text-xs font-bold text-gold hover:text-gold-light flex items-center gap-1 group transition-colors shrink-0">
+                  <span>Manage blogs</span>
+                  <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+                </RouterLink>
+              </div>
+
+              <div className="p-4 space-y-3.5">
+                {recentBlogs.length === 0 ? (
+                  <p className="text-center py-10 text-xs text-gray-400 dark:text-white/20">No articles available.</p>
+                ) : (
+                  recentBlogs.map(b => (
+                    <div key={b._id} className="flex items-center gap-3 p-2 rounded-2xl hover:bg-gray-50 dark:hover:bg-white/[0.02] transition-colors group">
+                      {b.image ? (
+                        <img src={b.image} alt={b.title} className="w-14 h-14 rounded-xl object-cover shrink-0 bg-gray-100 dark:bg-white/10 animate-fade-in" />
+                      ) : (
+                        <div className="w-14 h-14 rounded-xl bg-gray-100 dark:bg-white/10 flex items-center justify-center shrink-0">
+                          <FileText className="w-5 h-5 text-gray-400 dark:text-white/30" />
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs md:text-sm font-semibold text-navy dark:text-white truncate group-hover:text-gold transition-colors">
+                          {b.title}
+                        </p>
+                        <p className="text-[10px] text-gray-450 dark:text-white/35 mt-0.5 truncate">{b.subtitle || 'HyperRelestix Editorial'}</p>
+                        <div className="flex items-center gap-2.5 mt-2">
+                          <span className="text-[9px] text-gray-400 dark:text-white/20 font-bold whitespace-nowrap">
+                            {new Date(b.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                          </span>
+                          {b.readTime && (
+                            <span className="text-[9px] text-gold font-extrabold uppercase whitespace-nowrap">
+                              {b.readTime}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+
+            <div className="p-4 border-t border-gray-100 dark:border-white/5 bg-gray-50/20 dark:bg-white/[0.01] text-center">
+              <RouterLink to="/admin/blogs" className="text-xs font-semibold text-gray-500 dark:text-white/40 hover:text-navy dark:hover:text-white transition-colors">
+                Write editorial posts and publish articles
+              </RouterLink>
+            </div>
+          </div>
+        )}
+
       </div>
     </div>
   );

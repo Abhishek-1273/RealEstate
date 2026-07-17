@@ -174,8 +174,8 @@ export const SearchProvider = ({ children }) => {
   const [showSearch, setShowSearch]   = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [recentSearches, setRecentSearches] = useState([
-    'Penthouse Koregaon Park',
-    'Villa Baner',
+    'Penthouse KP',
+    'Villa Balewadi',
     'Luxury flat Kharadi',
   ]);
 

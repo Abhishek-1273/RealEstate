@@ -41,6 +41,7 @@ const enquirySchema = new mongoose.Schema(
     bedrooms:         { type: String, default: '' },
     askingPrice:      { type: String, default: '' },
     furnishing:       { type: String, default: '' },
+    images:           [{ type: String }],
 
     // ── Lease form fields ─────────────────────────────────────────────────────
     leasePurpose: { type: String, default: '' },
@@ -71,6 +72,10 @@ const enquirySchema = new mongoose.Schema(
 
     // ── Source tracking ───────────────────────────────────────────────────────
     source: { type: String, default: 'website' },
+
+    // ── Property Context (if enquiry is for a specific listing) ───────────────
+    propertyId:    { type: mongoose.Schema.Types.ObjectId, ref: 'Property', default: null },
+    propertyTitle: { type: String, default: '' },
   },
   { timestamps: true }
 );

@@ -1,9 +1,12 @@
 import { useState, useRef } from 'react';
 import { motion, useMotionValue, useSpring, useTransform } from 'framer-motion';
 
+const isTouchDevice = () => typeof window !== 'undefined' && window.matchMedia('(hover: none)').matches;
+
 export default function Tilt({ children, className, style = {} }) {
   const ref = useRef(null);
   const [glare, setGlare] = useState({ x: 50, y: 50, opacity: 0 });
+  const touch = isTouchDevice();
 
   const x = useMotionValue(0);
   const y = useMotionValue(0);
@@ -12,7 +15,7 @@ export default function Tilt({ children, className, style = {} }) {
   const rotateY = useSpring(useTransform(x, [-0.5, 0.5], [-16, 16]), { stiffness: 120, damping: 18 });
 
   const handleMouseMove = (e) => {
-    if (!ref.current) return;
+    if (!ref.current || touch) return;
     const rect = ref.current.getBoundingClientRect();
     const width = rect.width;
     const height = rect.height;
@@ -44,21 +47,20 @@ export default function Tilt({ children, className, style = {} }) {
       onMouseLeave={handleMouseLeave}
       style={{
         ...style,
-        rotateX,
-        rotateY,
-        transformStyle: 'preserve-3d',
-        perspective: 1000,
+        ...(touch ? {} : { rotateX, rotateY, transformStyle: 'preserve-3d', perspective: 1000 }),
       }}
       className={`relative ${className}`}
     >
-      {/* Glare reflection overlay */}
-      <div
-        className="absolute inset-0 pointer-events-none z-10 transition-opacity duration-300 rounded-[inherit]"
-        style={{
-          opacity: glare.opacity,
-          background: `radial-gradient(circle 240px at ${glare.x}% ${glare.y}%, rgba(255, 255, 255, 0.28) 0%, transparent 80%)`,
-        }}
-      />
+      {/* Glare reflection overlay — desktop only */}
+      {!touch && (
+        <div
+          className="absolute inset-0 pointer-events-none z-10 transition-opacity duration-300 rounded-[inherit]"
+          style={{
+            opacity: glare.opacity,
+            background: `radial-gradient(circle 240px at ${glare.x}% ${glare.y}%, rgba(255, 255, 255, 0.28) 0%, transparent 80%)`,
+          }}
+        />
+      )}
       {children}
     </motion.div>
   );

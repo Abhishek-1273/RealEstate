@@ -1,80 +1,79 @@
 import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSearchParams } from 'react-router-dom';
-import { Search, Grid3X3, List, ChevronDown, MapPin, Loader2 } from 'lucide-react';
+import { Search, Grid3X3, List, ChevronDown, MapPin, Loader2, ArrowUpDown } from 'lucide-react';
 import PropertyCard from '../../components/common/PropertyCard';
 import { properties as staticProperties } from '../../data/properties';
 import { fetchProperties } from '../../utils/api';
 import { fadeUp, staggerContainer } from '../../animations/variants';
 
-const TYPES   = ['All', 'Villa', 'Apartment', 'Penthouse', 'Farm House'];
-const CITIES  = [
-  'All', 
-  'Koregaon Park', 
-  'Baner', 
-  'Aundh', 
-  'Hinjewadi', 
-  'Wakad', 
-  'Boat Club Road', 
-  'Kalyani Nagar', 
-  'Viman Nagar', 
-  'Bavdhan', 
-  'NIBM', 
-  'Magarpatta', 
-  'Hadapsar', 
-  'Balewadi', 
-  'Kharadi'
+const TYPES = ['All', 'Villa', 'Apartment', 'Penthouse', 'Farm House', 'Commercial', 'Plot'];
+const CITIES = [
+  'All',
+  'Balewadi', 'Hadapsar', 'KP', 'NIBM Road', 'Viman Nagar', 'Kharadi',
+  'Punewadi', 'Kothrud', 'Karve Nagar', 'Shewalewadi Road', 'Baner',
+  'Pashan', 'Bawadhan', 'MG Road', 'JM Road', 'F.C. Road',
+  'Hinjewadi Phase I, II', 'Ravet', 'Ganga Dham Chownk', 'Swargate',
+  'Katraj', 'Prabhat Road', 'Bibwewadi', 'Bhekrai Nagar', 'Pimple Gurav',
+  'Pimple Saudagar', 'Dhayari', 'Kondhwa', 'Undri', 'Muhamad wadi',
+  'Handewadi', 'Wakad', 'Shivaji Nagar', 'Parvati Hill', 'Sukhsagar Nagar',
+  'Singhgad Road', 'Camp', 'Pimpri Gaon', 'Chinchwad Gaon', 'Bhosari',
+  'Nigdi', 'Bhugaon', 'Man', 'Sus', 'Malwadi', 'Warje', 'Fursungi',
+  'Wagholi', 'Manjari', 'Lohgaon', 'Vishrantwadi', 'Khadki', 'Nanded City'
 ];
 const BUDGETS = [
-  { label: 'Any',         min: 0,         max: Infinity  },
-  { label: 'Under ₹2 Cr', min: 0,         max: 20000000  },
-  { label: '₹2–5 Cr',    min: 20000000,  max: 50000000  },
-  { label: '₹5–10 Cr',   min: 50000000,  max: 100000000 },
-  { label: '₹10 Cr+',    min: 100000000, max: Infinity  },
+  { label: 'Any', min: 0, max: Infinity },
+  { label: 'Under ₹2 Cr', min: 0, max: 20000000 },
+  { label: '₹2–5 Cr', min: 20000000, max: 50000000 },
+  { label: '₹5–10 Cr', min: 50000000, max: 100000000 },
+  { label: '₹10 Cr+', min: 100000000, max: Infinity },
 ];
 const SORTBY = ['Newest', 'Price: Low to High', 'Price: High to Low', 'Area: Large to Small'];
 
 const SORT_API_MAP = {
-  'Newest':               'newest',
-  'Price: Low to High':   'price-asc',
-  'Price: High to Low':   'price-desc',
+  'Newest': 'newest',
+  'Price: Low to High': 'price-asc',
+  'Price: High to Low': 'price-desc',
   'Area: Large to Small': 'area-desc',
 };
 
-// Map footer URL param values → filter state
+// Map footer/homepage URL param values → filter state
 const CATEGORY_MAP = {
-  villas:      'Villa',
-  apartments:  'Apartment',
-  penthouse:   'Penthouse',
-  farm:        'Farm House',
-  commercial:  'All',
+  'luxury villas': 'Villa',
+  'apartments': 'Apartment',
+  'penthouses': 'Penthouse',
+  'commercial': 'Commercial',
+  'farm houses': 'Farm House',
+  'plots': 'Plot',
 };
 
 export default function Properties() {
   const [searchParams] = useSearchParams();
 
-  const [query,       setQuery]       = useState('');
-  const [type,        setType]        = useState('All');
-  const [city,        setCity]        = useState('All');
-  const [budget,      setBudget]      = useState(BUDGETS[0]);
-  const [sort,        setSort]        = useState('Newest');
-  const [view,        setView]        = useState('grid');
+  const [query, setQuery] = useState('');
+  const [type, setType] = useState('All');
+  const [city, setCity] = useState('All');
+  const [budget, setBudget] = useState(BUDGETS[0]);
+  const [sort, setSort] = useState('Newest');
+  const [view, setView] = useState('grid');
   const [sortOpen, setSortOpen] = useState(false);
+  const [cityOpen, setCityOpen] = useState(false);
   const dropdownRef = useRef(null);
+  const cityDropdownRef = useRef(null);
 
   // Data state
   const [allProperties, setAllProperties] = useState(staticProperties); // start with static
-  const [loading,       setLoading]       = useState(true);
-  const [apiError,      setApiError]      = useState(false);
-  const [total,         setTotal]         = useState(staticProperties.length);
-  const [page,          setPage]          = useState(1);
-  const [totalPages,    setTotalPages]    = useState(1);
+  const [loading, setLoading] = useState(true);
+  const [apiError, setApiError] = useState(false);
+  const [total, setTotal] = useState(staticProperties.length);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
 
   // ── Read URL params on mount ─────────────────────────────────────────────
   useEffect(() => {
     const categoryParam = searchParams.get('category');
-    const cityParam     = searchParams.get('city');
-    const searchParam   = searchParams.get('search');
+    const cityParam = searchParams.get('city');
+    const searchParam = searchParams.get('search');
     if (categoryParam) {
       const mapped = CATEGORY_MAP[categoryParam.toLowerCase()];
       if (mapped) setType(mapped);
@@ -85,7 +84,7 @@ export default function Properties() {
         setCity(match);
       } else {
         // If it is a Pune locality, set the city to Pune and set the search query to the locality
-        const localities = ['Koregaon Park', 'Baner', 'Aundh', 'Hinjewadi', 'Wakad', 'Boat Club Road', 'Kalyani Nagar', 'Viman Nagar', 'Bavdhan', 'NIBM', 'Magarpatta', 'Hadapsar', 'Balewadi', 'Kharadi'];
+        const localities = ['Balewadi', 'Hadapsar', 'KP', 'NIBM Road', 'Viman Nagar', 'Kharadi', 'Punewadi', 'Kothrud', 'Karve Nagar', 'Shewalewadi Road', 'Baner', 'Pashan', 'Bawadhan', 'MG Road', 'JM Road', 'F.C. Road', 'Hinjewadi Phase I, II', 'Ravet', 'Ganga Dham Chownk', 'Swargate', 'Katraj', 'Prabhat Road', 'Bibwewadi', 'Bhekrai Nagar', 'Pimple Gurav', 'Pimple Saudagar', 'Dhayari', 'Kondhwa', 'Undri', 'Muhamad wadi', 'Handewadi', 'Wakad', 'Shivaji Nagar', 'Parvati Hill', 'Sukhsagar Nagar', 'Singhgad Road', 'Camp', 'Pimpri Gaon', 'Chinchwad Gaon', 'Bhosari', 'Nigdi', 'Bhugaon', 'Man', 'Sus', 'Malwadi', 'Warje', 'Fursungi', 'Wagholi', 'Manjari', 'Lohgaon', 'Vishrantwadi', 'Khadki', 'Nanded City'];
         const matchedLocality = localities.find(l => l.toLowerCase() === cityParam.toLowerCase());
         if (matchedLocality) {
           setCity('Pune');
@@ -94,7 +93,7 @@ export default function Properties() {
       }
     }
     if (searchParam) setQuery(searchParam);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Reset page when search/filter attributes change
@@ -102,11 +101,23 @@ export default function Properties() {
     setPage(1);
   }, [type, city, budget, sort, query]);
 
+  // Scroll to top of page when pagination page changes ( Lenis compatible )
+  useEffect(() => {
+    if (window.lenis) {
+      window.lenis.scrollTo(0, { immediate: true });
+    } else {
+      window.scrollTo(0, 0);
+    }
+  }, [page]);
+
   // Click outside to close sort dropdown
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
         setSortOpen(false);
+      }
+      if (cityDropdownRef.current && !cityDropdownRef.current.contains(e.target)) {
+        setCityOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -118,11 +129,11 @@ export default function Properties() {
     setLoading(true);
     try {
       const params = { sort: SORT_API_MAP[sort], page, limit: 6 };
-      if (type !== 'All')            params.type     = type;
-      if (city !== 'All')            params.city     = city;
-      if (query)                     params.search   = query;
-      if (budget.min > 0)            params.minPrice = budget.min;
-      if (budget.max !== Infinity)   params.maxPrice = budget.max;
+      if (type !== 'All') params.type = type;
+      if (city !== 'All') params.city = city;
+      if (query) params.search = query;
+      if (budget.min > 0) params.minPrice = budget.min;
+      if (budget.max !== Infinity) params.maxPrice = budget.max;
 
       const data = await fetchProperties(params, { signal });
       setAllProperties(data.properties);
@@ -179,7 +190,7 @@ export default function Properties() {
     setSort('Newest');
   };
 
-  const hasFilters = query || type !== 'All' || budget.label !== 'Any';
+  const hasFilters = query || type !== 'All' || city !== 'All' || budget.label !== 'Any';
 
   return (
     <div className="min-h-screen bg-surface dark:bg-navy-dark pt-20 transition-colors duration-300">
@@ -208,13 +219,13 @@ export default function Properties() {
       </div>
 
       {/* ── Filters Bar ── */}
-      <div className="sticky top-[74px] z-30 bg-white/95 dark:bg-navy-dark/95 backdrop-blur-xl border-b border-gray-100 dark:border-white/10 shadow-[0_4px_20px_rgba(7,26,47,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.15)] transition-colors duration-300">
+      <div className="bg-white/95 dark:bg-navy-dark/95 border-b border-gray-100 dark:border-white/10 transition-colors duration-300">
         <div className="container-luxury py-4">
           <div className="flex flex-col gap-3">
 
             {/* Row 1 */}
-            <div className="flex items-center gap-2 md:gap-3 w-full">
-              <div className="relative flex-1 min-w-0">
+            <div className="flex flex-col md:flex-row items-stretch md:items-center gap-2 md:gap-3 w-full">
+              <div className="relative w-full md:w-[42%] shrink-0">
                 <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-soft dark:text-white/40" />
                 <input
                   value={query}
@@ -224,76 +235,121 @@ export default function Properties() {
                 />
               </div>
 
-              <div className="relative shrink-0" ref={dropdownRef}>
-                <button
-                  onClick={() => setSortOpen(!sortOpen)}
-                  className="flex items-center justify-between gap-2 px-4 h-[40px] rounded-xl text-[11px] md:text-xs font-semibold border border-gray-200 dark:border-white/10 bg-white dark:bg-navy text-navy dark:text-white hover:border-gold/50 transition-colors"
-                >
-                  <span>{sort}</span>
-                  <ChevronDown className={`w-3.5 h-3.5 text-ink-soft dark:text-white/40 transition-transform duration-200 ${sortOpen ? 'rotate-180' : ''}`} />
-                </button>
-                
-                <AnimatePresence>
-                  {sortOpen && (
-                    <motion.div
-                      data-lenis-prevent
-                      initial={{ opacity: 0, y: 8, scale: 0.97 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, y: 8, scale: 0.97 }}
-                      transition={{ duration: 0.15, ease: 'easeOut' }}
-                      className="absolute right-0 top-full mt-2 w-48 bg-white/95 dark:bg-navy/95 backdrop-blur-md border border-gray-150 dark:border-white/10 rounded-2xl shadow-luxury overflow-hidden z-50 py-1.5"
-                    >
-                      {SORTBY.map((s) => (
-                        <button
-                          key={s}
-                          onClick={() => {
-                            setSort(s);
-                            setSortOpen(false);
-                          }}
-                          className={`w-full text-left px-4 py-2.5 text-xs font-semibold transition-colors flex items-center justify-between ${
-                            sort === s
-                              ? 'bg-gold/10 text-gold-dark dark:text-gold'
-                              : 'text-ink-muted dark:text-cream/80 hover:bg-gray-50 dark:hover:bg-white/5 hover:text-navy dark:hover:text-white'
-                          }`}
-                        >
-                          {s}
-                          {sort === s && <span className="text-gold text-[10px]">●</span>}
-                        </button>
-                      ))}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-
-              <div className="flex gap-0.5 p-1 h-[40px] items-center rounded-xl shrink-0 bg-black/5 dark:bg-white/5 border border-transparent dark:border-white/5">
-                {[
-                  ['grid', <Grid3X3 key="g" className="w-3.5 h-3.5" />],
-                  ['list', <List key="l" className="w-3.5 h-3.5" />]
-                ].map(([v, icon]) => (
-                  <button key={v} onClick={() => setView(v)}
-                    className={`p-1.5 rounded-lg transition-all duration-200 h-7 w-7 flex items-center justify-center ${
-                      view === v
-                        ? 'bg-white dark:bg-navy-light text-navy dark:text-white shadow-sm'
-                        : 'bg-transparent text-ink-soft dark:text-white/40 hover:text-navy dark:hover:text-white'
-                    }`}
+              {/* Group for other filters on mobile */}
+              <div className="flex items-center gap-2 w-full md:flex-1">
+                {/* City Dropdown Selector */}
+                <div className="relative flex-1 md:shrink-0 min-w-0" ref={cityDropdownRef}>
+                  <button
+                    onClick={() => setCityOpen(!cityOpen)}
+                    className="flex items-center justify-between gap-2 px-3 md:px-4 h-[40px] w-full md:min-w-[140px] rounded-xl text-[11px] md:text-xs font-semibold border border-gray-200 dark:border-white/10 bg-white dark:bg-navy text-navy dark:text-white hover:border-gold/50 transition-colors"
                   >
-                    {icon}
+                    <MapPin className="w-3.5 h-3.5 shrink-0" style={{ color: '#D4AF37' }} />
+                    <span className="truncate flex-1 text-left">{city === 'All' ? 'All Localities' : city}</span>
+                    <ChevronDown className={`w-3.5 h-3.5 text-ink-soft dark:text-white/40 transition-transform duration-200 shrink-0 ${cityOpen ? 'rotate-180' : ''}`} />
                   </button>
-                ))}
+
+                  <AnimatePresence>
+                    {cityOpen && (
+                      <motion.div
+                        data-lenis-prevent
+                        initial={{ opacity: 0, y: 8, scale: 0.97 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 8, scale: 0.97 }}
+                        transition={{ duration: 0.15, ease: 'easeOut' }}
+                        className="absolute left-0 right-0 md:right-auto md:w-48 top-full mt-2 max-h-60 overflow-y-auto bg-white/95 dark:bg-navy/95 backdrop-blur-md border border-gray-150 dark:border-white/10 rounded-2xl shadow-luxury z-50 py-1.5 no-scrollbar"
+                      >
+                        {CITIES.map((c) => (
+                          <button
+                            key={c}
+                            onClick={() => {
+                              setCity(c);
+                              setCityOpen(false);
+                            }}
+                            className={`w-full text-left px-4 py-2.5 text-xs font-semibold transition-colors flex items-center justify-between ${city === c
+                                ? 'bg-gold/10 text-gold-dark dark:text-gold'
+                                : 'text-ink-muted dark:text-cream/80 hover:bg-gray-50 dark:hover:bg-white/5 hover:text-navy dark:hover:text-white'
+                              }`}
+                          >
+                            <span>{c === 'All' ? 'All Localities' : c}</span>
+                            {city === c && <span className="text-gold text-[10px]">●</span>}
+                          </button>
+                        ))}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+
+                {/* Sort dropdown */}
+                <div className="relative flex-1 md:shrink-0 min-w-0" ref={dropdownRef}>
+                  <button
+                    onClick={() => setSortOpen(!sortOpen)}
+                    className="flex items-center justify-between gap-2 px-3 md:px-4 h-[40px] w-full md:min-w-[120px] rounded-xl text-[11px] md:text-xs font-semibold border border-gray-200 dark:border-white/10 bg-white dark:bg-navy text-navy dark:text-white hover:border-gold/50 transition-colors"
+                  >
+                    <ArrowUpDown className="w-3.5 h-3.5 shrink-0 text-ink-soft dark:text-white/40" />
+                    <span className="truncate flex-1 text-left">{sort}</span>
+                    <ChevronDown className={`w-3.5 h-3.5 text-ink-soft dark:text-white/40 transition-transform duration-200 shrink-0 ${sortOpen ? 'rotate-180' : ''}`} />
+                  </button>
+
+                  <AnimatePresence>
+                    {sortOpen && (
+                      <motion.div
+                        data-lenis-prevent
+                        initial={{ opacity: 0, y: 8, scale: 0.97 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 8, scale: 0.97 }}
+                        transition={{ duration: 0.15, ease: 'easeOut' }}
+                        className="absolute left-0 right-0 md:right-auto md:w-48 top-full mt-2 bg-white/95 dark:bg-navy/95 backdrop-blur-md border border-gray-150 dark:border-white/10 rounded-2xl shadow-luxury overflow-hidden z-50 py-1.5"
+                      >
+                        {SORTBY.map((s) => (
+                          <button
+                            key={s}
+                            onClick={() => {
+                              setSort(s);
+                              setSortOpen(false);
+                            }}
+                            className={`w-full text-left px-4 py-2.5 text-xs font-semibold transition-colors flex items-center justify-between ${sort === s
+                                ? 'bg-gold/10 text-gold-dark dark:text-gold'
+                                : 'text-ink-muted dark:text-cream/80 hover:bg-gray-50 dark:hover:bg-white/5 hover:text-navy dark:hover:text-white'
+                              }`}
+                          >
+                            {s}
+                            {sort === s && <span className="text-gold text-[10px]">●</span>}
+                          </button>
+                        ))}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+
+                {/* Grid view selector */}
+                <div className="flex gap-0.5 p-1 h-[40px] items-center rounded-xl shrink-0 bg-black/5 dark:bg-white/5 border border-transparent dark:border-white/5">
+                  {[
+                    ['grid', <Grid3X3 key="g" className="w-3.5 h-3.5" />],
+                    ['list', <List key="l" className="w-3.5 h-3.5" />]
+                  ].map(([v, icon]) => (
+                    <button key={v} onClick={() => setView(v)}
+                      className={`p-1.5 rounded-lg transition-all duration-200 h-7 w-7 flex items-center justify-center ${view === v
+                          ? 'bg-white dark:bg-navy-light text-navy dark:text-white shadow-sm'
+                          : 'bg-transparent text-ink-soft dark:text-white/40 hover:text-navy dark:hover:text-white'
+                        }`}
+                    >
+                      {icon}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
 
             {/* Row 2: Filters (Types & Budgets) */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 pt-1">
               {/* Type pills */}
-              <div className="flex gap-1.5 overflow-x-auto no-scrollbar items-center shrink-0">
+              <div className="flex gap-1.5 overflow-x-auto no-scrollbar items-center shrink-0 py-1.5">
                 {TYPES.map(t => (
                   <button key={t} onClick={() => setType(t)}
-                    className={`px-3.5 h-[36px] rounded-lg text-[11px] font-semibold whitespace-nowrap transition-all duration-250 shrink-0 flex items-center justify-center ${
-                      type === t
+                    className={`px-3.5 h-[36px] rounded-lg text-[11px] font-semibold whitespace-nowrap transition-all duration-250 shrink-0 flex items-center justify-center ${type === t
                         ? 'bg-gradient-to-r from-gold to-gold-light text-navy shadow-[0_3px_10px_rgba(212,175,55,0.25)]'
                         : 'bg-black/5 dark:bg-white/5 text-ink-muted dark:text-cream/80 hover:bg-black/10 dark:hover:bg-white/10'
-                    }`}
+                      }`}
                   >
                     {t}
                   </button>
@@ -304,17 +360,16 @@ export default function Properties() {
               <div className="hidden md:block h-5 w-px bg-gray-200 dark:bg-white/10 mx-2" />
 
               {/* Budget pills */}
-              <div className="flex gap-1.5 overflow-x-auto no-scrollbar items-center flex-1 md:justify-end">
+              <div className="flex gap-1.5 overflow-x-auto no-scrollbar items-center flex-1 md:justify-end py-1.5">
                 <span className="text-[10px] uppercase font-bold text-ink-soft dark:text-white/40 shrink-0 mr-1">
                   Budget:
                 </span>
                 {BUDGETS.map(b => (
                   <button key={b.label} onClick={() => setBudget(b)}
-                    className={`px-3 h-[32px] rounded-lg text-[10px] font-semibold whitespace-nowrap transition-all duration-250 shrink-0 flex items-center justify-center border ${
-                      budget.label === b.label
+                    className={`px-3 h-[32px] rounded-lg text-[10px] font-semibold whitespace-nowrap transition-all duration-250 shrink-0 flex items-center justify-center border ${budget.label === b.label
                         ? 'bg-gold/10 text-gold-dark dark:text-gold border-gold'
                         : 'bg-black/5 dark:bg-white/5 text-ink-muted dark:text-cream/80 border-transparent hover:bg-black/10 dark:hover:bg-white/10'
-                    }`}
+                      }`}
                   >
                     {b.label === 'Any' ? 'Any Budget' : b.label}
                   </button>
@@ -388,16 +443,15 @@ export default function Properties() {
             >
               Previous
             </button>
-            
+
             {[...Array(totalPages)].map((_, i) => (
               <button
                 key={i}
                 onClick={() => setPage(i + 1)}
-                className={`w-9 h-9 rounded-xl text-xs font-bold transition-all ${
-                  page === i + 1
+                className={`w-9 h-9 rounded-xl text-xs font-bold transition-all ${page === i + 1
                     ? 'bg-gradient-to-r from-gold to-gold-light text-navy shadow-[0_3px_10px_rgba(212,175,55,0.25)]'
                     : 'border border-transparent hover:bg-black/5 dark:hover:bg-white/5 text-ink-muted dark:text-cream/80'
-                }`}
+                  }`}
               >
                 {i + 1}
               </button>

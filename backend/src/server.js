@@ -12,6 +12,7 @@ import propertyRoutes from './routes/property.js';
 import chatRoutes     from './routes/chat.js';
 import blogRoutes     from './routes/blog.js';
 import uploadRoutes   from './routes/upload.js';
+import partnerRoutes  from './routes/partner.js';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -95,6 +96,7 @@ app.use('/api/properties', propertyRoutes);
 app.use('/api/chat',       chatRoutes);
 app.use('/api/blogs',      blogRoutes);
 app.use('/api/upload',     uploadRoutes);
+app.use('/api/partners',   partnerRoutes);
 
 // ── Health Check ───────────────────────────────────────────────────────────────
 app.get('/api/health', (req, res) => {

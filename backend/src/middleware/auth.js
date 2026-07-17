@@ -53,4 +53,4 @@ export const requireRole = (...roles) => (req, res, next) => {
 export const adminOnly      = [protect, requireRole('admin')];
 export const managementPlus = [protect, requireRole('admin', 'management')];
 export const leadControlPlus= [protect, requireRole('admin', 'management')];
-export const staffOnly      = [protect, requireRole('admin', 'management')];
+export const staffOnly      = [protect, requireRole('admin', 'management', 'agent')];

@@ -97,7 +97,7 @@ export default function Contact() {
     phone: '',
     email: '',
     subject: location.state?.subject || '',
-    message: '',
+    message: location.state?.message || '',
     timezone: 'Dubai (GST)',
     preferredTime: ''
   });
@@ -193,6 +193,7 @@ export default function Contact() {
                       email: form.email,
                       subject: form.subject,
                       message: finalMessage,
+                      propertyId: location.state?.propertyId || undefined,
                       isNRI: form.phone.startsWith('+') && !form.phone.startsWith('+91'),
                     });
                     setSubmitted(true);

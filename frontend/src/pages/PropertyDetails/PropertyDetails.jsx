@@ -535,7 +535,7 @@ export default function PropertyDetails() {
               <div className="mb-8">
                 <h2 className="font-display font-bold text-navy dark:text-white text-xl mb-5">Amenities</h2>
                 <div className="flex flex-wrap gap-2.5">
-                  {property.amenities.map((a, i) => (
+                  {(property.amenities || []).map((a, i) => (
                     <span key={i} className="flex items-center gap-2 px-4 py-2 rounded-full text-xs font-semibold bg-gold/5 dark:bg-gold/10 border border-gold/20 text-gold-dark dark:text-gold-light"
                     >
                       <CheckCircle2 className="w-3 h-3" />
@@ -625,7 +625,13 @@ export default function PropertyDetails() {
               <p className="text-ink-soft dark:text-white/40 text-xs mb-6">Negotiable · RERA Verified</p>
 
               <div className="flex flex-col gap-3 mb-5">
-                <Link to="/contact"
+                <Link 
+                  to="/contact"
+                  state={{
+                    subject: `Book a Site Visit: ${property.title}`,
+                    propertyId: property._id || property.id,
+                    message: `Hi, I am interested in booking a site visit for "${property.title}" (Locality: ${property.location}). Please connect me with the specialist advisor, ${property.agent?.name || 'an agent'}.`
+                  }}
                   onClick={(e) => {
                     if (!user) {
                       e.preventDefault();
@@ -693,7 +699,7 @@ export default function PropertyDetails() {
         <div className="mt-16 bg-white dark:bg-navy border border-gray-100 dark:border-white/10 rounded-3xl p-6 md:p-8 shadow-card transition-colors duration-300">
           <div className="flex flex-col lg:flex-row gap-8">
             {/* Map Column */}
-            <div className="flex-1 min-h-[350px] md:min-h-[450px] relative rounded-2xl overflow-hidden border border-gray-100 dark:border-white/5">
+            <div className="flex-1 min-h-[350px] md:min-h-[450px] relative z-0 order-2 lg:order-1 rounded-2xl overflow-hidden border border-gray-100 dark:border-white/5">
               <InteractiveMap
                 properties={[property]}
                 center={mapCenter}
@@ -710,7 +716,7 @@ export default function PropertyDetails() {
             </div>
 
             {/* Amenities Sidebar Column */}
-            <div className="w-full lg:w-[380px] shrink-0 flex flex-col justify-between">
+            <div className="w-full lg:w-[380px] shrink-0 flex flex-col justify-between order-1 lg:order-2">
               <div>
                 <span className="h-px w-8 bg-gold inline-block mb-3" style={{ background: '#D4AF37' }} />
                 <h3 className="font-display font-black text-navy dark:text-white text-2xl tracking-tight mb-2">

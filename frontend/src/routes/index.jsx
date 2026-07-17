@@ -14,7 +14,6 @@ const Blog            = lazy(() => import('../pages/Blog/Blog'));
 const BlogDetails     = lazy(() => import('../pages/BlogDetails/BlogDetails'));
 const Contact         = lazy(() => import('../pages/Contact/Contact'));
 const Wishlist        = lazy(() => import('../pages/Wishlist/Wishlist'));
-const NRICorner       = lazy(() => import('../pages/NRICorner/NRICorner'));
 const NotFound        = lazy(() => import('../pages/NotFound/NotFound'));
 const BuyProperty     = lazy(() => import('../pages/Services/BuyProperty'));
 const SellProperty    = lazy(() => import('../pages/Services/SellProperty'));
@@ -29,11 +28,10 @@ const AuthCallback    = lazy(() => import('../pages/Auth/AuthCallback'));
 const AdminLogin      = lazy(() => import('../pages/Admin/AdminLogin'));
 const AdminLayout     = lazy(() => import('../pages/Admin/AdminLayout'));
 const Dashboard       = lazy(() => import('../pages/Admin/Dashboard'));
-const LeadsList       = lazy(() => import('../pages/Admin/LeadsList'));
-const LeadDetail      = lazy(() => import('../pages/Admin/LeadDetail'));
 const BlogsAdmin      = lazy(() => import('../pages/Admin/BlogsAdmin'));
 const PropertiesAdmin = lazy(() => import('../pages/Admin/PropertiesAdmin'));
 const UsersAdmin      = lazy(() => import('../pages/Admin/UsersAdmin'));
+const PartnersAdmin   = lazy(() => import('../pages/Admin/PartnersAdmin'));
 
 // ── Guard: redirect to login if not staff ─────────────────────────────────────
 function PanelGuard({ children, requiredRoles }) {
@@ -62,7 +60,6 @@ export default function AppRoutes() {
           <Route path="blog/:id" element={<BlogDetails />} />
           <Route path="contact" element={<Contact />} />
           <Route path="wishlist" element={<Wishlist />} />
-          <Route path="nri-corner" element={<NRICorner />} />
           <Route path="services" element={<ServicesIndex />} />
           <Route path="services/buy"        element={<AuthGuard><BuyProperty /></AuthGuard>} />
           <Route path="services/sell"       element={<AuthGuard><SellProperty /></AuthGuard>} />
@@ -91,17 +88,7 @@ export default function AppRoutes() {
                   </PanelGuard>
                 } />
 
-                {/* Leads — admin + management */}
-                <Route path="leads" element={
-                  <PanelGuard requiredRoles={['admin','management']}>
-                    <LeadsList />
-                  </PanelGuard>
-                } />
-                <Route path="leads/:id" element={
-                  <PanelGuard requiredRoles={['admin','management']}>
-                    <LeadDetail />
-                  </PanelGuard>
-                } />
+
 
                 {/* Blog Manager — admin + management */}
                 <Route path="blogs" element={
@@ -114,6 +101,13 @@ export default function AppRoutes() {
                 <Route path="properties" element={
                   <PanelGuard requiredRoles={['admin','management']}>
                     <PropertiesAdmin />
+                  </PanelGuard>
+                } />
+
+                {/* Partners — admin + management */}
+                <Route path="partners" element={
+                  <PanelGuard requiredRoles={['admin','management']}>
+                    <PartnersAdmin />
                   </PanelGuard>
                 } />
 

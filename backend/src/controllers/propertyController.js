@@ -19,9 +19,16 @@ export const getAllProperties = async (req, res) => {
     if (type    && type    !== 'All') filter.type = type;
     if (city    && city    !== 'All') {
       const localities = [
-        'Koregaon Park', 'Baner', 'Aundh', 'Hinjewadi', 'Wakad', 
-        'Boat Club Road', 'Kalyani Nagar', 'Viman Nagar', 'Bavdhan', 
-        'NIBM', 'Magarpatta', 'Hadapsar', 'Balewadi', 'Kharadi'
+        'Balewadi', 'Hadapsar', 'KP', 'NIBM Road', 'Viman Nagar', 'Kharadi',
+        'Punewadi', 'Kothrud', 'Karve Nagar', 'Shewalewadi Road', 'Baner',
+        'Pashan', 'Bawadhan', 'MG Road', 'JM Road', 'F.C. Road',
+        'Hinjewadi Phase I, II', 'Ravet', 'Ganga Dham Chownk', 'Swargate',
+        'Katraj', 'Prabhat Road', 'Bibwewadi', 'Bhekrai Nagar', 'Pimple Gurav',
+        'Pimple Saudagar', 'Dhayari', 'Kondhwa', 'Undri', 'Muhamad wadi',
+        'Handewadi', 'Wakad', 'Shivaji Nagar', 'Parvati Hill', 'Sukhsagar Nagar',
+        'Singhgad Road', 'Camp', 'Pimpri Gaon', 'Chinchwad Gaon', 'Bhosari',
+        'Nigdi', 'Bhugaon', 'Man', 'Sus', 'Malwadi', 'Warje', 'Fursungi',
+        'Wagholi', 'Manjari', 'Lohgaon', 'Vishrantwadi', 'Khadki', 'Nanded City'
       ];
       if (localities.includes(city)) {
         filter.location = new RegExp(city, 'i');
@@ -165,9 +172,11 @@ export const getPropertyCounts = async (req, res) => {
     };
 
     const localities = [
-      'Koregaon Park', 'Baner', 'Aundh', 'Hinjewadi', 'Wakad',
-      'Boat Club Road', 'Kalyani Nagar', 'Viman Nagar', 'Bavdhan',
-      'NIBM', 'Magarpatta', 'Hadapsar', 'Balewadi', 'Kharadi',
+      'Balewadi', 'Hadapsar', 'KP', 'NIBM Road', 'Viman Nagar', 'Kharadi',
+      'Punewadi', 'Kothrud', 'Karve Nagar', 'Shewalewadi Road', 'Baner',
+      'Pashan', 'Bawadhan', 'MG Road', 'JM Road', 'F.C. Road',
+      'Hinjewadi Phase I, II', 'Ravet', 'Ganga Dham Chownk', 'Swargate',
+      'Katraj', 'Prabhat Road'
     ];
 
     // Single aggregation pipeline — far more efficient than fetching all docs and looping in JS
@@ -197,7 +206,7 @@ export const getPropertyCounts = async (req, res) => {
 
     const localityCounts = {};
     localityAggs.forEach(({ locality, count }) => {
-      if (count > 0) localityCounts[locality] = count;
+      localityCounts[locality] = count;
     });
 
     return res.status(200).json({ success: true, typeCounts, localityCounts });

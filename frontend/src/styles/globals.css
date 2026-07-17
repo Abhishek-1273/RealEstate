@@ -599,6 +599,7 @@ html.lenis body {
 .glow-border:hover::before {
   opacity: 1;
 }
+
 /* ═══════════════════════════════════════
    PROPERTY DETAILS — GALLERY SWIPER
    (replaces dangerouslySetInnerHTML in PropertyDetails.jsx)

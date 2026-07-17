@@ -26,10 +26,10 @@ export default function PropertyCard({ property, view = 'grid' }) {
     return (
       <div 
         onClick={() => navigate(`/properties/${property._id || property.id}`)}
-        className="bg-white dark:bg-navy-light rounded-3xl overflow-hidden shadow-card hover:shadow-xl transition-all duration-300 border border-gray-100 dark:border-white/20 flex flex-row h-[140px] md:h-[260px] group cursor-pointer relative"
+        className="bg-white dark:bg-navy-light rounded-3xl overflow-hidden shadow-card hover:shadow-xl transition-all duration-300 border border-gray-100 dark:border-white/20 flex flex-row h-[170px] md:h-[260px] group cursor-pointer relative"
       >
         {/* ── Image Column ── */}
-        <div className="relative overflow-hidden w-[120px] md:w-[320px] shrink-0 h-full">
+        <div className="relative overflow-hidden w-[140px] md:w-[320px] shrink-0 h-full">
           {!imgLoaded && (
             <div className="absolute inset-0 bg-gradient-to-br from-gray-100 to-gray-200 animate-pulse" />
           )}
@@ -55,7 +55,7 @@ export default function PropertyCard({ property, view = 'grid' }) {
         </div>
 
         {/* ── Content Column ── */}
-        <div className="p-3 md:p-6 flex-1 flex flex-col justify-between min-w-0">
+        <div className="p-4 md:p-6 flex-1 flex flex-col justify-between min-w-0">
           <div>
             <div className="flex flex-col md:flex-row md:items-start justify-between gap-1 md:gap-3 mb-1 md:mb-2.5">
               <div className="space-y-0.5 md:space-y-1 min-w-0">
@@ -85,8 +85,8 @@ export default function PropertyCard({ property, view = 'grid' }) {
             </p>
           </div>
 
-          <div className="flex flex-row items-center justify-between gap-4 pt-2 border-t border-gray-100 dark:border-white/10 mt-auto">
-            <div className="flex items-center gap-3 md:gap-5 text-ink-muted dark:text-white/60 text-[9px] md:text-xs">
+          <div className="flex flex-row items-center justify-between gap-4 pt-2.5 border-t border-gray-100 dark:border-white/10 mt-auto">
+            <div className="flex items-center gap-2.5 md:gap-5 text-ink-muted dark:text-white/60 text-[9px] md:text-xs">
               {[
                 { icon: <Bed className="w-3 h-3 md:w-3.5 md:h-3.5 text-gold/80" />, val: `${property.bedrooms} Beds` },
                 { icon: <Bath className="w-3 h-3 md:w-3.5 md:h-3.5 text-gold/80" />, val: `${property.bathrooms} Baths` },
@@ -96,7 +96,7 @@ export default function PropertyCard({ property, view = 'grid' }) {
                   {s.icon}
                   <span className="font-semibold text-navy/80 dark:text-cream/90">
                     {s.val.split(' ')[0]}
-                    <span className="hidden md:inline"> {s.val.split(' ')[1]}</span>
+                    <span className="hidden sm:inline"> {s.val.split(' ')[1]}</span>
                   </span>
                 </div>
               ))}
@@ -142,7 +142,7 @@ export default function PropertyCard({ property, view = 'grid' }) {
     >
       <div onClick={() => navigate(`/properties/${property._id || property.id}`)} className="rounded-3xl overflow-hidden">
         {/* ── Image ── */}
-        <div className="relative overflow-hidden rounded-t-3xl" style={{ height: '260px' }}>
+        <div className="relative overflow-hidden rounded-t-3xl aspect-square w-full">
           {/* Skeleton loader */}
           {!imgLoaded && (
             <div className="absolute inset-0 bg-gradient-to-br from-gray-100 to-gray-200 animate-pulse" />
@@ -231,15 +231,15 @@ export default function PropertyCard({ property, view = 'grid' }) {
             <span className="truncate">{property.location}</span>
           </div>
 
-          <div className="flex items-center justify-between text-ink-muted dark:text-white/60 text-xs pt-4 border-t border-gray-100 dark:border-white/20">
+          <div className="flex items-center justify-between text-ink-muted dark:text-white/60 text-[11px] md:text-xs pt-3 md:pt-4 border-t border-gray-100 dark:border-white/20 gap-1">
             {[
-              { icon: <Bed className="w-3.5 h-3.5" />, val: `${property.bedrooms} Beds` },
-              { icon: <Bath className="w-3.5 h-3.5" />, val: `${property.bathrooms} Baths` },
-              { icon: <Square className="w-3.5 h-3.5" />, val: `${property.area.toLocaleString()} sqft` },
+              { icon: <Bed className="w-3 h-3 md:w-3.5 md:h-3.5" />, val: `${property.bedrooms} Beds` },
+              { icon: <Bath className="w-3 h-3 md:w-3.5 md:h-3.5" />, val: `${property.bathrooms} Baths` },
+              { icon: <Square className="w-3 h-3 md:w-3.5 md:h-3.5" />, val: `${property.area.toLocaleString()} sqft` },
             ].map((s, i) => (
-              <div key={i} className="flex items-center gap-1.5 transition-transform duration-300 group-hover:translate-y-[-2px]">
+              <div key={i} className="flex items-center gap-1 transition-transform duration-300 group-hover:translate-y-[-2px]">
                 {s.icon}
-                <span>{s.val}</span>
+                <span className="whitespace-nowrap">{s.val}</span>
               </div>
             ))}
           </div>

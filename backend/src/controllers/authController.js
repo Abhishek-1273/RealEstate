@@ -2,6 +2,9 @@ import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import User from '../models/User.js';
 import Otp from '../models/Otp.js';
+import Enquiry from '../models/Enquiry.js';
+import Property from '../models/Property.js';
+import { sendEmail } from '../utils/mailer.js';
 
 // ── Helper: sign a JWT and set it as httpOnly cookie ──────────────────────────
 const setTokenCookie = (res, userId) => {
@@ -29,6 +32,8 @@ const userPayload = (user) => ({
   email:      user.email,
   role:       user.role,
   department: user.department,
+  expertise:  user.expertise || '',
+  qualities:  user.qualities || '',
   isActive:   user.isActive,
   createdAt:  user.createdAt,
 });
@@ -39,6 +44,24 @@ const userPayload = (user) => ({
 export const signIn = async (req, res) => {
   try {
     const { name, phone, email } = req.body;
+
+    // Email-only sign in (Staff/Admin Portal)
+    if (email && !phone && !name) {
+      const user = await User.findOne({ email: email.toLowerCase() });
+      if (!user) {
+        return res.status(404).json({ success: false, message: 'Staff account not found for this email.' });
+      }
+      if (!user.isActive) {
+        return res.status(403).json({ success: false, message: 'Your account has been deactivated. Please contact support.' });
+      }
+      setTokenCookie(res, user._id);
+      return res.status(200).json({
+        success: true,
+        message: 'Welcome back!',
+        isNew: false,
+        user: userPayload(user),
+      });
+    }
 
     if (!name || !phone) {
       return res.status(400).json({ success: false, message: 'Name and phone are required' });
@@ -82,35 +105,29 @@ export const signIn = async (req, res) => {
 // ─────────────────────────────────────────────────────────────────────────────
 export const sendOtp = async (req, res) => {
   try {
-    const { target, mode } = req.body; // target is email or phone, mode is 'login' or 'signup'
+    const { target, mode } = req.body; // target must be email, mode is 'login' or 'signup'
     if (!target) {
-      return res.status(400).json({ success: false, message: 'Email or Mobile Number is required' });
+      return res.status(400).json({ success: false, message: 'Email Address is required' });
     }
 
     const isEmail = target.includes('@');
-    if (isEmail) {
-      if (!/\S+@\S+\.\S+/.test(target)) {
-        return res.status(400).json({ success: false, message: 'Invalid email format' });
-      }
-    } else {
-      if (!/^[6-9]\d{9}$/.test(target)) {
-        return res.status(400).json({ success: false, message: 'Invalid 10-digit Indian mobile number' });
-      }
+    if (!isEmail || !/\S+@\S+\.\S+/.test(target)) {
+      return res.status(400).json({ success: false, message: 'Invalid email format. Only email is supported for verification codes.' });
     }
 
-    // Check database
-    const user = await User.findOne({ $or: [{ phone: target }, { email: target }] });
+    // Check database by email only
+    const user = await User.findOne({ email: target.toLowerCase() });
 
     if (mode === 'login') {
       if (!user) {
-        return res.status(404).json({ success: false, message: 'No account registered with this number/email. Please sign up!' });
+        return res.status(404).json({ success: false, message: 'No account registered with this email. Please sign up!' });
       }
       if (!user.isActive) {
         return res.status(403).json({ success: false, message: 'Your account has been deactivated. Please contact support.' });
       }
     } else if (mode === 'signup') {
       if (user) {
-        return res.status(400).json({ success: false, message: 'An account with this number/email already exists. Please login instead!' });
+        return res.status(400).json({ success: false, message: 'An account with this email already exists. Please login instead!' });
       }
     }
 
@@ -125,10 +142,27 @@ export const sendOtp = async (req, res) => {
       { upsert: true, new: true }
     );
 
-    // Log OTP to console in development only (never in production)
-    if (process.env.NODE_ENV !== 'production') {
-      console.info(`[DEV-ONLY OTP] Target: ${target} | Code: ${code} | Expires: ${expiresAt.toLocaleTimeString()}`);
-    }
+    // Send the email (handles SMTP sending and console log fallback automatically)
+    await sendEmail({
+      to: target,
+      subject: `HyperRelestix Verification Code: ${code}`,
+      text: `Your verification code is ${code}. It will expire in 5 minutes.`,
+      html: `
+        <div style="font-family: Arial, sans-serif; padding: 25px; color: #071A2F; max-width: 500px; margin: 0 auto; border: 1px solid #E5C17D; border-radius: 16px; background-color: #FAF8F5;">
+          <div style="text-align: center; margin-bottom: 20px;">
+            <h2 style="font-size: 24px; font-weight: bold; margin: 0; color: #071A2F;">Hyper<span style="color: #D4AF37;">Relestix</span></h2>
+            <p style="font-size: 9px; letter-spacing: 2px; text-transform: uppercase; margin: 5px 0 0 0; color: #8C96A3;">Premium Real Estate</p>
+          </div>
+          <hr style="border: 0; border-top: 1px solid #E5E9F0; margin-bottom: 20px;" />
+          <h3 style="font-size: 16px; font-weight: bold; margin-top: 0;">Verification Code</h3>
+          <p style="font-size: 13px; color: #4A5568; line-height: 1.5;">Please use the following verification code to access your account. This code is valid for 5 minutes.</p>
+          <div style="background-color: #071A2F; border-radius: 12px; text-align: center; font-size: 30px; font-weight: 800; letter-spacing: 6px; padding: 15px; margin: 20px 0; color: #E5C17D;">
+            ${code}
+          </div>
+          <p style="font-size: 11px; color: #718096; line-height: 1.4; margin-bottom: 0;">If you did not request this verification code, please disregard this email. Your account remains secure.</p>
+        </div>
+      `
+    });
 
     return res.status(200).json({ success: true, message: 'OTP sent successfully!' });
   } catch (error) {
@@ -164,30 +198,33 @@ export const verifyOtp = async (req, res) => {
     let isNew = false;
 
     if (mode === 'signup') {
-      if (!name || !phone) {
-        return res.status(400).json({ success: false, message: 'Name and Mobile Number are required for signup' });
+      if (!name || !phone || !email) {
+        return res.status(400).json({ success: false, message: 'Name, Mobile Number, and Email are required for signup' });
       }
       if (!/^[6-9]\d{9}$/.test(phone)) {
         return res.status(400).json({ success: false, message: 'Invalid 10-digit Indian mobile number' });
       }
+      if (!/\S+@\S+\.\S+/.test(email)) {
+        return res.status(400).json({ success: false, message: 'Invalid email format' });
+      }
 
-      // Check if user already exists
-      const existingUser = await User.findOne({ $or: [{ phone }, { email: email || 'random_non_matching_placeholder' }] });
+      // Check if user already exists with either phone or email
+      const existingUser = await User.findOne({ $or: [{ phone }, { email: email.toLowerCase() }] });
       if (existingUser) {
-        return res.status(400).json({ success: false, message: 'User already exists' });
+        return res.status(400).json({ success: false, message: 'A user with this Mobile Number or Email already exists.' });
       }
 
       // Create new user
       user = await User.create({
         name,
         phone,
-        email: email || '',
+        email: email.toLowerCase(),
         role: 'client',
       });
       isNew = true;
     } else {
-      // Login flow
-      user = await User.findOne({ $or: [{ phone: target }, { email: target }] });
+      // Login flow: target is email
+      user = await User.findOne({ email: target.toLowerCase() });
       if (!user) {
         return res.status(404).json({ success: false, message: 'User not found. Please sign up!' });
       }
@@ -258,7 +295,27 @@ export const getAllUsers = async (req, res) => {
     const filter = {};
     if (role) filter.role = role;
     const users = await User.find(filter).sort({ createdAt: -1 });
-    const mapped = users.map(userPayload);
+    
+    const mapped = await Promise.all(users.map(async (u) => {
+      const payload = userPayload(u);
+      if (u.role !== 'client') {
+        const activeLeadsCount = await Enquiry.countDocuments({
+          assignedTo: u._id,
+          status: { $nin: ['converted', 'lost'] }
+        });
+        payload.activeLeads = activeLeadsCount;
+
+        const propertiesCount = await Property.countDocuments({
+          'agent.id': String(u._id)
+        });
+        payload.propertiesCount = propertiesCount;
+      } else {
+        payload.activeLeads = 0;
+        payload.propertiesCount = 0;
+      }
+      return payload;
+    }));
+
     return res.status(200).json({ success: true, count: users.length, users: mapped });
   } catch (error) {
     return res.status(500).json({ success: false, message: error.message });
@@ -270,25 +327,35 @@ export const getAllUsers = async (req, res) => {
 // ─────────────────────────────────────────────────────────────────────────────
 export const createStaff = async (req, res) => {
   try {
-    const { name, phone, email, role, department } = req.body;
-    if (!name || !phone || !role) {
-      return res.status(400).json({ success: false, message: 'name, phone and role are required' });
+    const { name, phone, email, role, department, expertise, qualities } = req.body;
+    if (!name || !phone || !email || !role) {
+      return res.status(400).json({ success: false, message: 'name, phone, email and role are required' });
     }
-    const allowed = ['management', 'admin'];
+    const allowed = ['agent', 'management', 'admin'];
     if (!allowed.includes(role)) {
       return res.status(400).json({ success: false, message: 'Invalid role' });
     }
-    const existing = await User.findOne({ phone });
+    const existing = await User.findOne({ $or: [{ phone }, { email: email.toLowerCase() }] });
     if (existing) {
       // Upgrade existing client to staff role
       existing.role = role;
-      if (department) existing.department = department;
+      if (department !== undefined) existing.department = department;
+      if (expertise !== undefined) existing.expertise = expertise;
+      if (qualities !== undefined) existing.qualities = qualities;
       if (name)  existing.name  = name;
-      if (email) existing.email = email;
+      existing.email = email.toLowerCase();
       await existing.save();
       return res.status(200).json({ success: true, message: 'User role updated', user: userPayload(existing) });
     }
-    const user = await User.create({ name, phone, email: email || '', role, department: department || '' });
+    const user = await User.create({
+      name,
+      phone,
+      email: email.toLowerCase(),
+      role,
+      department: department || '',
+      expertise: expertise || '',
+      qualities: qualities || ''
+    });
     return res.status(201).json({ success: true, message: 'Staff member created', user: userPayload(user) });
   } catch (error) {
     return res.status(500).json({ success: false, message: error.message });
@@ -300,17 +367,22 @@ export const createStaff = async (req, res) => {
 // ─────────────────────────────────────────────────────────────────────────────
 export const updateUserRole = async (req, res) => {
   try {
-    const { role, department, isActive } = req.body;
+    const { role, department, expertise, qualities, isActive, name, phone, email } = req.body;
     const update = {};
     if (role !== undefined) {
-      const allowed = ['client', 'management', 'admin'];
+      const allowed = ['client', 'agent', 'management', 'admin'];
       if (!allowed.includes(role)) {
         return res.status(400).json({ success: false, message: 'Invalid role' });
       }
       update.role = role;
     }
     if (department !== undefined) update.department = department;
+    if (expertise  !== undefined) update.expertise  = expertise;
+    if (qualities  !== undefined) update.qualities  = qualities;
     if (isActive   !== undefined) update.isActive   = isActive;
+    if (name       !== undefined) update.name       = name;
+    if (phone      !== undefined) update.phone      = phone;
+    if (email      !== undefined) update.email      = email ? email.toLowerCase() : '';
 
     const user = await User.findByIdAndUpdate(req.params.id, update, { new: true, runValidators: true });
     if (!user) return res.status(404).json({ success: false, message: 'User not found' });
@@ -502,3 +574,17 @@ export const googleCallback = async (req, res) => {
     return res.status(500).json({ success: false, message: 'Something went wrong during Google login.' });
   }
 };
+
+// ─────────────────────────────────────────────────────────────────────────────
+// DELETE /api/auth/users/:id  — admin: delete user account
+// ─────────────────────────────────────────────────────────────────────────────
+export const deleteUser = async (req, res) => {
+  try {
+    const user = await User.findByIdAndDelete(req.params.id);
+    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+    return res.status(200).json({ success: true, message: 'User deleted successfully' });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+

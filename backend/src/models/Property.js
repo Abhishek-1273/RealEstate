@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 
 const agentSchema = new mongoose.Schema({
-  id:    { type: Number },
+  id:    { type: String },
   name:  { type: String, default: '' },
   phone: { type: String, default: '' },
 }, { _id: false });
@@ -16,7 +16,7 @@ const propertySchema = new mongoose.Schema(
     priceLabel: { type: String, default: '' },    // ₹45 Cr
 
     location:   { type: String, required: true }, // Worli, Mumbai
-    city:       { type: String, required: true }, // Mumbai
+    city:       { type: String, required: true }, // Pune (all properties are Pune-based)
 
     bedrooms:   { type: Number, default: 0 },
     bathrooms:  { type: Number, default: 0 },

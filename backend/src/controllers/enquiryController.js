@@ -1,19 +1,20 @@
 import Enquiry from '../models/Enquiry.js';
+import Property from '../models/Property.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // POST /api/enquiry  — public: all form types
 // ─────────────────────────────────────────────────────────────────────────────
 export const createEnquiry = async (req, res) => {
   try {
-    const { type, name, phone, email } = req.body;
+    const { type, name, phone, email, propertyId } = req.body;
 
-    if (!type)  return res.status(400).json({ success: false, message: 'Enquiry type is required' });
-    if (!name)  return res.status(400).json({ success: false, message: 'Name is required' });
+    if (!type) return res.status(400).json({ success: false, message: 'Enquiry type is required' });
+    if (!name) return res.status(400).json({ success: false, message: 'Name is required' });
     if (!phone) return res.status(400).json({ success: false, message: 'Phone number is required' });
 
     const cleanPhone = phone.replace(/\s/g, '');
     const indianPhone = /^[6-9]\d{9}$/.test(cleanPhone);
-    const intlPhone   = /^\+\d{7,15}$/.test(cleanPhone);
+    const intlPhone = /^\+\d{7,15}$/.test(cleanPhone);
     if (!indianPhone && !intlPhone) {
       return res.status(400).json({ success: false, message: 'Enter a valid phone number' });
     }
@@ -36,6 +37,23 @@ export const createEnquiry = async (req, res) => {
       followUps: [],
     };
 
+    if (propertyId) {
+      try {
+        const prop = await Property.findById(propertyId);
+        if (prop) {
+          payload.propertyId = prop._id;
+          payload.propertyTitle = prop.title;
+          if (prop.agent && prop.agent.id) {
+            payload.assignedTo = prop.agent.id;
+            payload.assignedToName = prop.agent.name;
+            payload.assignedAt = new Date();
+          }
+        }
+      } catch (err) {
+        console.error("Auto-assignment failed:", err);
+      }
+    }
+
     if (type === 'contact') {
       payload.subject = req.body.subject || '';
       payload.message = req.body.message || '';
@@ -51,6 +69,7 @@ export const createEnquiry = async (req, res) => {
       payload.bedrooms = req.body.bedrooms || '';
       payload.askingPrice = req.body.askingPrice || '';
       payload.furnishing = req.body.furnishing || '';
+      payload.images = req.body.images || [];
     } else if (type === 'lease') {
       payload.leasePurpose = req.body.leasePurpose || '';
       payload.rentRange = req.body.rentRange || '';
@@ -63,10 +82,10 @@ export const createEnquiry = async (req, res) => {
     const enquiry = await Enquiry.create(payload);
 
     const messages = {
-      contact:    "Message received! We'll respond within 2 hours.",
-      buy:        'Requirement submitted! Your advisor will contact you within 24 hours.',
-      sell:       'Listing request received! Our team will assess your property within 48 hours.',
-      lease:      'Lease enquiry submitted! Our rental desk will reach out soon.',
+      contact: "Message received! We'll respond within 2 hours.",
+      buy: 'Requirement submitted! Your advisor will contact you within 24 hours.',
+      sell: 'Listing request received! Our team will assess your property within 48 hours.',
+      lease: 'Lease enquiry submitted! Our rental desk will reach out soon.',
       management: "Management enquiry received! We'll schedule a property assessment.",
       newsletter: "Subscribed successfully! You'll receive our next NRI property update.",
     };
@@ -89,16 +108,16 @@ export const getAllEnquiries = async (req, res) => {
   try {
     const { type, status, assignedTo, limit = 50, page = 1 } = req.query;
     const filter = {};
-    if (type)       filter.type       = type;
-    if (status)     filter.status     = status;
+    if (type) filter.type = type;
+    if (status) filter.status = status;
     if (assignedTo) filter.assignedTo = assignedTo;
 
-    // Employees can only see their own assigned leads
-    if (req.user.role === 'employee') {
+    // Employees and agents can only see their own assigned leads
+    if (req.user.role === 'employee' || req.user.role === 'agent') {
       filter.assignedTo = req.user._id;
     }
 
-    const total    = await Enquiry.countDocuments(filter);
+    const total = await Enquiry.countDocuments(filter);
     const enquiries = await Enquiry
       .find(filter)
       .sort({ createdAt: -1 })
@@ -121,9 +140,9 @@ export const getEnquiryById = async (req, res) => {
       .populate('assignedTo', 'name phone role department');
     if (!enquiry) return res.status(404).json({ success: false, message: 'Enquiry not found' });
 
-    // Employees can only see their own
-    if (req.user.role === 'employee' &&
-        String(enquiry.assignedTo?._id) !== String(req.user._id)) {
+    // Employees and agents can only see their own
+    if ((req.user.role === 'employee' || req.user.role === 'agent') &&
+      String(enquiry.assignedTo?._id) !== String(req.user._id)) {
       return res.status(403).json({ success: false, message: 'Access denied' });
     }
 
@@ -147,9 +166,9 @@ export const updateEnquiryStatus = async (req, res) => {
     const enquiry = await Enquiry.findById(req.params.id);
     if (!enquiry) return res.status(404).json({ success: false, message: 'Enquiry not found' });
 
-    // Employees can only update their own leads
-    if (req.user.role === 'employee' &&
-        String(enquiry.assignedTo) !== String(req.user._id)) {
+    // Employees and agents can only update their own leads
+    if ((req.user.role === 'employee' || req.user.role === 'agent') &&
+      String(enquiry.assignedTo) !== String(req.user._id)) {
       return res.status(403).json({ success: false, message: 'Access denied' });
     }
 
@@ -204,14 +223,14 @@ export const addFollowUp = async (req, res) => {
     const enquiry = await Enquiry.findById(req.params.id);
     if (!enquiry) return res.status(404).json({ success: false, message: 'Enquiry not found' });
 
-    if (req.user.role === 'employee' &&
-        String(enquiry.assignedTo) !== String(req.user._id)) {
+    if ((req.user.role === 'employee' || req.user.role === 'agent') &&
+      String(enquiry.assignedTo) !== String(req.user._id)) {
       return res.status(403).json({ success: false, message: 'Access denied' });
     }
 
     enquiry.followUps.push({
-      note:        note.trim(),
-      addedBy:     req.user._id,
+      note: note.trim(),
+      addedBy: req.user._id,
       addedByName: req.user.name,
     });
     await enquiry.save();
@@ -230,7 +249,7 @@ export const getEnquiryStats = async (req, res) => {
     const [total, byStatus, byType, recentWeek] = await Promise.all([
       Enquiry.countDocuments(),
       Enquiry.aggregate([{ $group: { _id: '$status', count: { $sum: 1 } } }]),
-      Enquiry.aggregate([{ $group: { _id: '$type',   count: { $sum: 1 } } }]),
+      Enquiry.aggregate([{ $group: { _id: '$type', count: { $sum: 1 } } }]),
       Enquiry.countDocuments({
         createdAt: { $gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) },
       }),

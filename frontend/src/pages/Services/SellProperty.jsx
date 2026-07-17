@@ -5,10 +5,12 @@ import { fadeUp } from '../../animations/variants';
 import { Link } from 'react-router-dom';
 import PremiumIcon from '../../components/common/PremiumIcon';
 import { submitEnquiry } from '../../utils/api';
+import CameraUploader from '../../components/common/CameraUploader';
+import SearchableSelect from '../../components/common/SearchableSelect';
 
 const STEPS = ['Property Details', 'Photos & Pricing', 'Owner Contact'];
 const propTypes = ['Villa', 'Apartment', 'Penthouse', 'Farm House', 'Commercial', 'Plot'];
-const localities = ['Baner', 'Balewadi', 'Kharadi', 'Koregaon Park', 'Kalyani Nagar', 'Wakad', 'Hinjawadi', 'Viman Nagar', 'Bavdhan', 'NIBM', 'Magarpatta', 'Other'];
+const localities = ['Balewadi', 'Hadapsar', 'KP', 'NIBM Road', 'Viman Nagar', 'Kharadi', 'Punewadi', 'Kothrud', 'Karve Nagar', 'Shewalewadi Road', 'Baner', 'Pashan', 'Bawadhan', 'MG Road', 'JM Road', 'F.C. Road', 'Hinjewadi Phase I, II', 'Ravet', 'Ganga Dham Chownk', 'Swargate', 'Katraj', 'Prabhat Road', 'Bibwewadi', 'Bhekrai Nagar', 'Pimple Gurav', 'Pimple Saudagar', 'Dhayari', 'Kondhwa', 'Undri', 'Muhamad wadi', 'Handewadi', 'Wakad', 'Shivaji Nagar', 'Parvati Hill', 'Sukhsagar Nagar', 'Singhgad Road', 'Camp', 'Pimpri Gaon', 'Chinchwad Gaon', 'Bhosari', 'Nigdi', 'Bhugaon', 'Man', 'Sus', 'Malwadi', 'Warje', 'Fursungi', 'Wagholi', 'Manjari', 'Lohgaon', 'Vishrantwadi', 'Khadki', 'Nanded City', 'Other'];
 
 function CustomSelect({ value, onChange, options, placeholder, className = "" }) {
   const [open, setOpen] = useState(false);
@@ -85,7 +87,7 @@ function CustomSelect({ value, onChange, options, placeholder, className = "" })
 
 export default function SellProperty() {
   const [step, setStep] = useState(0);
-  const [form, setForm] = useState({ type: '', locality: '', area: '', bedrooms: '', furnishing: 'Fully Furnished', name: '', phone: '', email: '', askingPrice: '', notes: '' });
+  const [form, setForm] = useState({ type: '', locality: '', area: '', bedrooms: '', furnishing: 'Fully Furnished', name: '', phone: '', email: '', askingPrice: '', notes: '', images: [] });
   const [submitted, setSubmitted]   = useState(false);
   const [loading, setLoading]       = useState(false);
   const [serverError, setServerError] = useState('');
@@ -173,19 +175,12 @@ export default function SellProperty() {
                   </div>
                   <div>
                     <label className="block text-xs font-bold text-navy dark:text-white mb-2">Locality</label>
-                    <div className="flex flex-wrap gap-2">
-                      {localities.map(l => (
-                        <button key={l} onClick={() => set('locality', l)}
-                          className={`px-4 py-2 rounded-full text-xs font-semibold transition-all duration-200 border ${
-                            form.locality === l
-                              ? 'bg-gold/10 dark:bg-gold/20 border-gold text-gold-text dark:text-gold-light'
-                              : 'bg-white dark:bg-navy-light text-ink-muted dark:text-cream/80 border-gray-100 dark:border-white/10 hover:bg-black/5 dark:hover:bg-white/5'
-                          }`}
-                        >
-                          {l}
-                        </button>
-                      ))}
-                    </div>
+                    <SearchableSelect
+                      value={form.locality}
+                      onChange={val => set('locality', val)}
+                      options={localities}
+                      placeholder="Choose locality (e.g. Balewadi, KP, Sus...)"
+                    />
                   </div>
                   <div className="grid sm:grid-cols-3 gap-4">
                     <div>
@@ -242,6 +237,13 @@ export default function SellProperty() {
                       placeholder="e.g. Private pool, corner flat, RERA approved, recently renovated, ready-to-move, panoramic city view..."
                       className="input-luxury resize-none" />
                   </div>
+                  <div>
+                    <label className="block text-xs font-bold text-navy dark:text-white mb-2">Property Photos *</label>
+                    <CameraUploader values={form.images} onChange={val => set('images', val)} maxImages={5} />
+                    {form.images.length === 0 && (
+                      <p className="text-[10px] text-amber-500 font-semibold mt-1.5">Please upload or capture at least 1 photo to continue.</p>
+                    )}
+                  </div>
                   {/* Photo upload note */}
                   <div className="p-5 rounded-2xl flex items-start gap-4 bg-gold/5 dark:bg-gold/10 border border-gold/20"
                   >
@@ -254,7 +256,13 @@ export default function SellProperty() {
                 </div>
                 <div className="flex gap-3">
                   <button onClick={() => setStep(0)} className="btn-outline"><ArrowLeft className="w-4 h-4" /> Back</button>
-                  <button onClick={() => setStep(2)} className="btn-primary flex-1">Continue <ArrowRight className="w-4 h-4" /></button>
+                  <button 
+                    onClick={() => setStep(2)} 
+                    disabled={form.images.length === 0} 
+                    className="btn-primary flex-1 disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    Continue <ArrowRight className="w-4 h-4" />
+                  </button>
                 </div>
               </motion.div>
             )}
@@ -280,6 +288,7 @@ export default function SellProperty() {
                     furnishing: form.furnishing,
                     askingPrice: form.askingPrice,
                     notes: form.notes,
+                    images: form.images,
                     isNRI: form.phone.startsWith('+') && !form.phone.startsWith('+91'),
                   });
                   setSubmitted(true);

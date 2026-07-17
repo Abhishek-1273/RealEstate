@@ -3,7 +3,7 @@ import rateLimit from 'express-rate-limit';
 import {
   signIn, getMe, signOut,
   getUserByPhone, getAllUsers,
-  createStaff, updateUserRole,
+  createStaff, updateUserRole, deleteUser,
   getWishlist, toggleWishlist,
   sendOtp, verifyOtp, socialSignIn, googleCallback,
 } from '../controllers/authController.js';
@@ -37,5 +37,6 @@ router.get('/users',             ...managementPlus, getAllUsers);
 router.get('/user/:phone',       ...managementPlus, getUserByPhone);
 router.post('/staff',            ...adminOnly,      createStaff);
 router.patch('/users/:id/role',  ...adminOnly,      updateUserRole);
+router.delete('/users/:id',     ...adminOnly,      deleteUser);
 
 export default router;

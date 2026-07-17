@@ -298,7 +298,7 @@ export default function InteractiveMap({
   }, [showAmenities, amenityCategory, center]);
 
   return (
-    <div className="relative w-full h-full overflow-hidden rounded-2xl border border-gray-100 dark:border-white/10 shadow-inner">
+    <div className="relative z-0 w-full h-full overflow-hidden rounded-2xl border border-gray-100 dark:border-white/10 shadow-inner">
       <div ref={mapContainerRef} className="w-full h-full bg-slate-900" style={{ minHeight: '300px' }} />
       {/* Dynamic Gold Gradient Border Accent */}
       <div className="absolute inset-x-0 bottom-0 h-1 bg-gradient-to-r from-transparent via-gold to-transparent pointer-events-none z-[1000]" />

@@ -8,6 +8,7 @@ import { fadeUp } from '../../animations/variants';
 import { Link } from 'react-router-dom';
 import PremiumIcon from '../../components/common/PremiumIcon';
 import { submitEnquiry } from '../../utils/api';
+import SearchableSelect from '../../components/common/SearchableSelect';
 
 const ICON_MAP = {
   villa: Home,
@@ -29,7 +30,7 @@ const propertyTypes = [
   { id: 'plot', label: 'Plot', icon: '🌿', desc: 'Land in premium Pune localities' },
 ];
 
-const localities = ['Baner', 'Balewadi', 'Kharadi', 'Koregaon Park', 'Kalyani Nagar', 'Wakad', 'Hinjawadi', 'Viman Nagar', 'Bavdhan', 'NIBM', 'Magarpatta', 'Hadapsar'];
+const localities = ['Balewadi', 'Hadapsar', 'KP', 'NIBM Road', 'Viman Nagar', 'Kharadi', 'Punewadi', 'Kothrud', 'Karve Nagar', 'Shewalewadi Road', 'Baner', 'Pashan', 'Bawadhan', 'MG Road', 'JM Road', 'F.C. Road', 'Hinjewadi Phase I, II', 'Ravet', 'Ganga Dham Chownk', 'Swargate', 'Katraj', 'Prabhat Road', 'Bibwewadi', 'Bhekrai Nagar', 'Pimple Gurav', 'Pimple Saudagar', 'Dhayari', 'Kondhwa', 'Undri', 'Muhamad wadi', 'Handewadi', 'Wakad', 'Shivaji Nagar', 'Parvati Hill', 'Sukhsagar Nagar', 'Singhgad Road', 'Camp', 'Pimpri Gaon', 'Chinchwad Gaon', 'Bhosari', 'Nigdi', 'Bhugaon', 'Man', 'Sus', 'Malwadi', 'Warje', 'Fursungi', 'Wagholi', 'Manjari', 'Lohgaon', 'Vishrantwadi', 'Khadki', 'Nanded City'];
 const budgets = ['Under ₹2 Cr', '₹2–5 Cr', '₹5–10 Cr', '₹10–20 Cr', '₹20 Cr+'];
 const timings = ['Immediately', 'Within 3 months', '3–6 months', 'Just exploring'];
 
@@ -173,19 +174,12 @@ export default function BuyProperty() {
                       <label className="block font-display font-bold text-navy dark:text-white text-sm mb-3 flex items-center gap-2">
                         <MapPin className="w-4 h-4" style={{ color: '#D4AF37' }} /> Preferred Locality
                       </label>
-                      <div className="flex flex-wrap gap-2">
-                        {localities.map(l => (
-                          <button key={l} onClick={() => set('locality', l)}
-                            className={`px-4 py-2 rounded-full text-xs font-semibold transition-all duration-200 border ${
-                              form.locality === l
-                                ? 'bg-gradient-to-r from-gold to-gold-light border-gold text-navy shadow-[0_4px_14px_rgba(212,175,55,0.3)]'
-                                : 'bg-white dark:bg-navy-light text-ink-muted dark:text-cream/80 border-gray-100 dark:border-white/10 hover:bg-black/5 dark:hover:bg-white/5'
-                            }`}
-                          >
-                            {l}
-                          </button>
-                        ))}
-                      </div>
+                      <SearchableSelect
+                        value={form.locality}
+                        onChange={val => set('locality', val)}
+                        options={localities}
+                        placeholder="Choose locality (e.g. Balewadi, KP, Sus...)"
+                      />
                     </div>
                     <div>
                       <label className="block font-display font-bold text-navy dark:text-white text-sm mb-3">Budget Range</label>

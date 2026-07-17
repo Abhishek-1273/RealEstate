@@ -1,6 +1,6 @@
 import { useState, useEffect, lazy, Suspense } from 'react';
 import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowRight, Star, Shield, Award, Clock, TrendingUp,
   CheckCircle2, MapPin, Search, Home as HomeIcon, Building2, Zap,
@@ -28,7 +28,7 @@ const InteractiveGlobe = lazy(() => import('../../components/common/InteractiveG
 import PremiumIcon from '../../components/common/PremiumIcon';
 import { featuredProperties } from '../../data/properties';
 import { testimonials, cities, stats, blogs, categories, developerLogos, companyLogos } from '../../data/index';
-import { submitEnquiry, fetchProperties, fetchPropertyCounts } from '../../utils/api';
+import { submitEnquiry, fetchProperties, fetchPropertyCounts, fetchPartners, fetchBlogs } from '../../utils/api';
 import { fadeUp, fadeLeft, scaleIn, staggerContainer, staggerFast, viewportOnce } from '../../animations/variants';
 
 /* ══════════════════════════════════════════════════════════════════════════
@@ -160,7 +160,25 @@ function StatsStrip() {
    EXPLORE LUXURY CITIES
 ══════════════════════════════════════════════════════════════════════════ */
 function ExploreCities({ counts = {} }) {
-  const [activeCity, setActiveCity] = useState('Koregaon Park');
+  const [activeCity, setActiveCity] = useState('Balewadi');
+  const [expanded, setExpanded] = useState(false);
+
+  const main8Names = ['KP', 'NIBM Road', 'Viman Nagar', 'Kharadi', 'Punewadi', 'Kothrud', 'Karve Nagar', 'Balewadi'];
+
+  // Split and order cities
+  const main8 = cities.filter(c => main8Names.includes(c.name));
+  const otherCities = cities.filter(c => !main8Names.includes(c.name));
+  main8.sort((a, b) => main8Names.indexOf(a.name) - main8Names.indexOf(b.name));
+
+  const displayedCities = expanded ? [...main8, ...otherCities] : main8;
+
+  // Auto expand if city selected on globe is not in main 8
+  useEffect(() => {
+    if (!main8Names.includes(activeCity)) {
+      setExpanded(true);
+    }
+  }, [activeCity]);
+
   const activeCityData = cities.find((c) => c.name === activeCity) || cities[0];
 
   return (
@@ -190,33 +208,48 @@ function ExploreCities({ counts = {} }) {
             </Suspense>
           </div>
 
-          {/* Right Column — City Details Card & Selector */}
+          {/* Right Column — City Tabs & Preview Card */}
           <div className="lg:col-span-5">
             <div className="space-y-6">
-              {/* City Quick Tabs */}
-              <div className="flex flex-wrap gap-2.5">
-                {cities.map((city) => (
+              {/* Symmetrical Grid of Localities (Compact) */}
+              <div className="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-4 gap-2">
+                {displayedCities.map((city) => (
                   <button
                     key={city.id}
                     onClick={() => setActiveCity(city.name)}
-                    className={`px-4 py-2 rounded-full text-xs font-semibold border transition-all duration-300 ${activeCity === city.name
-                      ? 'border-gold bg-gold/10 text-gold shadow-[0_4px_12px_rgba(212,175,55,0.15)]'
-                      : 'border-gray-100 dark:border-white/10 bg-transparent text-ink-muted dark:text-cream/80 hover:bg-gray-50 dark:hover:bg-white/5'
+                    className={`px-2 py-1.5 rounded-lg text-[10px] font-bold text-center border truncate transition-all duration-300 ${activeCity === city.name
+                        ? 'border-gold bg-gold/10 text-gold shadow-[0_3px_10px_rgba(212,175,55,0.12)]'
+                        : 'border-gray-100 dark:border-white/10 bg-transparent text-ink-muted dark:text-cream/80 hover:bg-gray-50 dark:hover:bg-white/5'
                       }`}
+                    style={activeCity === city.name ? { color: '#D4AF37', borderColor: '#D4AF37' } : {}}
                   >
                     {city.name}
                   </button>
                 ))}
               </div>
 
-              {/* City Preview Card */}
+              {/* Show More / Show Less Toggle under the tabs grid (Centered & Compact) */}
+              <div className="pt-1 flex items-center justify-center gap-4">
+                <div className="flex-1 h-px bg-gradient-to-r from-transparent to-gold/15" />
+                <button
+                  onClick={() => setExpanded(!expanded)}
+                  className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-[9px] font-bold tracking-wider uppercase border border-gold/20 hover:border-gold hover:bg-gold/5 text-gold transition-all duration-300 shrink-0"
+                  style={{ color: '#D4AF37', borderColor: 'rgba(212,175,55,0.25)' }}
+                >
+                  <span>{expanded ? 'Show Less Localities' : 'Show All Localities'}</span>
+                  <span className="text-[10px] leading-none">{expanded ? '▴' : '▾'}</span>
+                </button>
+                <div className="flex-1 h-px bg-gradient-to-l from-transparent to-gold/15" />
+              </div>
+
+              {/* Active City Preview Card */}
               <motion.div
                 key={activeCity}
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.5 }}
                 className="group relative overflow-hidden rounded-3xl shadow-luxury"
-                style={{ height: '320px', border: '1px solid rgba(7,26,47,0.07)' }}
+                style={{ height: '300px', border: '1px solid rgba(7,26,47,0.07)' }}
               >
                 <img
                   src={activeCityData.image}
@@ -226,16 +259,15 @@ function ExploreCities({ counts = {} }) {
                 <div className="absolute inset-0"
                   style={{ background: 'linear-gradient(to top, rgba(7,26,47,0.92) 0%, rgba(7,26,47,0.3) 55%, transparent 100%)' }}
                 />
-
-                <div className="absolute inset-0 flex flex-col justify-end p-8">
+                <div className="absolute inset-0 flex flex-col justify-end p-7">
                   <span className="text-[10px] font-accent font-bold tracking-[0.22em] uppercase mb-1.5" style={{ color: '#D4AF37' }}>
                     {activeCityData.tag}
                   </span>
-                  <h3 className="font-display font-black text-white text-3xl leading-tight">{activeCityData.name}</h3>
-
-                  <div className="flex items-center justify-between mt-3.5 pt-4" style={{ borderTop: '1px solid rgba(255,255,255,0.12)' }}>
+                  <h3 className="font-display font-black text-white text-2xl leading-tight">{activeCityData.name}</h3>
+                  <div className="flex items-center justify-between mt-3 pt-3.5" style={{ borderTop: '1px solid rgba(255,255,255,0.12)' }}>
                     <p className="text-white/70 text-sm font-semibold">
-                      {counts[activeCityData.name] || 0} {counts[activeCityData.name] === 1 ? 'Verified Property' : 'Verified Properties'}
+                      {counts[activeCityData.name] ?? 0}{' '}
+                      {(counts[activeCityData.name] ?? 0) === 1 ? 'Verified Property' : 'Verified Properties'}
                     </p>
                     <Link
                       to={`/properties?city=${activeCityData.name}`}
@@ -479,10 +511,33 @@ function Testimonials() {
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
-   DEVELOPER PARTNERS
+   DEVELOPER PARTNERS (DYNAMIC)
 ══════════════════════════════════════════════════════════════════════════ */
 function DeveloperPartners() {
-  const doubled = [...developerLogos, ...developerLogos]; // doubled is sufficient for seamless -50% scroll
+  const [partners, setPartners] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let active = true;
+    const getPartners = async () => {
+      try {
+        const list = await fetchPartners();
+        if (active) setPartners(list || []);
+      } catch (err) {
+        console.error('Failed to load partners:', err);
+      } finally {
+        if (active) setLoading(false);
+      }
+    };
+    getPartners();
+    return () => { active = false; };
+  }, []);
+
+  if (loading || partners.length === 0) return null;
+
+  // Double the array for infinite scroll
+  const doubled = [...partners, ...partners];
+
   return (
     <section className="py-20 bg-white dark:bg-navy-dark border-y border-gray-100 dark:border-white/10 transition-colors duration-300">
       <div className="container-luxury mb-10 text-center">
@@ -516,6 +571,25 @@ function DeveloperPartners() {
    BLOG PREVIEW
 ══════════════════════════════════════════════════════════════════════════ */
 function BlogPreview() {
+  const [list, setList] = useState(blogs);
+
+  useEffect(() => {
+    let active = true;
+    const getBlogs = async () => {
+      try {
+        const data = await fetchBlogs();
+        const blogsArray = data.blogs || (Array.isArray(data) ? data : []);
+        if (active && blogsArray.length > 0) {
+          setList(blogsArray.slice(0, 3));
+        }
+      } catch (err) {
+        console.error('Failed to load real blogs on homepage:', err);
+      }
+    };
+    getBlogs();
+    return () => { active = false; };
+  }, []);
+
   return (
     <section className="section-pad bg-surface-alt dark:bg-navy transition-colors duration-300">
       <div className="container-luxury">
@@ -533,11 +607,11 @@ function BlogPreview() {
           viewport={viewportOnce}
           className="grid grid-cols-1 md:grid-cols-3 gap-7"
         >
-          {blogs.map((b) => (
-            <motion.div key={b.id} variants={fadeUp}>
+          {list.map((b) => (
+            <motion.div key={b._id || b.id} variants={fadeUp}>
               <Link
-                to={`/blog/${b.id}`}
-                className="group block bg-white dark:bg-navy-light rounded-3xl overflow-hidden transition-all duration-400 hover:-translate-y-1 border border-gray-100 dark:border-white/10 shadow-card"
+                to={`/blog/${b.slug || b.id}`}
+                className="group block bg-white dark:bg-navy-light rounded-3xl overflow-hidden transition-all duration-400 hover:-translate-y-1 border border-gray-150 dark:border-white/10 shadow-card"
               >
                 <div className="relative h-52 overflow-hidden">
                   <img src={b.image} alt={b.title} loading="lazy" className="w-full h-full object-cover transition-transform duration-600 group-hover:scale-108" />
@@ -551,9 +625,9 @@ function BlogPreview() {
                     {b.title}
                   </h3>
                   <p className="text-ink-muted dark:text-white/60 text-sm line-clamp-2 leading-relaxed mb-5">{b.excerpt}</p>
-                  <div className="flex items-center gap-2.5 pt-4 border-t border-gray-100 dark:border-white/10">
-                    <img src={b.author.image} alt="" className="w-7 h-7 rounded-full object-cover" />
-                    <span className="text-ink-muted dark:text-cream/80 text-xs font-semibold">{b.author.name}</span>
+                  <div className="flex items-center gap-2.5 pt-4 border-t border-gray-150 dark:border-white/10">
+                    <img src={b.author?.image || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=faces'} alt="" className="w-7 h-7 rounded-full object-cover" />
+                    <span className="text-ink-muted dark:text-cream/80 text-xs font-semibold">{b.author?.name}</span>
                     <ArrowRight className="w-3.5 h-3.5 ml-auto group-hover:translate-x-1 transition-transform" style={{ color: '#D4AF37' }} />
                   </div>
                 </div>
@@ -701,7 +775,6 @@ export default function Home() {
   return (
     <>
       <Hero />
-      <TrustMarquee />
       <FeaturedProperties />
       <StatsStrip />
       <ExploreCities counts={counts.localityCounts} />
