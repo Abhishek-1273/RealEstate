@@ -5,7 +5,10 @@ import cookieParser from 'cookie-parser';
 import morgan from 'morgan';
 import helmet from 'helmet';
 import compression from 'compression';
+import rateLimit from 'express-rate-limit';
+import { RedisStore } from 'rate-limit-redis';
 import connectDB from './config/db.js';
+import redis from './config/redis.js';
 import authRoutes     from './routes/auth.js';
 import enquiryRoutes  from './routes/enquiry.js';
 import propertyRoutes from './routes/property.js';
@@ -13,6 +16,8 @@ import chatRoutes     from './routes/chat.js';
 import blogRoutes     from './routes/blog.js';
 import uploadRoutes   from './routes/upload.js';
 import partnerRoutes  from './routes/partner.js';
+import sitemapRoutes  from './routes/sitemap.js';
+import { sanitizeInput } from './middleware/sanitize.js';
 
 const app = express();
 
@@ -25,7 +30,29 @@ const isProd = process.env.NODE_ENV === 'production';
 // Connect to MongoDB
 connectDB();
 
-// ── Compression ────────────────────────────────────────────────────────────────
+// ── Rate Limiting (Redis-backed for persistence across restarts) ────────────
+const makeStore = () => redis ? new RedisStore({ sendCommand: (...args) => redis.sendCommand(args) }) : undefined;
+
+// Auth routes: 10 requests per minute per IP
+const authLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 10,
+  message: { success: false, message: 'Too many requests, please try again after a minute.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+  store: makeStore(),
+});
+
+// General API: 100 requests per minute per IP
+const apiLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 100,
+  message: { success: false, message: 'Too many requests, please slow down.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+  store: makeStore(),
+});
+
 // Compress all responses with gzip — reduces payload by ~70%
 app.use(compression());
 
@@ -90,6 +117,7 @@ app.use(cors({
 app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 app.use(cookieParser());
+app.use(sanitizeInput);
 
 // ── Base Route ─────────────────────────────────────────────────────────────────
 app.get('/', (req, res) => {
@@ -97,13 +125,14 @@ app.get('/', (req, res) => {
 });
 
 // ── API Routes ─────────────────────────────────────────────────────────────────
-app.use('/api/auth',       authRoutes);
-app.use('/api/enquiry',    enquiryRoutes);
-app.use('/api/properties', propertyRoutes);
-app.use('/api/chat',       chatRoutes);
-app.use('/api/blogs',      blogRoutes);
-app.use('/api/upload',     uploadRoutes);
-app.use('/api/partners',   partnerRoutes);
+app.use('/api/auth',       authLimiter, authRoutes);
+app.use('/api/enquiry',    apiLimiter,  enquiryRoutes);
+app.use('/api/properties', apiLimiter,  propertyRoutes);
+app.use('/api/chat',       apiLimiter,  chatRoutes);
+app.use('/api/blogs',      apiLimiter,  blogRoutes);
+app.use('/api/upload',     apiLimiter,  uploadRoutes);
+app.use('/api/partners',   apiLimiter,  partnerRoutes);
+app.use('/sitemap.xml',    sitemapRoutes);
 
 // ── Health Check ───────────────────────────────────────────────────────────────
 app.get('/api/health', (req, res) => {

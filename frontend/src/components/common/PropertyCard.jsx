@@ -104,6 +104,7 @@ export default function PropertyCard({ property, view = 'grid' }) {
 
             <div className="flex items-center gap-2 md:gap-3 shrink-0">
               <button
+                aria-label={wished ? "Remove from wishlist" : "Add to wishlist"}
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
@@ -176,6 +177,7 @@ export default function PropertyCard({ property, view = 'grid' }) {
 
           {/* Wishlist */}
           <button
+            aria-label={wished ? "Remove from wishlist" : "Add to wishlist"}
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();

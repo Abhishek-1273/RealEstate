@@ -5,6 +5,7 @@ import Otp from '../models/Otp.js';
 import Enquiry from '../models/Enquiry.js';
 import Property from '../models/Property.js';
 import { sendEmail } from '../utils/mailer.js';
+import { otpSet, otpVerify, otpIncrementLimit, wishlistGet, wishlistSet, wishlistDel } from '../utils/cache.js';
 
 // ── Helper: sign a JWT and set it as httpOnly cookie ──────────────────────────
 const setTokenCookie = (res, userId) => {
@@ -117,6 +118,15 @@ export const sendOtp = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Invalid email format. Only email is supported for verification codes.' });
     }
 
+    // Check OTP rate limit (max 3 sends per 15 minutes)
+    const limitCheck = await otpIncrementLimit(target.toLowerCase());
+    if (!limitCheck.ok) {
+      return res.status(429).json({
+        success: false,
+        message: `Too many OTP requests. Please wait ${Math.ceil(limitCheck.retryAfter / 60)} minutes before trying again.`
+      });
+    }
+
     // Check database by email only
     const user = await User.findOne({ email: target.toLowerCase() });
 
@@ -139,12 +149,16 @@ export const sendOtp = async (req, res) => {
 
     console.info(`🔑 [OTP SYSTEM] Target: ${target} | Code: ${code}`);
 
-    // Upsert OTP
-    await Otp.findOneAndUpdate(
-      { target },
-      { code, expiresAt },
-      { upsert: true, new: true }
-    );
+    // Try Redis first (fast, auto-expiry), fallback to MongoDB
+    const savedToRedis = await otpSet(target, code);
+    if (!savedToRedis) {
+      // MongoDB fallback
+      await Otp.findOneAndUpdate(
+        { target },
+        { code, expiresAt },
+        { upsert: true, new: true }
+      );
+    }
 
     // Send the email (handles SMTP sending and console log fallback automatically)
     await sendEmail({
@@ -185,18 +199,23 @@ export const verifyOtp = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Target and OTP code are required' });
     }
 
-    const otpRecord = await Otp.findOne({ target, code });
-    if (!otpRecord) {
+    // Try Redis first, fallback to MongoDB
+    const redisResult = await otpVerify(target, code);
+    if (redisResult === false) {
       return res.status(400).json({ success: false, message: 'Invalid OTP code. Please check and try again.' });
     }
-
-    if (otpRecord.expiresAt < new Date()) {
+    if (redisResult === null) {
+      // Redis not available — use MongoDB fallback
+      const otpRecord = await Otp.findOne({ target, code });
+      if (!otpRecord) {
+        return res.status(400).json({ success: false, message: 'Invalid OTP code. Please check and try again.' });
+      }
+      if (otpRecord.expiresAt < new Date()) {
+        await Otp.deleteOne({ _id: otpRecord._id });
+        return res.status(400).json({ success: false, message: 'OTP has expired. Please request a new one.' });
+      }
       await Otp.deleteOne({ _id: otpRecord._id });
-      return res.status(400).json({ success: false, message: 'OTP has expired. Please request a new one.' });
     }
-
-    // Delete OTP after verification success
-    await Otp.deleteOne({ _id: otpRecord._id });
 
     let user;
     let isNew = false;
@@ -416,6 +435,8 @@ export const toggleWishlist = async (req, res) => {
     }
     await user.save();
     const populated = await User.findById(req.user.id).populate('wishlist');
+    // Invalidate wishlist cache so next GET fetches fresh data
+    await wishlistDel(req.user.id);
     return res.status(200).json({ success: true, wishlist: populated.wishlist });
   } catch (error) {
     return res.status(500).json({ success: false, message: error.message });
@@ -425,8 +446,15 @@ export const toggleWishlist = async (req, res) => {
 // GET /api/auth/wishlist
 export const getWishlist = async (req, res) => {
   try {
+    // Try Redis cache first (60s TTL)
+    const cached = await wishlistGet(req.user.id);
+    if (cached) {
+      return res.status(200).json({ success: true, wishlist: cached, cached: true });
+    }
     const user = await User.findById(req.user.id).populate('wishlist');
     if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+    // Store in Redis cache
+    await wishlistSet(req.user.id, user.wishlist);
     return res.status(200).json({ success: true, wishlist: user.wishlist });
   } catch (error) {
     return res.status(500).json({ success: false, message: error.message });

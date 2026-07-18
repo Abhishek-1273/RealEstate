@@ -6,6 +6,7 @@ import { fadeUp, fadeLeft, fadeRight, scaleIn, staggerContainer, staggerFast, vi
 import SectionHeader from '../../components/common/SectionHeader';
 import CountUpNumber from '../../components/common/CountUpNumber';
 import PremiumIcon from '../../components/common/PremiumIcon';
+import SEO from '../../components/common/SEO';
 import { agents, stats } from '../../data/index';
 import aboutBg from '../../assets/image/about-bg.webp';
 import missionFront from '../../assets/image/mission-front.webp';
@@ -26,6 +27,11 @@ export default function About() {
 
   return (
     <div className="min-h-screen bg-surface dark:bg-navy-dark pt-20 transition-colors duration-300">
+      <SEO 
+        title="About Our Agency" 
+        description="Learn more about HyperRelestix, Pune's premier luxury real estate agency. Our mission, values, and expert team of real estate advisors." 
+        url="/about" 
+      />
 
       {/* ── Hero ── */}
       <div className="relative overflow-hidden" style={{ height: '560px' }}>

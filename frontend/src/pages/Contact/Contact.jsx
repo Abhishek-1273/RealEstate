@@ -8,6 +8,7 @@ import SectionHeader from '../../components/common/SectionHeader';
 import PremiumIcon from '../../components/common/PremiumIcon';
 import { useAuth } from '../../contexts';
 import { submitEnquiry } from '../../utils/api';
+import SEO from '../../components/common/SEO';
 
 const CONTACTS = [
   { icon: <MapPin className="w-5 h-5" />, label: 'Visit Us', val: 'Level 12, Panchshil Tech Park\nYerwada, Pune 411006', href: '#' },
@@ -115,6 +116,11 @@ export default function Contact() {
 
   return (
     <div className="min-h-screen bg-surface dark:bg-navy-dark pt-20 transition-colors duration-300">
+      <SEO 
+        title="Contact Us & Book a Consultation" 
+        description="Get in touch with our senior real estate advisors. Schedule site visits, remote NRI meetings, FEMA consultations, or call our Pune headquarters." 
+        url="/contact" 
+      />
 
       {/* Hero */}
       <div className="bg-mesh-dark py-24 relative overflow-hidden">

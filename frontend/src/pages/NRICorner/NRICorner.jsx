@@ -2,6 +2,7 @@ import { motion } from 'framer-motion';
 import { ShieldCheck, ArrowRight, FileText, Globe, Landmark, Users } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { fadeUp, staggerContainer } from '../../animations/variants';
+import SEO from '../../components/common/SEO';
 
 export default function NRICorner() {
   const processSteps = [
@@ -34,6 +35,11 @@ export default function NRICorner() {
 
   return (
     <div className="min-h-screen bg-[#071A2F] text-white pt-24 overflow-hidden relative">
+      <SEO 
+        title="NRI Investment Corner — Remote Property Buy" 
+        description="Acquire, verify, lease and manage premium real estate in Pune entirely from overseas. FEMA compliant and RBI approved NRI remote desk." 
+        url="/nri-corner" 
+      />
       {/* Decorative ambient gold glows */}
       <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] rounded-full blur-[120px] opacity-10 bg-gold pointer-events-none" style={{ backgroundColor: '#D4AF37' }} />
       <div className="absolute bottom-1/4 right-1/4 w-[500px] h-[500px] rounded-full blur-[120px] opacity-10 bg-gold pointer-events-none" style={{ backgroundColor: '#D4AF37' }} />

@@ -16,11 +16,13 @@ import 'swiper/css/pagination';
 import 'swiper/css/thumbs';
 import 'swiper/css/free-mode';
 import { useWishlist, useAuth } from '../../contexts';
-import { properties } from '../../data/properties';
 import PropertyCard from '../../components/common/PropertyCard';
-import { fetchPropertyById } from '../../utils/api';
+import { fetchPropertyById, fetchProperties } from '../../utils/api';
+import { getDynamicOgImage } from '../../utils/ogImage';
 import { fadeUp, fadeLeft, fadeRight, staggerContainer, viewportOnce } from '../../animations/variants';
 import InteractiveMap from '../../components/common/InteractiveMap';
+import SEO from '../../components/common/SEO';
+import ErrorBoundary from '../../components/common/ErrorBoundary';
 
 function generateNearbyAmenities(lat, lng) {
   if (!lat || !lng) return {};
@@ -100,6 +102,8 @@ export default function PropertyDetails() {
 
   const [property, setProperty] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [relatedList, setRelatedList] = useState([]);
   const [currency, setCurrency] = useState('INR');
   const [currencyOpen, setCurrencyOpen] = useState(false);
   const currencyRef = useRef(null);
@@ -144,6 +148,7 @@ export default function PropertyDetails() {
   useEffect(() => {
     let active = true;
     setLoading(true);
+    setError(null);
     const getProperty = async () => {
       try {
         const data = await fetchPropertyById(id);
@@ -152,15 +157,24 @@ export default function PropertyDetails() {
           setLoading(false);
         }
       } catch (err) {
-        // Fallback to static properties
-        const staticProp = properties.find(p => String(p.id) === String(id));
         if (active) {
-          setProperty(staticProp || null);
+          setError(err.message || 'Failed to load property details.');
           setLoading(false);
         }
       }
     };
+    const getRelated = async () => {
+      try {
+        const resData = await fetchProperties({ limit: 12 });
+        if (active && resData?.properties) {
+          setRelatedList(resData.properties);
+        }
+      } catch (err) {
+        console.error('Failed to load related properties:', err);
+      }
+    };
     getProperty();
+    getRelated();
     return () => { active = false; };
   }, [id]);
 
@@ -198,7 +212,7 @@ export default function PropertyDetails() {
 
   // Related: same city > same type > anything else — always 3 results
   const { related, relatedLabel } = (() => {
-    const others = properties.filter(p => String(p.id) !== String(id) && p._id !== id);
+    const others = relatedList.filter(p => String(p.id) !== String(id) && p._id !== id);
     const sameCity = others.filter(p => p.city === property?.city);
     if (sameCity.length >= 3) return { related: sameCity.slice(0, 3), relatedLabel: `More in ${property?.city}` };
     if (sameCity.length > 0) {
@@ -215,6 +229,19 @@ export default function PropertyDetails() {
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center bg-[#071A2F]">
       <Loader2 className="w-8 h-8 animate-spin text-gold" style={{ color: '#D4AF37' }} />
+    </div>
+  );
+
+  if (error) return (
+    <div className="min-h-screen flex items-center justify-center bg-surface dark:bg-navy-dark transition-colors duration-300">
+      <div className="text-center max-w-md p-6">
+        <h2 className="font-display font-bold text-red-500 text-2xl mb-2">Error Loading Property</h2>
+        <p className="text-sm text-ink-soft dark:text-white/60 mb-6">{error}</p>
+        <div className="flex gap-3 justify-center">
+          <button onClick={() => window.location.reload()} className="btn-primary">Retry</button>
+          <Link to="/properties" className="btn-outline">Back to Listings</Link>
+        </div>
+      </div>
     </div>
   );
 
@@ -235,6 +262,42 @@ export default function PropertyDetails() {
 
   return (
     <div className="min-h-screen bg-surface dark:bg-navy-dark pt-20 transition-colors duration-300">
+      <SEO 
+        title={`${property.title} in ${property.location}, ${property.city}`}
+        description={`${property.type} for sale in ${property.location}, ${property.city}. Price: ${property.priceLabel}. ${property.description || `Discover this verified premium listing on HyperRelestix.`}`}
+        image={getDynamicOgImage(property)}
+        url={`/properties/${id}`}
+      />
+      
+      {/* Schema.org Structured Data for Real Estate Listings */}
+      <script type="application/ld+json">
+        {JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "SingleFamilyResidence",
+          "name": property.title,
+          "description": property.description || `${property.type} for sale in ${property.location}, ${property.city}.`,
+          "image": galleryImages,
+          "address": {
+            "@type": "PostalAddress",
+            "addressLocality": property.location,
+            "addressRegion": property.city,
+            "addressCountry": "IN"
+          },
+          ...(property.coordinates?.lat && property.coordinates?.lng ? {
+            "geo": {
+              "@type": "GeoCoordinates",
+              "latitude": property.coordinates.lat,
+              "longitude": property.coordinates.lng
+            }
+          } : {}),
+          "offers": {
+            "@type": "Offer",
+            "price": property.price,
+            "priceCurrency": "INR",
+            "availability": property.status === 'Sold Out' ? "https://schema.org/SoldOut" : "https://schema.org/InStock"
+          }
+        })}
+      </script>
       
       {/* Swiper gallery styles are in globals.css — .main-swiper-gallery, .thumbs-swiper-gallery */}
 
@@ -263,27 +326,29 @@ export default function PropertyDetails() {
         <div className="container-luxury">
           {/* Main swiper wrapper */}
           <div className="relative rounded-3xl overflow-hidden mb-5 shadow-2xl group border border-white/10 aspect-square md:aspect-auto md:h-[520px] w-full">
-            <Swiper
-              modules={[Pagination, Thumbs]}
-              onSwiper={setMainSwiper}
-              pagination={{ 
-                clickable: true,
-                dynamicBullets: true 
-              }}
-              thumbs={{ swiper: thumbsSwiper && !thumbsSwiper.destroyed ? thumbsSwiper : null }}
-              className="h-full main-swiper-gallery"
-            >
-              {galleryImages.map((img, i) => (
-                <SwiperSlide key={i}>
-                  <img
-                    src={img}
-                    alt={`${property.title} ${i + 1}`}
-                    className="w-full h-full object-cover cursor-zoom-in transition-transform duration-700 hover:scale-[1.025]"
-                    onClick={() => setLightbox(i)}
-                  />
-                </SwiperSlide>
-              ))}
-            </Swiper>
+            <ErrorBoundary widget>
+              <Swiper
+                modules={[Pagination, Thumbs]}
+                onSwiper={setMainSwiper}
+                pagination={{ 
+                  clickable: true,
+                  dynamicBullets: true 
+                }}
+                thumbs={{ swiper: thumbsSwiper && !thumbsSwiper.destroyed ? thumbsSwiper : null }}
+                className="h-full main-swiper-gallery"
+              >
+                {galleryImages.map((img, i) => (
+                  <SwiperSlide key={i}>
+                    <img
+                      src={img}
+                      alt={`${property.title} ${i + 1}`}
+                      className="w-full h-full object-cover cursor-zoom-in transition-transform duration-700 hover:scale-[1.025]"
+                      onClick={() => setLightbox(i)}
+                    />
+                  </SwiperSlide>
+                ))}
+              </Swiper>
+            </ErrorBoundary>
 
             {/* Custom Premium Swiper Navigation (Fade in on hover of Swiper wrapper) */}
             <button 
@@ -369,29 +434,31 @@ export default function PropertyDetails() {
           {/* Thumbnails Swiper (Beautiful gold-bordered cards) */}
           {property.images.length > 1 && (
             <div className="pt-4 mt-4 border-t border-white/5">
-              <Swiper
-                modules={[FreeMode, Thumbs]}
-                onSwiper={setThumbsSwiper}
-                spaceBetween={12}
-                slidesPerView={Math.min(property.images.length, 6)}
-                freeMode
-                watchSlidesProgress
-                className="!h-20 thumbs-swiper-gallery"
-              >
-                {property.images.map((img, i) => (
-                  <SwiperSlide 
-                    key={i} 
-                    onClick={() => mainSwiper?.slideTo(i)}
-                    className="cursor-pointer !h-20 border border-white/10 hover:border-white/20 transition-all duration-300"
-                  >
-                    <img 
-                      src={img} 
-                      alt="" 
-                      className="w-full h-full object-cover opacity-50 hover:opacity-100 transition-all duration-300 hover:scale-105" 
-                    />
-                  </SwiperSlide>
-                ))}
-              </Swiper>
+              <ErrorBoundary widget>
+                <Swiper
+                  modules={[FreeMode, Thumbs]}
+                  onSwiper={setThumbsSwiper}
+                  spaceBetween={12}
+                  slidesPerView={Math.min(property.images.length, 6)}
+                  freeMode
+                  watchSlidesProgress
+                  className="!h-20 thumbs-swiper-gallery"
+                >
+                  {property.images.map((img, i) => (
+                    <SwiperSlide 
+                      key={i} 
+                      onClick={() => mainSwiper?.slideTo(i)}
+                      className="cursor-pointer !h-20 border border-white/10 hover:border-white/20 transition-all duration-300"
+                    >
+                      <img 
+                        src={img} 
+                        alt="" 
+                        className="w-full h-full object-cover opacity-50 hover:opacity-100 transition-all duration-300 hover:scale-105" 
+                      />
+                    </SwiperSlide>
+                  ))}
+                </Swiper>
+              </ErrorBoundary>
             </div>
           )}
         </div>
@@ -700,19 +767,21 @@ export default function PropertyDetails() {
           <div className="flex flex-col lg:flex-row gap-8">
             {/* Map Column */}
             <div className="flex-1 min-h-[350px] md:min-h-[450px] relative z-0 order-2 lg:order-1 rounded-2xl overflow-hidden border border-gray-100 dark:border-white/5">
-              <InteractiveMap
-                properties={[property]}
-                center={mapCenter}
-                zoom={mapZoom}
-                activePropertyId={property._id || property.id}
-                showAmenities={
-                  generateNearbyAmenities(
-                    property?.coordinates?.lat || 19.0178,
-                    property?.coordinates?.lng || 72.8173
-                  )[amenityCategory] || []
-                }
-                amenityCategory={amenityCategory}
-              />
+              <ErrorBoundary widget>
+                <InteractiveMap
+                  properties={[property]}
+                  center={mapCenter}
+                  zoom={mapZoom}
+                  activePropertyId={property._id || property.id}
+                  showAmenities={
+                    generateNearbyAmenities(
+                      property?.coordinates?.lat || 19.0178,
+                      property?.coordinates?.lng || 72.8173
+                    )[amenityCategory] || []
+                  }
+                  amenityCategory={amenityCategory}
+                />
+              </ErrorBoundary>
             </div>
 
             {/* Amenities Sidebar Column */}
@@ -797,6 +866,10 @@ export default function PropertyDetails() {
                     ));
                   })()}
                 </div>
+
+                <p className="text-[10px] text-ink-soft dark:text-cream/40 leading-relaxed italic border-t border-gray-100 dark:border-white/10 pt-4 mt-4">
+                  *Disclaimer: Landmark names and coordinate offsets are estimated approximate metrics calculated from general locality centroids for illustrative planning purposes. Real distances may vary.
+                </p>
               </div>
 
               {/* Reset to property center */}

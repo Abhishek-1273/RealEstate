@@ -7,6 +7,7 @@ export default defineConfig({
   build: {
     // Target modern browsers — smaller output, no legacy transforms
     target: 'esnext',
+    minify: true,
     cssMinify: true,
     sourcemap: false,
     // Skip reporting compressed sizes during build for faster CI builds

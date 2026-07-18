@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { getProperties, createProperty, updateProperty, deleteProperty, uploadImage, getUsers } from '../../utils/adminApi';
 import { useAdmin } from './AdminContext';
 import ImageUploader from '../../components/common/ImageUploader';
+import { SkeletonTable } from '../../components/common/Skeleton';
 
 const FormContext = createContext(null);
 
@@ -625,8 +626,22 @@ export default function PropertiesAdmin() {
 
       {/* Properties List Table */}
       {loading ? (
-        <div className="flex items-center justify-center py-20">
-          <Loader2 className="w-7 h-7 animate-spin text-gold" style={{ color: '#D4AF37' }} />
+        <div className="p-4 space-y-4">
+          <div className="hidden lg:block">
+            <SkeletonTable rows={5} cols={5} />
+          </div>
+          <div className="block lg:hidden space-y-4">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="p-4 rounded-2xl bg-white dark:bg-navy-light border border-gray-100 dark:border-white/5 flex gap-3 animate-pulse">
+                <div className="w-16 h-16 rounded-xl bg-gray-200 dark:bg-white/10 shrink-0" />
+                <div className="flex-1 space-y-2">
+                  <div className="h-3 w-16 bg-gray-200 dark:bg-white/10 rounded" />
+                  <div className="h-4.5 w-full bg-gray-200 dark:bg-white/10 rounded" />
+                  <div className="h-3 w-2/3 bg-gray-200 dark:bg-white/10 rounded" />
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       ) : filtered.length === 0 ? (
         <div className="text-center py-20 bg-white dark:bg-[#0E1A2B] rounded-3xl border border-gray-100 dark:border-white/10 shadow-sm transition-colors duration-300">

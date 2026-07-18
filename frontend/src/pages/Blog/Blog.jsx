@@ -5,6 +5,8 @@ import { ArrowRight, Clock, Loader } from 'lucide-react';
 import { fetchBlogs } from '../../utils/api';
 import { fadeUp, staggerContainer } from '../../animations/variants';
 import blogBg from '../../assets/image/blog-bg.webp';
+import SEO from '../../components/common/SEO';
+import { blogs as staticBlogs } from '../../data/index';
 
 const CATEGORIES = ['All', 'NRI Guide', 'Market Insights', 'NRI Services'];
 
@@ -13,14 +15,18 @@ export default function Blog() {
   const [cat, setCat] = useState(location.state?.category || 'All');
   const [blogsList, setBlogsList] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [apiError, setApiError] = useState(false);
 
   useEffect(() => {
     const getBlogs = async () => {
       try {
         const data = await fetchBlogs();
         setBlogsList(data);
+        setApiError(false);
       } catch (err) {
         console.error('Failed to load blogs:', err);
+        setBlogsList(staticBlogs);
+        setApiError(true);
       } finally {
         setLoading(false);
       }
@@ -29,11 +35,16 @@ export default function Blog() {
   }, []);
 
   const filtered = cat === 'All' ? blogsList : blogsList.filter(b => b.category === cat);
-  const featured = blogsList.find(b => b.featured);
-  const rest = blogsList.filter(b => !b.featured);
+  const featured = blogsList.find(b => b.featured) || blogsList[0]; // fallback to first if no featured
+  const rest = blogsList.filter(b => b !== featured);
 
   return (
     <div className="min-h-screen bg-surface dark:bg-navy-dark pt-20 transition-colors duration-300">
+      <SEO 
+        title={cat === 'All' ? 'Luxury Real Estate Blog' : `${cat} — Real Estate Updates`} 
+        description="Exclusive insights, NRI property guides, tax updates, and market trends in Pune's premium real estate sectors." 
+        url="/blog" 
+      />
 
       {/* ── Featured Hero ── */}
       {loading ? (
@@ -91,6 +102,13 @@ export default function Blog() {
 
       {/* ── Articles Grid ── */}
       <div className="container-luxury py-16">
+        {apiError && (
+          <div className="mb-6 flex justify-end">
+            <span className="text-xs text-amber-600 bg-amber-50 dark:bg-amber-950/20 dark:text-amber-400 border border-amber-200 dark:border-amber-900/30 px-3 py-1 rounded-full">
+              Showing cached articles
+            </span>
+          </div>
+        )}
         {loading ? (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-7">
             {[1, 2, 3].map(i => (

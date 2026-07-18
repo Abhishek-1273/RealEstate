@@ -21,6 +21,7 @@ const navLinks = [
   { label: 'Home',       path: '/' },
   { label: 'Services',   hasMenu: true },
   { label: 'Properties', path: '/properties' },
+  { label: 'NRI Corner', path: '/nri-corner' },
   { label: 'About',      path: '/about' },
   { label: 'Contact',    path: '/contact' },
 ];

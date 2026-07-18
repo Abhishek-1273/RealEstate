@@ -17,6 +17,23 @@ export default class ErrorBoundary extends React.Component {
 
   render() {
     if (this.state.hasError) {
+      if (this.props.widget) {
+        return (
+          <div className="w-full h-full min-h-[250px] flex flex-col items-center justify-center p-6 bg-red-500/5 border border-red-500/10 rounded-2xl text-center gap-3">
+            <AlertTriangle className="w-8 h-8 text-red-500" />
+            <h4 className="text-sm font-bold text-navy dark:text-white">Section Load Failed</h4>
+            <p className="text-xs text-ink-soft dark:text-white/50 max-w-xs leading-relaxed">
+              We encountered an unexpected error loading this section.
+            </p>
+            <button
+              onClick={() => this.setState({ hasError: false, error: null })}
+              className="px-3.5 py-1.5 rounded-lg border border-red-500/20 hover:bg-red-500/10 text-red-400 text-[10px] font-bold uppercase tracking-wider transition-colors"
+            >
+              Retry
+            </button>
+          </div>
+        );
+      }
       return (
         <div className="min-h-screen flex items-center justify-center px-6 relative overflow-hidden bg-[#071A2F]">
           {/* Ambient decorative radial gold glows */}

@@ -10,8 +10,7 @@ const WishlistContext = createContext(null);
 const AuthContext     = createContext(null);
 const SearchContext   = createContext(null);
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-
+import { API_URL } from '../config/api';
 // ─────────────────────────────────────────────────────────────────────────────
 // Wishlist Provider
 // ─────────────────────────────────────────────────────────────────────────────
@@ -111,6 +110,7 @@ export const AuthProvider = ({ children }) => {
 
   // ── Restore session on every app mount / page refresh ──────────────────────
   useEffect(() => {
+    const controller = new AbortController();
     const restoreSession = async () => {
       try {
         const localToken = localStorage.getItem('hr_token');
@@ -122,6 +122,7 @@ export const AuthProvider = ({ children }) => {
         const res = await fetch(`${API_URL}/api/auth/me`, {
           headers,
           credentials: 'include', // send the httpOnly cookie
+          signal: controller.signal,
         });
         const data = await res.json();
         if (res.ok && data.success) {
@@ -129,13 +130,15 @@ export const AuthProvider = ({ children }) => {
         } else {
           if (localToken) localStorage.removeItem('hr_token');
         }
-      } catch {
+      } catch (err) {
+        if (err.name === 'AbortError') return;
         // No session or server unreachable — stay logged out silently
       } finally {
         setAuthLoading(false);
       }
     };
     restoreSession();
+    return () => controller.abort();
   }, []);
 
   // ── Auth modal helpers ──────────────────────────────────────────────────────

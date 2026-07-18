@@ -1,13 +1,16 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, User, Phone, Mail, ArrowRight, CheckCircle2, Loader2, ArrowLeft } from 'lucide-react';
-import { FaGoogle, FaFacebookF, FaApple } from 'react-icons/fa';
 import { useAuth } from '../../contexts';
 import { useNavigate } from 'react-router-dom';
 import bgImage from '../../assets/image/bg.webp';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+// Steps
+import SuccessStep from './AuthModal/SuccessStep';
+import SocialStep from './AuthModal/SocialStep';
+import OTPStep from './AuthModal/OTPStep';
 
+import { API_URL } from '../../config/api';
 const containerVariants = {
   hidden: { opacity: 0 },
   visible: {
@@ -615,264 +618,40 @@ export default function AuthModal() {
 
               {/* ── Social Login Screen Simulation ───────────────────────── */}
               {step === 'social_select' && (
-                <motion.div
-                  key="social-select-step"
-                  variants={containerVariants}
-                  initial="hidden"
-                  animate="visible"
-                  exit="hidden"
-                  className="space-y-4 text-center"
-                >
-                  <div className="flex items-center gap-2 mb-2 text-left">
-                    <button
-                      type="button"
-                      onClick={() => { setStep('form'); setServerError(''); }}
-                      className="p-1 rounded-full hover:bg-white/5 text-white/40 hover:text-white transition-colors"
-                    >
-                      <ArrowLeft className="w-4 h-4" />
-                    </button>
-                    <h2 className="font-display font-bold text-lg text-white">
-                      Sign in with {socialProvider}
-                    </h2>
-                  </div>
-
-                  {socialProvider === 'Google' && (
-                    <div className="bg-white rounded-2xl p-5 text-gray-800 space-y-4 shadow-xl border border-gray-100">
-                      <div className="flex items-center justify-center gap-2 mb-1">
-                        <FaGoogle className="w-6 h-6 text-[#DB4437]" />
-                        <span className="font-black text-sm tracking-tight text-gray-800 font-display">Google</span>
-                      </div>
-                      
-                      <p className="text-[10px] text-gray-500 font-medium leading-relaxed">
-                        Choose an account to continue to <span className="font-semibold text-gray-700">HyperRelestix</span>
-                      </p>
-
-                      <div className="space-y-2 text-left">
-                        <button
-                          type="button"
-                          onClick={() => handleSocialVerify('Abhishek Kayg', 'akayg@gmail.com')}
-                          disabled={loading}
-                          className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 border border-gray-100 transition-colors"
-                        >
-                          <div className="w-8 h-8 rounded-full bg-gold/15 text-gold font-bold flex items-center justify-center text-xs">
-                            AK
-                          </div>
-                          <div>
-                            <p className="text-xs font-bold text-gray-800">Abhishek Kayg</p>
-                            <p className="text-[10px] text-gray-400">akayg@gmail.com</p>
-                          </div>
-                        </button>
-                        
-                        <button
-                          type="button"
-                          onClick={() => handleSocialVerify('Demo User', 'demo@gmail.com')}
-                          disabled={loading}
-                          className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 border border-gray-100 transition-colors"
-                        >
-                          <div className="w-8 h-8 rounded-full bg-navy/10 text-navy font-bold flex items-center justify-center text-xs">
-                            DU
-                          </div>
-                          <div>
-                            <p className="text-xs font-bold text-gray-800">Demo User</p>
-                            <p className="text-[10px] text-gray-400">demo@gmail.com</p>
-                          </div>
-                        </button>
-                      </div>
-                    </div>
-                  )}
-
-                  {socialProvider === 'Facebook' && (
-                    <div className="bg-[#1877F2] rounded-2xl p-6 text-white space-y-4 shadow-xl">
-                      <div className="flex items-center justify-center gap-2">
-                        <FaFacebookF className="w-6 h-6 text-white" />
-                        <span className="font-black text-base font-display">facebook</span>
-                      </div>
-                      
-                      <p className="text-xs text-white/80 font-medium">
-                        HyperRelestix is requesting access to your name and email profile.
-                      </p>
-
-                      <div className="pt-2">
-                        <button
-                          type="button"
-                          onClick={() => handleSocialVerify('Abhishek Kayg', 'akayg@facebook.com')}
-                          disabled={loading}
-                          className="w-full bg-white text-[#1877F2] hover:bg-gray-50 transition-colors font-bold text-xs py-3 rounded-xl shadow-md"
-                        >
-                          {loading ? 'Connecting...' : 'Continue as Abhishek Kayg'}
-                        </button>
-                      </div>
-                    </div>
-                  )}
-
-                  {socialProvider === 'Apple' && (
-                    <div className="bg-black border border-white/10 rounded-2xl p-6 text-white space-y-5 shadow-xl">
-                      <div className="flex items-center justify-center gap-2">
-                        <FaApple className="w-6 h-6 text-white" />
-                        <span className="font-bold text-sm tracking-tight text-white font-display">Apple ID</span>
-                      </div>
-                      
-                      <p className="text-[11px] text-white/50 leading-relaxed max-w-xs mx-auto">
-                        Use your Apple ID to sign in to <span className="text-white font-semibold">HyperRelestix</span>.
-                      </p>
-
-                      <div className="bg-white/5 rounded-xl p-3 border border-white/10 text-left">
-                        <p className="text-[9px] text-white/45 uppercase tracking-wider font-bold">Apple ID</p>
-                        <p className="text-xs text-white/90 font-medium mt-0.5">akayg@icloud.com</p>
-                      </div>
-
-                      <div className="pt-1">
-                        <button
-                          type="button"
-                          onClick={() => handleSocialVerify('Abhishek Kayg', 'akayg@icloud.com')}
-                          disabled={loading}
-                          className="w-full bg-white text-black hover:bg-gray-100 transition-colors font-black text-xs py-3 rounded-xl shadow-md"
-                        >
-                          {loading ? 'Verifying with Touch ID...' : 'Continue with Touch ID / Password'}
-                        </button>
-                      </div>
-                    </div>
-                  )}
-
-                  {loading && (
-                    <div className="flex items-center justify-center gap-2 text-xs text-white/50 pt-2">
-                      <Loader2 className="w-4 h-4 animate-spin text-gold" />
-                      <span>Completing secure login...</span>
-                    </div>
-                  )}
-                </motion.div>
+                <SocialStep
+                  socialProvider={socialProvider}
+                  loading={loading}
+                  onBack={() => { setStep('form'); setServerError(''); }}
+                  onSocialVerify={handleSocialVerify}
+                />
               )}
 
               {/* ── OTP Verification Step ───────────────────────────────────── */}
               {step === 'otp' && (
-                <motion.div
-                  key="otp-step"
-                  variants={containerVariants}
-                  initial="hidden"
-                  animate="visible"
-                  exit="hidden"
-                  className="space-y-4"
-                >
-                  <motion.div variants={itemVariants} className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => { setStep('form'); setServerError(''); setOtpSuccessMessage(''); }}
-                      className="p-1 rounded-full hover:bg-white/5 text-white/40 hover:text-white transition-colors"
-                    >
-                      <ArrowLeft className="w-4 h-4" />
-                    </button>
-                    <div className="text-left">
-                      <h2 className="font-display font-bold text-xl text-white tracking-tight">
-                        Enter Verification Code
-                      </h2>
-                      <p className="text-white/50 text-[10px] mt-0.5">
-                        Sent to: <span className="text-gold font-bold">{otpTarget}</span>
-                      </p>
-                    </div>
-                  </motion.div>
-
-                  {/* Server error / success banner */}
-                  {serverError && (
-                    <motion.div
-                      variants={itemVariants}
-                      className="bg-red-500/10 border border-red-500/20 rounded-2xl px-4 py-2 text-red-400 text-xs"
-                    >
-                      {serverError}
-                    </motion.div>
-                  )}
-                  {otpSuccessMessage && (
-                    <motion.div
-                      variants={itemVariants}
-                      className="bg-emerald-500/10 border border-emerald-500/20 rounded-2xl px-4 py-2 text-emerald-400 text-xs text-center"
-                    >
-                      {otpSuccessMessage}
-                    </motion.div>
-                  )}
-
-                  {/* 6 OTP Boxes */}
-                  <motion.div variants={itemVariants} className="flex justify-between gap-2 max-w-xs mx-auto py-2">
-                    {otpCode.map((digit, idx) => (
-                      <input
-                        key={idx}
-                        id={`otp-input-${idx}`}
-                        type="text"
-                        maxLength={1}
-                        value={digit}
-                        onChange={e => handleOtpChange(e.target.value, idx)}
-                        onKeyDown={e => handleOtpKeyDown(e, idx)}
-                        onPaste={idx === 0 ? handleOtpPaste : undefined}
-                        className="w-10 h-11 text-center text-base font-extrabold bg-white/5 border border-white/10 focus:border-gold/50 rounded-xl text-white focus:outline-none focus:bg-white/8 transition-all"
-                      />
-                    ))}
-                  </motion.div>
-
-                  {/* Countdown Timer */}
-                  <motion.div variants={itemVariants} className="text-center text-xs text-white/40">
-                    {timer > 0 ? (
-                      <p>Resend code in <span className="text-gold font-bold">{timer}s</span></p>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={handleResendOtp}
-                        disabled={loading}
-                        className="text-gold hover:underline font-bold transition-all disabled:opacity-50"
-                      >
-                        Resend OTP code
-                      </button>
-                    )}
-                  </motion.div>
-
-                  <motion.div variants={itemVariants} className="pt-2">
-                    <button
-                      onClick={handleVerifyOtp}
-                      disabled={loading}
-                      className="btn-primary w-full disabled:opacity-60 disabled:cursor-not-allowed justify-center py-2.5 text-xs font-bold"
-                    >
-                      {loading ? (
-                        <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Verifying...</>
-                      ) : (
-                        <>Verify & Login <CheckCircle2 className="w-3.5 h-3.5" /></>
-                      )}
-                    </button>
-                  </motion.div>
-                </motion.div>
+                <OTPStep
+                  otpTarget={otpTarget}
+                  timer={timer}
+                  loading={loading}
+                  serverError={serverError}
+                  otpSuccessMessage={otpSuccessMessage}
+                  otpCode={otpCode}
+                  onBack={() => { setStep('form'); setServerError(''); setOtpSuccessMessage(''); }}
+                  onOtpChange={handleOtpChange}
+                  onOtpKeyDown={handleOtpKeyDown}
+                  onOtpPaste={handleOtpPaste}
+                  onResendOtp={handleResendOtp}
+                  onVerifyOtp={handleVerifyOtp}
+                />
               )}
 
               {/* ── Success step ────────────────────────────────────────────── */}
               {step === 'success' && (
-                <motion.div
-                  key="success-step"
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.9 }}
-                  className="text-center py-4 space-y-4"
-                >
-                  <motion.div
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    transition={{ type: 'spring', stiffness: 320, delay: 0.1 }}
-                    className="w-16 h-16 bg-emerald-500/10 border border-emerald-500/20 rounded-full flex items-center justify-center mx-auto"
-                  >
-                    <CheckCircle2 className="w-8 h-8 text-emerald-400" />
-                  </motion.div>
-
-                  <div className="space-y-1.5">
-                    <h3 className="font-display font-bold text-xl text-white">
-                      {isNew ? `Welcome, ${form.name.split(' ')[0]}! 🎉` : `Welcome back!`}
-                    </h3>
-                    <p className="text-white/60 text-xs max-w-xs mx-auto leading-relaxed">
-                      {isNew
-                        ? 'Your account has been created. You now have full access to all premium services.'
-                        : 'Signed in successfully. You now have full access to all premium services.'
-                      }
-                    </p>
-                  </div>
-
-                  <button onClick={handleDone} className="btn-primary mx-auto py-2.5 px-6 text-xs">
-                    {pendingRedirect ? 'Continue to Service' : 'Explore Properties'}{' '}
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </button>
-                </motion.div>
+                <SuccessStep
+                  isNew={isNew}
+                  userName={form.name}
+                  pendingRedirect={pendingRedirect}
+                  onDone={handleDone}
+                />
               )}
 
             </AnimatePresence>

@@ -1,5 +1,5 @@
-const API = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-
+import { API_URL } from '../config/api';
+const API = API_URL;
 const call = async (path, options = {}) => {
   const token = localStorage.getItem('hr_token');
   const headers = { 'Content-Type': 'application/json', ...options.headers };

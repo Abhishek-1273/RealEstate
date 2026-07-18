@@ -1,4 +1,5 @@
 import Property from '../models/Property.js';
+import { cacheGet, cacheSet, cacheDelPattern } from '../utils/cache.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // GET /api/properties
@@ -59,6 +60,15 @@ export const getAllProperties = async (req, res) => {
     };
     const sortObj = sortMap[sort] || { createdAt: -1 };
 
+    // Cache featured listings (homepage) for 5 min — skip cache for search/filter
+    const isFeaturedOnly = featured === 'true' && !search && !type && !city && !minPrice && !maxPrice && Number(page) === 1;
+    const cacheKey = isFeaturedOnly ? `properties:featured:${limit}:${sort}` : null;
+
+    if (cacheKey) {
+      const cached = await cacheGet(cacheKey);
+      if (cached) return res.status(200).json({ ...cached, cached: true });
+    }
+
     const skip  = (Number(page) - 1) * Number(limit);
     const total = await Property.countDocuments(filter);
 
@@ -68,13 +78,11 @@ export const getAllProperties = async (req, res) => {
       .skip(skip)
       .limit(Number(limit));
 
-    return res.status(200).json({
-      success: true,
-      total,
-      count: properties.length,
-      page: Number(page),
-      properties,
-    });
+    const result = { success: true, total, count: properties.length, page: Number(page), properties };
+
+    if (cacheKey) await cacheSet(cacheKey, result, 5 * 60); // 5 min cache
+
+    return res.status(200).json(result);
   } catch (error) {
     return res.status(500).json({ success: false, message: error.message });
   }
@@ -110,6 +118,9 @@ export const createProperty = async (req, res) => {
       });
     }
     const property = await Property.create(req.body);
+    // Invalidate property caches on new listing
+    await cacheDelPattern('properties:*');
+    await cacheDelPattern('prop:counts');
     return res.status(201).json({ success: true, property });
   } catch (error) {
     return res.status(500).json({ success: false, message: error.message });
@@ -130,6 +141,9 @@ export const updateProperty = async (req, res) => {
     if (!property) {
       return res.status(404).json({ success: false, message: 'Property not found' });
     }
+    // Invalidate caches on update
+    await cacheDelPattern('properties:*');
+    await cacheDelPattern('prop:counts');
     return res.status(200).json({ success: true, property });
   } catch (error) {
     return res.status(500).json({ success: false, message: error.message });
@@ -150,6 +164,9 @@ export const deleteProperty = async (req, res) => {
     if (!property) {
       return res.status(404).json({ success: false, message: 'Property not found' });
     }
+    // Invalidate caches on delete
+    await cacheDelPattern('properties:*');
+    await cacheDelPattern('prop:counts');
     return res.status(200).json({ success: true, message: 'Property removed from listings' });
   } catch (error) {
     return res.status(500).json({ success: false, message: error.message });
@@ -162,6 +179,11 @@ export const deleteProperty = async (req, res) => {
 // ─────────────────────────────────────────────────────────────────────────────
 export const getPropertyCounts = async (req, res) => {
   try {
+    // Cache this heavy aggregation for 10 minutes
+    const CACHE_KEY = 'prop:counts';
+    const cached = await cacheGet(CACHE_KEY);
+    if (cached) return res.status(200).json({ ...cached, cached: true });
+
     const typeMap = {
       'Villa':      'Luxury Villas',
       'Apartment':  'Apartments',
@@ -179,14 +201,11 @@ export const getPropertyCounts = async (req, res) => {
       'Katraj', 'Prabhat Road'
     ];
 
-    // Single aggregation pipeline — far more efficient than fetching all docs and looping in JS
     const [typeAgg, localityAggs] = await Promise.all([
-      // Group by property type
       Property.aggregate([
         { $match: { isActive: true } },
         { $group: { _id: '$type', count: { $sum: 1 } } },
       ]),
-      // Count each locality in parallel
       Promise.all(
         localities.map(async (loc) => ({
           locality: loc,
@@ -209,7 +228,9 @@ export const getPropertyCounts = async (req, res) => {
       localityCounts[locality] = count;
     });
 
-    return res.status(200).json({ success: true, typeCounts, localityCounts });
+    const result = { success: true, typeCounts, localityCounts };
+    await cacheSet(CACHE_KEY, result, 10 * 60); // 10 min cache
+    return res.status(200).json(result);
   } catch (error) {
     return res.status(500).json({ success: false, message: error.message });
   }

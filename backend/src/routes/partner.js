@@ -1,6 +1,10 @@
 import express from 'express';
 import Partner from '../models/Partner.js';
 import { staffOnly } from '../middleware/auth.js';
+import { cacheGet, cacheSet, cacheDel } from '../utils/cache.js';
+
+const PARTNERS_CACHE_KEY = 'partners:public';
+const PARTNERS_ADMIN_CACHE_KEY = 'partners:admin';
 
 const router = express.Router();
 
@@ -8,8 +12,13 @@ const router = express.Router();
 // GET /api/partners - get all visible partners
 router.get('/', async (req, res) => {
   try {
+    const cached = await cacheGet(PARTNERS_CACHE_KEY);
+    if (cached) return res.json({ ...cached, cached: true });
+
     const partners = await Partner.find({ visible: true }).sort({ name: 1 });
-    res.json({ success: true, partners });
+    const result = { success: true, partners };
+    await cacheSet(PARTNERS_CACHE_KEY, result, 15 * 60); // 15 min
+    res.json(result);
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
@@ -19,8 +28,13 @@ router.get('/', async (req, res) => {
 // GET /api/partners/admin - get all partners (including hidden ones)
 router.get('/admin', staffOnly, async (req, res) => {
   try {
+    const cached = await cacheGet(PARTNERS_ADMIN_CACHE_KEY);
+    if (cached) return res.json({ ...cached, cached: true });
+
     const partners = await Partner.find({}).sort({ name: 1 });
-    res.json({ success: true, partners });
+    const result = { success: true, partners };
+    await cacheSet(PARTNERS_ADMIN_CACHE_KEY, result, 15 * 60); // 15 min
+    res.json(result);
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
@@ -34,6 +48,7 @@ router.post('/', staffOnly, async (req, res) => {
       return res.status(400).json({ success: false, message: 'Partner name is required' });
     }
     const partner = await Partner.create({ name: name.trim() });
+    await cacheDel(PARTNERS_CACHE_KEY, PARTNERS_ADMIN_CACHE_KEY);
     res.json({ success: true, partner });
   } catch (err) {
     if (err.code === 11000) {
@@ -55,6 +70,7 @@ router.put('/:id', staffOnly, async (req, res) => {
     if (!partner) {
       return res.status(404).json({ success: false, message: 'Partner not found' });
     }
+    await cacheDel(PARTNERS_CACHE_KEY, PARTNERS_ADMIN_CACHE_KEY);
     res.json({ success: true, partner });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
@@ -68,6 +84,7 @@ router.delete('/:id', staffOnly, async (req, res) => {
     if (!partner) {
       return res.status(404).json({ success: false, message: 'Partner not found' });
     }
+    await cacheDel(PARTNERS_CACHE_KEY, PARTNERS_ADMIN_CACHE_KEY);
     res.json({ success: true, message: 'Partner deleted successfully' });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });

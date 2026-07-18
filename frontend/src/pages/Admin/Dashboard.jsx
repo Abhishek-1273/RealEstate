@@ -4,6 +4,7 @@ import { TrendingUp, Inbox, Building2, Users, ArrowRight, Loader2, Calendar, Fil
 import { getProperties, getUsers, getPartnersAdmin, getEnquiries } from '../../utils/adminApi';
 import { fetchBlogs } from '../../utils/api';
 import { useAdmin } from './AdminContext';
+import { SkeletonDashboard } from '../../components/common/Skeleton';
 
 function StatCard({ icon: Icon, label, value, sub, color, trend }) {
   return (
@@ -98,11 +99,7 @@ export default function Dashboard() {
     })();
   }, [isMgmt, isAgent]);
 
-  if (loading) return (
-    <div className="flex items-center justify-center h-96">
-      <Loader2 className="w-8 h-8 animate-spin text-gold" style={{ color: '#D4AF37' }} />
-    </div>
-  );
+  if (loading) return <SkeletonDashboard />;
 
   return (
     <div className="animate-fade-in pb-8">

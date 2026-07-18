@@ -6,6 +6,7 @@ import PropertyCard from '../../components/common/PropertyCard';
 import { properties as staticProperties } from '../../data/properties';
 import { fetchProperties } from '../../utils/api';
 import { fadeUp, staggerContainer } from '../../animations/variants';
+import SEO from '../../components/common/SEO';
 
 const TYPES = ['All', 'Villa', 'Apartment', 'Penthouse', 'Farm House', 'Commercial', 'Plot'];
 const CITIES = [
@@ -192,8 +193,30 @@ export default function Properties() {
 
   const hasFilters = query || type !== 'All' || city !== 'All' || budget.label !== 'Any';
 
+  const seoTitle = useMemo(() => {
+    let titleStr = 'Premium Properties & Listings';
+    if (type !== 'All') {
+      titleStr = `${type}s for Sale`;
+    }
+    if (city !== 'All') {
+      titleStr += ` in ${city}`;
+    } else {
+      titleStr += ' in Pune';
+    }
+    return titleStr;
+  }, [type, city]);
+
+  const seoDesc = useMemo(() => {
+    return `Discover premium real estate listings in Pune${city !== 'All' ? ` including ${city}` : ''}. Filter from verified ${type !== 'All' ? `${type.toLowerCase()}s` : 'villas, penthouses and luxury apartments'} with price ranges, amenities, and RERA compliance.`;
+  }, [type, city]);
+
   return (
     <div className="min-h-screen bg-surface dark:bg-navy-dark pt-20 transition-colors duration-300">
+      <SEO 
+        title={seoTitle} 
+        description={seoDesc} 
+        url={`/properties${hasFilters ? `?type=${type}&city=${city}` : ''}`} 
+      />
 
       {/* ── Page Header ── */}
       <div className="bg-mesh-dark py-20 relative overflow-hidden">

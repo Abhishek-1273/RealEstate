@@ -3,8 +3,8 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAdmin } from './AdminContext';
 import { useAuth } from '../../contexts';
 
-const API = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-
+import { API_URL } from '../../config/api';
+const API = API_URL;
 const ROLE_LABELS = {
   admin:        { label: 'Admin', color: '#7C3AED' },
   management:   { label: 'Management', color: '#D4AF37' },

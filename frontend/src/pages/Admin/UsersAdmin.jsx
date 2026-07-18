@@ -4,6 +4,7 @@ import { Crown, Briefcase, Users, Plus, X, Search, Phone, Mail, Trash2, Loader2,
 import { motion, AnimatePresence } from 'framer-motion';
 import { getUsers, createStaff, updateUserRole, deleteUser, getProperties, getEnquiries } from '../../utils/adminApi';
 import { useAdmin } from './AdminContext';
+import { SkeletonTable } from '../../components/common/Skeleton';
 
 const ROLE_META = {
   admin: { label: 'Admin', color: '#8B5CF6', bg: '#F5F3FF', darkBg: 'rgba(139,92,246,0.12)', border: 'rgba(139,92,246,0.15)', icon: Crown },
@@ -431,8 +432,22 @@ export default function UsersAdmin() {
 
       <div className="bg-white dark:bg-[#0E1A2B] rounded-3xl border border-gray-100 dark:border-white/10 shadow-sm overflow-hidden transition-colors duration-300">
         {loading ? (
-          <div className="flex items-center justify-center py-20">
-            <Loader2 className="w-7 h-7 animate-spin text-gold" style={{ color: '#D4AF37' }} />
+          <div className="p-4 space-y-4">
+            <div className="hidden lg:block">
+              <SkeletonTable rows={5} cols={5} />
+            </div>
+            <div className="block lg:hidden space-y-4">
+              {[...Array(3)].map((_, i) => (
+                <div key={i} className="p-4 rounded-2xl bg-white dark:bg-navy-light border border-gray-100 dark:border-white/5 flex gap-3 animate-pulse">
+                  <div className="w-16 h-16 rounded-xl bg-gray-200 dark:bg-white/10 shrink-0" />
+                  <div className="flex-1 space-y-2">
+                    <div className="h-3 w-16 bg-gray-200 dark:bg-white/10 rounded" />
+                    <div className="h-4.5 w-full bg-gray-200 dark:bg-white/10 rounded" />
+                    <div className="h-3 w-2/3 bg-gray-200 dark:bg-white/10 rounded" />
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         ) : filtered.length === 0 ? (
           <div className="text-center py-16">

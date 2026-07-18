@@ -1,11 +1,29 @@
-import { useState, useEffect, lazy, Suspense } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import {
   ArrowRight, Star, Shield, Award, Clock, TrendingUp,
-  CheckCircle2, MapPin, Search, Home as HomeIcon, Building2, Zap,
+  CheckCircle2, MapPin, Home as HomeIcon, Building2,
   Building, Store, Trees, Layers
 } from 'lucide-react';
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { Pagination, Autoplay } from 'swiper/modules';
+import 'swiper/css';
+import 'swiper/css/pagination';
+
+import Hero from '../../components/common/Hero';
+import SectionHeader from '../../components/common/SectionHeader';
+import { testimonials, categories, companyLogos } from '../../data/index';
+import { submitEnquiry, fetchPropertyCounts, fetchPartners } from '../../utils/api';
+import { fadeUp, scaleIn, staggerContainer, staggerFast, viewportOnce } from '../../animations/variants';
+import SEO from '../../components/common/SEO';
+import ErrorBoundary from '../../components/common/ErrorBoundary';
+
+// Subcomponents
+import FeaturedProperties from './components/FeaturedProperties';
+import StatsStrip from './components/StatsStrip';
+import ExploreCities from './components/ExploreCities';
+import BlogPreview from './components/BlogPreview';
 
 const CATEGORY_ICON_MAP = {
   'Luxury Villas': HomeIcon,
@@ -15,21 +33,6 @@ const CATEGORY_ICON_MAP = {
   'Farm Houses': Trees,
   'Plots': Layers,
 };
-import CountUpNumber from '../../components/common/CountUpNumber';
-import { Swiper, SwiperSlide } from 'swiper/react';
-import { Pagination, Autoplay } from 'swiper/modules';
-import 'swiper/css';
-import 'swiper/css/pagination';
-
-import Hero from '../../components/common/Hero';
-import SectionHeader from '../../components/common/SectionHeader';
-import PropertyCard from '../../components/common/PropertyCard';
-const InteractiveGlobe = lazy(() => import('../../components/common/InteractiveGlobe'));
-import PremiumIcon from '../../components/common/PremiumIcon';
-import { featuredProperties } from '../../data/properties';
-import { testimonials, cities, stats, blogs, categories, developerLogos, companyLogos } from '../../data/index';
-import { submitEnquiry, fetchProperties, fetchPropertyCounts, fetchPartners, fetchBlogs } from '../../utils/api';
-import { fadeUp, fadeLeft, scaleIn, staggerContainer, staggerFast, viewportOnce } from '../../animations/variants';
 
 /* ══════════════════════════════════════════════════════════════════════════
    TRUST MARQUEE
@@ -66,228 +69,6 @@ function TrustMarquee() {
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
-   FEATURED PROPERTIES
-══════════════════════════════════════════════════════════════════════════ */
-function FeaturedProperties() {
-  const [list, setList] = useState(featuredProperties.slice(0, 6));
-
-  useEffect(() => {
-    let active = true;
-    const getFeatured = async () => {
-      try {
-        const data = await fetchProperties({ featured: 'true', limit: 6 });
-        if (active && data?.properties?.length > 0) {
-          setList(data.properties);
-        }
-      } catch (err) {
-        // Fallback already matches static featuredProperties
-      }
-    };
-    getFeatured();
-    return () => { active = false; };
-  }, []);
-
-  return (
-    <section className="section-pad bg-surface-alt dark:bg-navy transition-colors duration-300">
-      <div className="container-luxury">
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-16">
-          <SectionHeader
-            label="Handpicked for You"
-            title={<>Featured <span style={{ color: '#D4AF37' }}>Properties</span></>}
-            description="Every listing personally vetted by our senior advisors. These represent the finest available in India right now."
-          />
-          <Link to="/properties" className="btn-outline shrink-0 hidden md:inline-flex">
-            View All <ArrowRight className="w-4 h-4" />
-          </Link>
-        </div>
-        <motion.div
-          variants={staggerContainer}
-          initial="hidden"
-          animate="visible"
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-7"
-        >
-          {list.map((p) => (
-            <motion.div key={p._id || p.id} variants={fadeUp}>
-              <PropertyCard property={p} />
-            </motion.div>
-          ))}
-        </motion.div>
-
-        {/* Mobile View All at bottom */}
-        <div className="flex justify-center mt-10 md:hidden">
-          <Link to="/properties" className="btn-outline w-full text-center justify-center">
-            View All <ArrowRight className="w-4 h-4" />
-          </Link>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-/* ══════════════════════════════════════════════════════════════════════════
-   STATS STRIP
-══════════════════════════════════════════════════════════════════════════ */
-function StatsStrip() {
-  return (
-    <section className="py-24 bg-mesh-dark relative overflow-hidden">
-      {/* Ambient */}
-      <div className="absolute inset-0 pointer-events-none"
-        style={{ background: 'radial-gradient(ellipse at 50% 100%, rgba(212,175,55,0.08) 0%, transparent 60%)' }} />
-      <div className="container-luxury relative">
-        <motion.div
-          variants={staggerFast}
-          initial="hidden"
-          whileInView="visible"
-          viewport={viewportOnce}
-          className="grid grid-cols-2 lg:grid-cols-4 gap-10"
-        >
-          {stats.map((s, i) => (
-            <motion.div key={i} variants={scaleIn} className="text-center">
-              <p className="font-display font-black text-white leading-none mb-3 text-3xl sm:text-4xl md:text-5xl lg:text-[3.5rem]">
-                <CountUpNumber end={s.value} duration={2.5} />
-                <span style={{ color: '#D4AF37' }}>{s.suffix}</span>
-              </p>
-              <p className="text-white/50 text-sm font-body tracking-wide">{s.label}</p>
-            </motion.div>
-          ))}
-        </motion.div>
-      </div>
-    </section>
-  );
-}
-
-/* ══════════════════════════════════════════════════════════════════════════
-   EXPLORE LUXURY CITIES
-══════════════════════════════════════════════════════════════════════════ */
-function ExploreCities({ counts = {} }) {
-  const [activeCity, setActiveCity] = useState('Balewadi');
-  const [expanded, setExpanded] = useState(false);
-
-  const main8Names = ['KP', 'NIBM Road', 'Viman Nagar', 'Kharadi', 'Punewadi', 'Kothrud', 'Karve Nagar', 'Balewadi'];
-
-  // Split and order cities
-  const main8 = cities.filter(c => main8Names.includes(c.name));
-  const otherCities = cities.filter(c => !main8Names.includes(c.name));
-  main8.sort((a, b) => main8Names.indexOf(a.name) - main8Names.indexOf(b.name));
-
-  const displayedCities = expanded ? [...main8, ...otherCities] : main8;
-
-  // Auto expand if city selected on globe is not in main 8
-  useEffect(() => {
-    if (!main8Names.includes(activeCity)) {
-      setExpanded(true);
-    }
-  }, [activeCity]);
-
-  const activeCityData = cities.find((c) => c.name === activeCity) || cities[0];
-
-  return (
-    <section className="section-pad bg-white dark:bg-navy-dark relative overflow-hidden transition-colors duration-300">
-      {/* Ambient */}
-      <div className="absolute inset-0 pointer-events-none opacity-30"
-        style={{ background: 'radial-gradient(ellipse at 50% 100%, rgba(212,175,55,0.08) 0%, transparent 60%)' }} />
-
-      <div className="container-luxury relative">
-        <SectionHeader
-          label="Explore by Locality"
-          title={<>Pune's Most Coveted <span style={{ color: '#D4AF37' }}>Luxury Localities</span></>}
-          align="center"
-          className="mb-16"
-        />
-
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
-          {/* Left Column — 3D Globe */}
-          <div className="hidden md:block lg:col-span-7">
-            <Suspense fallback={
-              <div className="relative w-full h-[450px] flex flex-col items-center justify-center bg-transparent gap-3">
-                <div className="w-8 h-8 border-4 border-gold border-t-transparent rounded-full animate-spin" style={{ borderColor: '#D4AF37', borderTopColor: 'transparent' }} />
-                <p className="text-xs font-semibold tracking-widest uppercase text-gold" style={{ color: '#D4AF37' }}>Loading 3D Earth...</p>
-              </div>
-            }>
-              <InteractiveGlobe onSelectCity={setActiveCity} activeCity={activeCity} />
-            </Suspense>
-          </div>
-
-          {/* Right Column — City Tabs & Preview Card */}
-          <div className="lg:col-span-5">
-            <div className="space-y-6">
-              {/* Symmetrical Grid of Localities (Compact) */}
-              <div className="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-4 gap-2">
-                {displayedCities.map((city) => (
-                  <button
-                    key={city.id}
-                    onClick={() => setActiveCity(city.name)}
-                    className={`px-2 py-1.5 rounded-lg text-[10px] font-bold text-center border truncate transition-all duration-300 ${activeCity === city.name
-                        ? 'border-gold bg-gold/10 text-gold shadow-[0_3px_10px_rgba(212,175,55,0.12)]'
-                        : 'border-gray-100 dark:border-white/10 bg-transparent text-ink-muted dark:text-cream/80 hover:bg-gray-50 dark:hover:bg-white/5'
-                      }`}
-                    style={activeCity === city.name ? { color: '#D4AF37', borderColor: '#D4AF37' } : {}}
-                  >
-                    {city.name}
-                  </button>
-                ))}
-              </div>
-
-              {/* Show More / Show Less Toggle under the tabs grid (Centered & Compact) */}
-              <div className="pt-1 flex items-center justify-center gap-4">
-                <div className="flex-1 h-px bg-gradient-to-r from-transparent to-gold/15" />
-                <button
-                  onClick={() => setExpanded(!expanded)}
-                  className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-[9px] font-bold tracking-wider uppercase border border-gold/20 hover:border-gold hover:bg-gold/5 text-gold transition-all duration-300 shrink-0"
-                  style={{ color: '#D4AF37', borderColor: 'rgba(212,175,55,0.25)' }}
-                >
-                  <span>{expanded ? 'Show Less Localities' : 'Show All Localities'}</span>
-                  <span className="text-[10px] leading-none">{expanded ? '▴' : '▾'}</span>
-                </button>
-                <div className="flex-1 h-px bg-gradient-to-l from-transparent to-gold/15" />
-              </div>
-
-              {/* Active City Preview Card */}
-              <motion.div
-                key={activeCity}
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.5 }}
-                className="group relative overflow-hidden rounded-3xl shadow-luxury"
-                style={{ height: '300px', border: '1px solid rgba(7,26,47,0.07)' }}
-              >
-                <img
-                  src={activeCityData.image}
-                  alt={activeCityData.name}
-                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                />
-                <div className="absolute inset-0"
-                  style={{ background: 'linear-gradient(to top, rgba(7,26,47,0.92) 0%, rgba(7,26,47,0.3) 55%, transparent 100%)' }}
-                />
-                <div className="absolute inset-0 flex flex-col justify-end p-7">
-                  <span className="text-[10px] font-accent font-bold tracking-[0.22em] uppercase mb-1.5" style={{ color: '#D4AF37' }}>
-                    {activeCityData.tag}
-                  </span>
-                  <h3 className="font-display font-black text-white text-2xl leading-tight">{activeCityData.name}</h3>
-                  <div className="flex items-center justify-between mt-3 pt-3.5" style={{ borderTop: '1px solid rgba(255,255,255,0.12)' }}>
-                    <p className="text-white/70 text-sm font-semibold">
-                      {counts[activeCityData.name] ?? 0}{' '}
-                      {(counts[activeCityData.name] ?? 0) === 1 ? 'Verified Property' : 'Verified Properties'}
-                    </p>
-                    <Link
-                      to={`/properties?city=${activeCityData.name}`}
-                      className="flex items-center gap-1.5 px-4 py-2 rounded-full text-navy text-xs font-bold transition-transform group-hover:-translate-y-0.5"
-                      style={{ background: 'linear-gradient(135deg, #D4AF37, #E8C84A)' }}
-                    >
-                      View All <ArrowRight className="w-3.5 h-3.5" />
-                    </Link>
-                  </div>
-                </div>
-              </motion.div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-/* ══════════════════════════════════════════════════════════════════════════
    PROPERTY CATEGORIES
 ══════════════════════════════════════════════════════════════════════════ */
 function Categories({ counts = {} }) {
@@ -301,35 +82,33 @@ function Categories({ counts = {} }) {
           className="mb-14"
         />
         <motion.div
-          variants={staggerFast}
+          variants={staggerContainer}
           initial="hidden"
           whileInView="visible"
           viewport={viewportOnce}
-          className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4"
+          className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-5"
         >
-          {categories.map((cat) => (
-            <motion.div key={cat.id} variants={scaleIn}>
-              <Link
-                to={`/properties?category=${cat.name}`}
-                className="group block relative overflow-hidden rounded-2xl shadow-card hover:shadow-card-hover transition-all duration-400"
-                style={{ aspectRatio: '1' }}
-              >
-                <img src={cat.image} alt={cat.name} loading="lazy" className="w-full h-full object-cover transition-transform duration-600 group-hover:scale-110" />
-                <div className="absolute inset-0"
-                  style={{ background: 'linear-gradient(to top, rgba(7,26,47,0.9) 0%, rgba(7,26,47,0.35) 60%, transparent 100%)' }}
-                />
-                <div className="absolute inset-0 flex flex-col items-center justify-end p-4 text-center">
-                  <span className="mb-2 group-hover:scale-110 transition-transform duration-300">
-                    <PremiumIcon icon={CATEGORY_ICON_MAP[cat.name]} variant="glass-light" size="md" animate={false} />
-                  </span>
-                  <p className="text-white font-display font-bold text-xs leading-snug mt-2">{cat.name}</p>
-                  <p className="text-white/50 text-[10px] mt-0.5">
-                    {counts[cat.name] || 0} {counts[cat.name] === 1 ? 'Property' : 'Properties'}
+          {categories.map((c) => {
+            const Icon = CATEGORY_ICON_MAP[c.name] || HomeIcon;
+            return (
+              <motion.div key={c.id} variants={fadeUp}>
+                <Link
+                  to={`/properties?category=${c.id}`}
+                  className="group block bg-white dark:bg-navy-light rounded-3xl p-7 text-center border border-gray-150 dark:border-white/5 transition-all duration-400 hover:-translate-y-1 hover:border-gold/30 hover:shadow-[0_16px_36px_rgba(10,25,47,0.04)] dark:hover:shadow-[0_16px_36px_rgba(0,0,0,0.25)] relative overflow-hidden"
+                >
+                  <div className="w-12 h-12 rounded-2xl bg-gold/10 text-gold flex items-center justify-center mx-auto mb-5 transition-transform duration-300 group-hover:scale-110">
+                    <Icon className="w-5.5 h-5.5" style={{ color: '#D4AF37' }} />
+                  </div>
+                  <h3 className="font-display font-bold text-navy dark:text-white text-xs md:text-sm tracking-tight mb-2">
+                    {c.name}
+                  </h3>
+                  <p className="text-[10px] text-ink-soft dark:text-white/40 font-semibold tracking-wide uppercase">
+                    {counts[c.name] ?? 0} Listings
                   </p>
-                </div>
-              </Link>
-            </motion.div>
-          ))}
+                </Link>
+              </motion.div>
+            );
+          })}
         </motion.div>
       </div>
     </section>
@@ -337,123 +116,102 @@ function Categories({ counts = {} }) {
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
-   WHY HYPERRELESTIX
+   WHY US (ACCORDION WITH IMAGE REVEAL / FLOATING TABS)
 ══════════════════════════════════════════════════════════════════════════ */
 function WhyUs() {
-  const features = [
-    { icon: <Shield className="w-5 h-5" />, title: 'RERA Verified', desc: 'Every property passes rigorous RERA and legal verification before listing.' },
-    { icon: <Award className="w-5 h-5" />, title: 'Award-Winning Advisors', desc: 'Our local specialists are consistently ranked among India\'s best luxury agents.' },
-    { icon: <Clock className="w-5 h-5" />, title: '24×7 Concierge', desc: 'Round-the-clock dedicated support for every client, every query.' },
-    { icon: <TrendingUp className="w-5 h-5" />, title: 'Best ROI Insights', desc: 'Data-backed market intelligence to ensure you invest at the right moment.' },
-    { icon: <CheckCircle2 className="w-5 h-5" />, title: 'Zero Hidden Costs', desc: 'Complete transparency — no surprises at any stage of your transaction.' },
-    { icon: <MapPin className="w-5 h-5" />, title: 'Prime Indian Addresses', desc: 'Exclusively curated from India\'s most sought-after locations.' },
-  ];
+  const [activeTab, setActiveTab] = useState(0);
 
-  return (
-    <section className="section-pad bg-mesh-dark relative overflow-hidden">
-      <div className="absolute top-0 left-1/4 w-[600px] h-[600px] rounded-full pointer-events-none"
-        style={{ background: 'radial-gradient(ellipse, rgba(212,175,55,0.06) 0%, transparent 70%)' }} />
-      <div className="absolute bottom-0 right-1/4 w-[400px] h-[400px] rounded-full pointer-events-none"
-        style={{ background: 'radial-gradient(ellipse, rgba(30,58,138,0.07) 0%, transparent 70%)' }} />
-
-      <div className="container-luxury relative">
-        <div className="grid lg:grid-cols-2 gap-20 items-center">
-          <motion.div variants={fadeLeft} initial="hidden" whileInView="visible" viewport={viewportOnce}>
-            <SectionHeader
-              label="Why Choose Us"
-              title={<>The HyperRelestix <span style={{ color: '#D4AF37' }}>Difference</span></>}
-              description="We don't just sell properties — we craft experiences, build trust, and match you with homes that truly reflect your aspirations in India's finest addresses."
-              light
-            />
-            <div className="mt-10 flex flex-wrap gap-4">
-              <Link to="/about" className="btn-primary">Our Story <ArrowRight className="w-4 h-4" /></Link>
-              <Link to="/contact" className="btn-outline-light">Talk to Us</Link>
-            </div>
-          </motion.div>
-
-          <motion.div
-            variants={staggerContainer}
-            initial="hidden"
-            whileInView="visible"
-            viewport={viewportOnce}
-            className="grid grid-cols-1 sm:grid-cols-2 gap-4"
-          >
-            {features.map((f, i) => (
-              <motion.div
-                key={i}
-                variants={fadeUp}
-                className="p-6 rounded-2xl transition-all duration-300 group cursor-default"
-                style={{
-                  background: 'rgba(255,255,255,0.04)',
-                  border: '1px solid rgba(255,255,255,0.07)',
-                }}
-                whileHover={{
-                  background: 'rgba(255,255,255,0.07)',
-                  borderColor: 'rgba(212,175,55,0.2)',
-                  y: -4,
-                }}
-              >
-                <PremiumIcon icon={f.icon} variant="gold" size="md" className="mb-4" />
-                <h3 className="font-display font-bold text-white text-sm mb-2">{f.title}</h3>
-                <p className="text-white/45 text-xs leading-relaxed">{f.desc}</p>
-              </motion.div>
-            ))}
-          </motion.div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-/* ══════════════════════════════════════════════════════════════════════════
-   BUYING JOURNEY
-══════════════════════════════════════════════════════════════════════════ */
-function BuyingJourney() {
-  const steps = [
-    { icon: <Search className="w-6 h-6" />, step: '01', title: 'Search', desc: 'Browse our curated luxury collection and shortlist your favourites.' },
-    { icon: <MapPin className="w-6 h-6" />, step: '02', title: 'Site Visit', desc: 'Our advisor personally accompanies you to every property on your list.' },
-    { icon: <Zap className="w-6 h-6" />, step: '03', title: 'Make an Offer', desc: 'We negotiate on your behalf to secure the best possible terms.' },
-    { icon: <HomeIcon className="w-6 h-6" />, step: '04', title: 'Move In', desc: 'Complete documentation, registration, and handover — all managed by us.' },
+  const items = [
+    {
+      title: 'RERA-Verified Portfolio Only',
+      desc: 'We enforce 100% legal verification. Every penthouse, villa, and apartment has undergone RERA verification and full title registration audit before hitting our platform.',
+      icon: <Shield className="w-5 h-5" />,
+    },
+    {
+      title: 'Elite Advisory Network',
+      desc: 'Our real estate advisors have 15+ years of deep luxury market intelligence. We consult on legal due diligence, tax structures, FEMA compliance, and property valuations.',
+      icon: <Award className="w-5 h-5" />,
+    },
+    {
+      title: 'Seamless Remote Execution',
+      desc: 'Specifically designed for remote buyers and NRI investors. Video walkthroughs, remote PoA logistics, digital contracts, and absolute security at every stage.',
+      icon: <Clock className="w-5 h-5" />,
+    },
   ];
 
   return (
     <section className="section-pad bg-white dark:bg-navy-dark transition-colors duration-300">
       <div className="container-luxury">
-        <SectionHeader
-          label="Simple Process"
-          title={<>Your Buying <span style={{ color: '#D4AF37' }}>Journey</span></>}
-          description="From first search to key handover — we're with you at every step."
-          align="center"
-          className="mb-20"
-        />
-        <div className="relative">
-          {/* Connecting line */}
-          <div className="hidden lg:block absolute top-10 left-[12.5%] right-[12.5%] h-px"
-            style={{ background: 'linear-gradient(90deg, transparent, rgba(212,175,55,0.3), rgba(212,175,55,0.5), rgba(212,175,55,0.3), transparent)' }} />
+        <div className="grid lg:grid-cols-2 gap-16 items-center">
+          <div>
+            <SectionHeader
+              label="Why HyperRelestix"
+              title={<>Setting the Standard in <span style={{ color: '#D4AF37' }}>Advisory</span></>}
+              description="We do not just list properties. We provide a full-service, secure transactional ecosystem built on transparency."
+              className="mb-10"
+            />
 
-          <motion.div
-            variants={staggerContainer}
-            initial="hidden"
-            whileInView="visible"
-            viewport={viewportOnce}
-            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8"
-          >
-            {steps.map((s, i) => (
-              <motion.div key={i} variants={fadeUp} className="text-center group">
-                <div className="relative inline-flex mb-8">
-                  <PremiumIcon icon={s.icon} variant="gold" size="xl" />
-                  <span
-                    className="absolute -top-2 -right-2 w-6 h-6 rounded-full text-[10px] font-black flex items-center justify-center text-navy"
-                    style={{ background: 'linear-gradient(135deg, #D4AF37, #E8C84A)' }}
-                  >
-                    {s.step}
-                  </span>
+            <div className="space-y-4">
+              {items.map((item, i) => (
+                <div
+                  key={i}
+                  onClick={() => setActiveTab(i)}
+                  className={`p-6 rounded-3xl border transition-all duration-300 cursor-pointer ${activeTab === i
+                      ? 'bg-gold/5 border-gold/30 dark:bg-gold/[0.03]'
+                      : 'bg-transparent border-gray-100 dark:border-white/5 hover:border-gray-200 dark:hover:border-white/10'
+                    }`}
+                >
+                  <div className="flex gap-4">
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${activeTab === i ? 'bg-gold/25 text-gold-dark dark:text-gold' : 'bg-black/5 dark:bg-white/5 text-ink-muted'}`}>
+                      {item.icon}
+                    </div>
+                    <div>
+                      <h3 className={`font-display font-bold text-sm md:text-base leading-none transition-colors mb-2.5 ${activeTab === i ? 'text-navy dark:text-white font-extrabold' : 'text-ink-muted dark:text-cream/80'}`}>
+                        {item.title}
+                      </h3>
+                      {activeTab === i && (
+                        <p className="text-ink-muted dark:text-white/60 text-xs leading-relaxed mt-2 animate-fade-in">
+                          {item.desc}
+                        </p>
+                      )}
+                    </div>
+                  </div>
                 </div>
-                <h3 className="font-display font-bold text-navy dark:text-white text-lg mb-2">{s.title}</h3>
-                <p className="text-ink-muted dark:text-white/60 text-sm leading-[1.8]">{s.desc}</p>
-              </motion.div>
-            ))}
-          </motion.div>
+              ))}
+            </div>
+          </div>
+
+          {/* Right Column: Dynamic illustrative elements */}
+          <div className="relative">
+            <div className="aspect-[4/3] rounded-[32px] overflow-hidden bg-mesh-dark p-10 flex flex-col justify-between relative shadow-luxury">
+              <div className="absolute inset-0 opacity-20"
+                style={{ background: 'radial-gradient(circle at 100% 0%, rgba(212,175,55,0.2) 0%, transparent 60%)' }} />
+
+              <div className="relative z-10 flex items-center justify-between border-b border-white/10 pb-6">
+                <div>
+                  <p className="font-accent font-bold text-[9px] tracking-widest text-gold uppercase" style={{ color: '#D4AF37' }}>RERA Document Audit</p>
+                  <h4 className="font-display font-black text-white text-lg mt-1">Pune Market Intelligence</h4>
+                </div>
+                <div className="px-3.5 py-1.5 rounded-full bg-gold/15 border border-gold/25 text-gold text-[10px] font-bold" style={{ color: '#D4AF37', borderColor: 'rgba(212,175,55,0.25)' }}>
+                  Verified
+                </div>
+              </div>
+
+              <div className="relative z-10 py-6 my-auto">
+                <p className="text-white/80 font-body text-sm leading-relaxed max-w-sm">
+                  "HyperRelestix operates with complete legal compliance and deep fiduciary responsibility, ensuring every transaction is completely RERA-verified."
+                </p>
+              </div>
+
+              <div className="relative z-10 flex items-center gap-3 pt-6 border-t border-white/10">
+                <div className="w-10 h-10 rounded-full flex items-center justify-center bg-gold/10 text-gold text-xs font-bold" style={{ color: '#D4AF37' }}>HR</div>
+                <div>
+                  <p className="text-white text-xs font-bold font-display">Advisory Board</p>
+                  <p className="text-white/40 text-[9px] mt-0.5 uppercase tracking-wide">FEMA & Tax Compliance Audited</p>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </section>
@@ -461,50 +219,92 @@ function BuyingJourney() {
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
-   TESTIMONIALS
+   BUYING JOURNEY (STAGGERED STEPS)
 ══════════════════════════════════════════════════════════════════════════ */
-function Testimonials() {
+function BuyingJourney() {
+  const steps = [
+    { num: '01', title: 'Consultation & Shortlisting', desc: 'Connect with a senior advisor to discuss FEMA guidelines, tax parameters, and view immersive RERA-verified options.' },
+    { num: '02', title: 'Virtual Tours & Auditing', desc: 'Inspect property dimensions, locality metrics, and title registry documents via video streaming and digital assets.' },
+    { num: '03', title: 'Escrow & Title Transfer', desc: 'Secure remittances directly via NRE/NRO banking channels. Our legal team drafts digital contracts and manages registration.' },
+  ];
+
   return (
     <section className="section-pad bg-surface-alt dark:bg-navy transition-colors duration-300">
       <div className="container-luxury">
         <SectionHeader
-          label="Client Stories"
-          title={<>What Our Clients <span style={{ color: '#D4AF37' }}>Say</span></>}
+          label="The Transaction Process"
+          title={<>Your Journey, <span style={{ color: '#D4AF37' }}>Simplified</span></>}
           align="center"
           className="mb-16"
         />
-        <Swiper
-          modules={[Pagination, Autoplay]}
-          pagination={{ clickable: true }}
-          autoplay={{ delay: 5000, disableOnInteraction: false }}
-          spaceBetween={28}
-          slidesPerView={1}
-          breakpoints={{ 768: { slidesPerView: 2 }, 1024: { slidesPerView: 3 } }}
-          className="pb-14"
-        >
-          {testimonials.map((t) => (
-            <SwiperSlide key={t.id}>
-              <div
-                className="rounded-3xl p-8 h-full flex flex-col transition-all duration-400 hover:-translate-y-1 bg-white dark:bg-navy-light border border-gray-100 dark:border-white/10 shadow-card"
-              >
-                <div className="flex gap-1 mb-5">
-                  {[...Array(t.rating)].map((_, i) => (
-                    <Star key={i} className="w-4 h-4 fill-gold text-gold" />
-                  ))}
-                </div>
-                <p className="text-ink-muted dark:text-cream/80 text-sm font-body leading-[1.95] mb-6 italic flex-1">"{t.text}"</p>
-                <div className="flex items-center gap-3.5 pt-5 border-t border-gray-100 dark:border-white/10">
-                  <img src={t.image} alt={t.name} className="w-11 h-11 rounded-full object-cover" />
-                  <div>
-                    <p className="font-display font-bold text-navy dark:text-white text-sm">{t.name}</p>
-                    <p className="text-ink-soft dark:text-white/50 text-xs mt-0.5">{t.role}</p>
-                    <p className="text-[10px] mt-0.5 font-accent tracking-wide" style={{ color: '#D4AF37' }}>{t.property}</p>
+        <div className="grid md:grid-cols-3 gap-8">
+          {steps.map((s, i) => (
+            <div key={i} className="bg-white dark:bg-navy-light rounded-3xl p-8 border border-gray-150 dark:border-white/5 shadow-card relative h-full flex flex-col justify-between">
+              <div>
+                <p className="font-display font-black text-gold/25 text-4xl mb-6">{s.num}</p>
+                <h3 className="font-display font-bold text-navy dark:text-white text-lg mb-3">{s.title}</h3>
+                <p className="text-ink-muted dark:text-white/60 text-xs leading-relaxed">{s.desc}</p>
+              </div>
+              <div className="pt-6 mt-6 border-t border-gray-100 dark:border-white/10 flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                <span className="text-[10px] text-ink-soft dark:text-white/40 uppercase tracking-wider font-bold">Secure Phase</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   TESTIMONIALS (CAROUSEL / SWIPER)
+══════════════════════════════════════════════════════════════════════════ */
+function Testimonials() {
+  return (
+    <section className="section-pad bg-white dark:bg-navy-dark transition-colors duration-300">
+      <div className="container-luxury">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-16">
+          <SectionHeader
+            label="Client Reviews"
+            title={<>Trusted by <span style={{ color: '#D4AF37' }}>Advisors & HNIs</span></>}
+            description="Listen to what local Pune property owners and global NRI investors say about our advisory service."
+          />
+        </div>
+        <ErrorBoundary widget>
+          <Swiper
+            modules={[Pagination, Autoplay]}
+            pagination={{ clickable: true }}
+            autoplay={{ delay: 5000, disableOnInteraction: false }}
+            spaceBetween={28}
+            slidesPerView={1}
+            breakpoints={{ 768: { slidesPerView: 2 }, 1024: { slidesPerView: 3 } }}
+            className="pb-14 animate-fade-in"
+          >
+            {testimonials.map((t) => (
+              <SwiperSlide key={t.id}>
+                <div
+                  className="rounded-3xl p-8 h-full flex flex-col transition-all duration-400 hover:-translate-y-1 bg-white dark:bg-navy-light border border-gray-150 dark:border-white/10 shadow-card"
+                >
+                  <div className="flex gap-1 mb-5">
+                    {[...Array(t.rating)].map((_, i) => (
+                      <Star key={i} className="w-4 h-4 fill-gold text-gold" style={{ color: '#D4AF37' }} />
+                    ))}
+                  </div>
+                  <p className="text-ink-muted dark:text-cream/80 text-xs md:text-sm font-body leading-[1.95] mb-6 italic flex-1">"{t.text}"</p>
+                  <div className="flex items-center gap-3.5 pt-5 border-t border-gray-100 dark:border-white/10">
+                    <img src={t.image} alt={t.name} className="w-11 h-11 rounded-full object-cover border border-gold/10" />
+                    <div>
+                      <p className="font-display font-bold text-navy dark:text-white text-xs md:text-sm">{t.name}</p>
+                      <p className="text-ink-soft dark:text-white/50 text-[10px] mt-0.5">{t.role}</p>
+                      <p className="text-[9px] mt-0.5 font-accent tracking-wide" style={{ color: '#D4AF37' }}>{t.property}</p>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </SwiperSlide>
-          ))}
-        </Swiper>
+              </SwiperSlide>
+            ))}
+          </Swiper>
+        </ErrorBoundary>
       </div>
     </section>
   );
@@ -562,86 +362,6 @@ function DeveloperPartners() {
         </div>
         <div className="absolute inset-y-0 left-0 w-32 pointer-events-none bg-gradient-to-r from-white dark:from-navy-dark to-transparent z-10" />
         <div className="absolute inset-y-0 right-0 w-32 pointer-events-none bg-gradient-to-l from-white dark:from-navy-dark to-transparent z-10" />
-      </div>
-    </section>
-  );
-}
-
-/* ══════════════════════════════════════════════════════════════════════════
-   BLOG PREVIEW
-══════════════════════════════════════════════════════════════════════════ */
-function BlogPreview() {
-  const [list, setList] = useState(blogs);
-
-  useEffect(() => {
-    let active = true;
-    const getBlogs = async () => {
-      try {
-        const data = await fetchBlogs();
-        const blogsArray = data.blogs || (Array.isArray(data) ? data : []);
-        if (active && blogsArray.length > 0) {
-          setList(blogsArray.slice(0, 3));
-        }
-      } catch (err) {
-        console.error('Failed to load real blogs on homepage:', err);
-      }
-    };
-    getBlogs();
-    return () => { active = false; };
-  }, []);
-
-  return (
-    <section className="section-pad bg-surface-alt dark:bg-navy transition-colors duration-300">
-      <div className="container-luxury">
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-16">
-          <SectionHeader
-            label="Insights & Trends"
-            title={<>Latest from Our <span style={{ color: '#D4AF37' }}>Blog</span></>}
-          />
-          <Link to="/blog" className="btn-outline shrink-0 hidden md:inline-flex">All Articles <ArrowRight className="w-4 h-4" /></Link>
-        </div>
-        <motion.div
-          variants={staggerContainer}
-          initial="hidden"
-          whileInView="visible"
-          viewport={viewportOnce}
-          className="grid grid-cols-1 md:grid-cols-3 gap-7"
-        >
-          {list.map((b) => (
-            <motion.div key={b._id || b.id} variants={fadeUp}>
-              <Link
-                to={`/blog/${b.slug || b.id}`}
-                className="group block bg-white dark:bg-navy-light rounded-3xl overflow-hidden transition-all duration-400 hover:-translate-y-1 border border-gray-150 dark:border-white/10 shadow-card"
-              >
-                <div className="relative h-52 overflow-hidden">
-                  <img src={b.image} alt={b.title} loading="lazy" className="w-full h-full object-cover transition-transform duration-600 group-hover:scale-108" />
-                  <span className="absolute top-4 left-4 badge-gold">{b.category}</span>
-                </div>
-                <div className="p-6">
-                  <div className="flex items-center gap-2 text-[11px] text-ink-soft dark:text-white/50 mb-3">
-                    <span>{b.date}</span><span>·</span><span>{b.readTime}</span>
-                  </div>
-                  <h3 className="font-display font-bold text-navy dark:text-white text-base leading-snug mb-3 group-hover:text-gold-muted transition-colors line-clamp-2">
-                    {b.title}
-                  </h3>
-                  <p className="text-ink-muted dark:text-white/60 text-sm line-clamp-2 leading-relaxed mb-5">{b.excerpt}</p>
-                  <div className="flex items-center gap-2.5 pt-4 border-t border-gray-150 dark:border-white/10">
-                    <img src={b.author?.image || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=faces'} alt="" className="w-7 h-7 rounded-full object-cover" />
-                    <span className="text-ink-muted dark:text-cream/80 text-xs font-semibold">{b.author?.name}</span>
-                    <ArrowRight className="w-3.5 h-3.5 ml-auto group-hover:translate-x-1 transition-transform" style={{ color: '#D4AF37' }} />
-                  </div>
-                </div>
-              </Link>
-            </motion.div>
-          ))}
-        </motion.div>
-
-        {/* Mobile All Articles at bottom */}
-        <div className="flex justify-center mt-10 md:hidden">
-          <Link to="/blog" className="btn-outline w-full text-center justify-center">
-            All Articles <ArrowRight className="w-4 h-4" />
-          </Link>
-        </div>
       </div>
     </section>
   );
@@ -774,6 +494,11 @@ export default function Home() {
 
   return (
     <>
+      <SEO 
+        title="Luxury Real Estate Pune | Premium Villas & Apartments" 
+        description="Discover Pune's most exclusive luxury homes. RERA-verified premium villas, apartments, and penthouses in Koregaon Park, Baner, Kharadi, and Viman Nagar." 
+        url="/" 
+      />
       <Hero />
       <FeaturedProperties />
       <StatsStrip />

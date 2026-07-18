@@ -6,6 +6,7 @@ import { FaXTwitter, FaLinkedinIn, FaFacebookF } from 'react-icons/fa6';
 import { fetchBlogBySlug, fetchBlogs } from '../../utils/api';
 import { fadeUp } from '../../animations/variants';
 import PageLoader from '../../components/common/PageLoader';
+import SEO from '../../components/common/SEO';
 
 export default function BlogDetails() {
   const { id: slug } = useParams();
@@ -79,6 +80,15 @@ export default function BlogDetails() {
 
   return (
     <div className="min-h-screen bg-surface dark:bg-navy-dark pt-20 transition-colors duration-300">
+      {blog && (
+        <SEO 
+          title={blog.title} 
+          description={blog.excerpt} 
+          image={blog.image}
+          type="article"
+          url={`/blog/${slug}`} 
+        />
+      )}
       <motion.div className="scroll-progress" style={{ scaleX: scrollYProgress }} />
 
       {/* Hero Header */}
