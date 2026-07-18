@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAdmin } from './AdminContext';
 import { useAuth } from '../../contexts';
@@ -8,7 +8,6 @@ const API = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 const ROLE_LABELS = {
   admin:        { label: 'Admin', color: '#7C3AED' },
   management:   { label: 'Management', color: '#D4AF37' },
-  client:       { label: 'Client', color: '#6B7280' },
 };
 
 export default function AdminLogin() {
@@ -16,23 +15,50 @@ export default function AdminLogin() {
   const { user }   = useAdmin();
   const navigate   = useNavigate();
 
-  const [email, setEmail] = useState('');
+  const [step, setStep]     = useState('email'); // 'email' | 'otp'
+  const [email, setEmail]   = useState('');
+  const [otp, setOtp]       = useState(['', '', '', '', '', '']);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError]   = useState('');
+  const [info, setInfo]     = useState('');
 
-  const handleSubmit = async () => {
-    if (!email.trim()) {
-      setError('Email address is required');
-      return;
-    }
+  const otpRefs = [useRef(), useRef(), useRef(), useRef(), useRef(), useRef()];
+
+  // Step 1: Send OTP
+  const handleSendOtp = async () => {
+    if (!email.trim()) { setError('Email address is required'); return; }
     setError('');
     setLoading(true);
     try {
-      const res  = await fetch(`${API}/api/auth/signin`, {
+      const res = await fetch(`${API}/api/auth/otp/send`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ email: email.trim() }),
+        body: JSON.stringify({ target: email.trim(), mode: 'login' }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) throw new Error(data.message);
+      setInfo(`OTP sent to ${email.trim()}`);
+      setStep('otp');
+    } catch (err) {
+      setError(err.message || 'Failed to send OTP');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Step 2: Verify OTP and sign in
+  const handleVerifyOtp = async () => {
+    const code = otp.join('');
+    if (code.length < 6) { setError('Please enter the full 6-digit OTP'); return; }
+    setError('');
+    setLoading(true);
+    try {
+      const res = await fetch(`${API}/api/auth/otp/verify`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ target: email.trim(), code, mode: 'login' }),
       });
       const data = await res.json();
       if (!res.ok || !data.success) throw new Error(data.message);
@@ -43,9 +69,34 @@ export default function AdminLogin() {
       signIn(data.user, data.token);
       navigate('/admin/dashboard');
     } catch (err) {
-      setError(err.message || 'Sign in failed');
+      setError(err.message || 'OTP verification failed');
     } finally {
       setLoading(false);
+    }
+  };
+
+  // OTP input handler
+  const handleOtpChange = (val, idx) => {
+    const digit = val.replace(/\D/g, '').slice(-1);
+    const newOtp = [...otp];
+    newOtp[idx] = digit;
+    setOtp(newOtp);
+    if (digit && idx < 5) otpRefs[idx + 1].current?.focus();
+  };
+
+  const handleOtpKeyDown = (e, idx) => {
+    if (e.key === 'Backspace' && !otp[idx] && idx > 0) {
+      otpRefs[idx - 1].current?.focus();
+    }
+    if (e.key === 'Enter') handleVerifyOtp();
+  };
+
+  const handleOtpPaste = (e) => {
+    e.preventDefault();
+    const digits = e.clipboardData.getData('text').replace(/\D/g, '').substring(0, 6).split('');
+    if (digits.length === 6) {
+      setOtp(digits);
+      otpRefs[5].current?.focus();
     }
   };
 
@@ -73,30 +124,84 @@ export default function AdminLogin() {
         {/* Card */}
         <div className="rounded-3xl p-8" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', backdropFilter: 'blur(20px)' }}>
           <div className="space-y-5">
-            <div>
-              <label className="block text-white/60 text-xs font-semibold mb-1.5 tracking-wider uppercase">Email Address</label>
-              <input
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                placeholder="staff@hyperrelestix.com"
-                type="email"
-                className="w-full px-4 py-3 rounded-xl text-white text-sm focus:outline-none transition-all focus:border-gold border border-white/10"
-                style={{ background: 'rgba(255,255,255,0.08)' }}
-                onKeyDown={e => e.key === 'Enter' && handleSubmit()}
-              />
-            </div>
 
-            {error && (
-              <div className="px-4 py-3 rounded-xl text-red-300 text-sm" style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)' }}>
-                {error}
-              </div>
+            {step === 'email' ? (
+              <>
+                <div>
+                  <label className="block text-white/60 text-xs font-semibold mb-1.5 tracking-wider uppercase">Email Address</label>
+                  <input
+                    value={email}
+                    onChange={e => setEmail(e.target.value)}
+                    placeholder="staff@hyperrelestix.com"
+                    type="email"
+                    className="w-full px-4 py-3 rounded-xl text-white text-sm focus:outline-none transition-all focus:border-gold border border-white/10"
+                    style={{ background: 'rgba(255,255,255,0.08)' }}
+                    onKeyDown={e => e.key === 'Enter' && handleSendOtp()}
+                  />
+                </div>
+
+                {error && (
+                  <div className="px-4 py-3 rounded-xl text-red-300 text-sm" style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)' }}>
+                    {error}
+                  </div>
+                )}
+
+                <button onClick={handleSendOtp} disabled={loading}
+                  className="w-full py-3.5 rounded-xl font-bold text-navy text-sm transition-all duration-200 disabled:opacity-60 cursor-pointer"
+                  style={{ background: loading ? '#A8882B' : 'linear-gradient(135deg, #D4AF37, #E8C84A)', boxShadow: '0 4px 20px rgba(212,175,55,0.25)' }}>
+                  {loading ? 'Sending OTP…' : 'Send OTP →'}
+                </button>
+              </>
+            ) : (
+              <>
+                {info && (
+                  <div className="px-4 py-3 rounded-xl text-green-300 text-xs text-center" style={{ background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.2)' }}>
+                    ✓ {info}
+                  </div>
+                )}
+
+                <div>
+                  <label className="block text-white/60 text-xs font-semibold mb-3 tracking-wider uppercase text-center">Enter 6-digit OTP</label>
+                  <div className="flex gap-2 justify-center" onPaste={handleOtpPaste}>
+                    {otp.map((digit, idx) => (
+                      <input
+                        key={idx}
+                        ref={otpRefs[idx]}
+                        value={digit}
+                        onChange={e => handleOtpChange(e.target.value, idx)}
+                        onKeyDown={e => handleOtpKeyDown(e, idx)}
+                        maxLength={1}
+                        inputMode="numeric"
+                        className="w-11 h-12 text-center text-white text-lg font-bold rounded-xl border focus:outline-none transition-all"
+                        style={{
+                          background: 'rgba(255,255,255,0.08)',
+                          border: digit ? '1.5px solid #D4AF37' : '1px solid rgba(255,255,255,0.15)',
+                        }}
+                      />
+                    ))}
+                  </div>
+                </div>
+
+                {error && (
+                  <div className="px-4 py-3 rounded-xl text-red-300 text-sm" style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)' }}>
+                    {error}
+                  </div>
+                )}
+
+                <button onClick={handleVerifyOtp} disabled={loading}
+                  className="w-full py-3.5 rounded-xl font-bold text-navy text-sm transition-all duration-200 disabled:opacity-60 cursor-pointer"
+                  style={{ background: loading ? '#A8882B' : 'linear-gradient(135deg, #D4AF37, #E8C84A)', boxShadow: '0 4px 20px rgba(212,175,55,0.25)' }}>
+                  {loading ? 'Verifying…' : 'Verify & Access Panel →'}
+                </button>
+
+                <button
+                  onClick={() => { setStep('email'); setOtp(['','','','','','']); setError(''); setInfo(''); }}
+                  className="w-full text-white/40 text-xs hover:text-white/70 transition-colors"
+                >
+                  ← Change email
+                </button>
+              </>
             )}
-
-            <button onClick={handleSubmit} disabled={loading}
-              className="w-full py-3.5 rounded-xl font-bold text-navy text-sm transition-all duration-200 disabled:opacity-60 cursor-pointer"
-              style={{ background: loading ? '#A8882B' : 'linear-gradient(135deg, #D4AF37, #E8C84A)', boxShadow: '0 4px 20px rgba(212,175,55,0.25)' }}>
-              {loading ? 'Signing in…' : 'Sign In to Panel →'}
-            </button>
           </div>
 
           <p className="text-white/25 text-xs text-center mt-6 flex flex-col items-center gap-2.5">
@@ -109,7 +214,7 @@ export default function AdminLogin() {
 
         {/* Role badges */}
         <div className="flex flex-wrap gap-2 justify-center mt-6">
-          {Object.entries(ROLE_LABELS).filter(([k]) => k !== 'client').map(([key, val]) => (
+          {Object.entries(ROLE_LABELS).map(([key, val]) => (
             <span key={key} className="text-[10px] font-semibold px-2.5 py-1 rounded-full"
               style={{ background: `${val.color}22`, color: val.color, border: `1px solid ${val.color}44` }}>
               {val.label}
