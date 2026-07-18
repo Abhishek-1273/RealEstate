@@ -31,7 +31,7 @@ const isProd = process.env.NODE_ENV === 'production';
 connectDB();
 
 // ── Rate Limiting (Redis-backed for persistence across restarts) ────────────
-const makeStore = () => redis ? new RedisStore({ sendCommand: (...args) => redis.sendCommand(args) }) : undefined;
+const makeStore = () => undefined;
 
 // Auth routes: 10 requests per minute per IP
 const authLimiter = rateLimit({
