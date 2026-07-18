@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import { ArrowLeft, Loader2 } from 'lucide-react';
-import { FaGoogle, FaFacebookF, FaApple } from 'react-icons/fa';
+import { FaGoogle, FaFacebookF, FaApple } from 'react-icons/fa6';
 
 export default function SocialStep({ socialProvider, loading, onBack, onSocialVerify }) {
   return (
