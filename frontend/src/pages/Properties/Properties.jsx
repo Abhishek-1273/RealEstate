@@ -40,12 +40,33 @@ const SORT_API_MAP = {
 
 // Map footer/homepage URL param values → filter state
 const CATEGORY_MAP = {
+  // IDs (from Home category cards)
+  '1': 'Villa',
+  '2': 'Apartment',
+  '3': 'Penthouse',
+  '4': 'Commercial',
+  '5': 'Farm House',
+  '6': 'Plot',
+
+  // Slugs & Variants (from Footer and custom URL entries)
+  'villas': 'Villa',
+  'villa': 'Villa',
   'luxury villas': 'Villa',
+  
   'apartments': 'Apartment',
+  'apartment': 'Apartment',
+  
   'penthouses': 'Penthouse',
+  'penthouse': 'Penthouse',
+  
   'commercial': 'Commercial',
+  
   'farm houses': 'Farm House',
+  'farm house': 'Farm House',
+  'farm': 'Farm House',
+  
   'plots': 'Plot',
+  'plot': 'Plot',
 };
 
 export default function Properties() {
@@ -70,15 +91,19 @@ export default function Properties() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
-  // ── Read URL params on mount ─────────────────────────────────────────────
+  // ── Read and Sync URL params ─────────────────────────────────────────────
   useEffect(() => {
     const categoryParam = searchParams.get('category');
     const cityParam = searchParams.get('city');
     const searchParam = searchParams.get('search');
+    
     if (categoryParam) {
       const mapped = CATEGORY_MAP[categoryParam.toLowerCase()];
       if (mapped) setType(mapped);
+    } else {
+      setType('All');
     }
+    
     if (cityParam) {
       const match = CITIES.find(c => c.toLowerCase() === cityParam.toLowerCase());
       if (match) {
@@ -92,10 +117,16 @@ export default function Properties() {
           setQuery(matchedLocality);
         }
       }
+    } else {
+      setCity('All');
     }
-    if (searchParam) setQuery(searchParam);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    
+    if (searchParam) {
+      setQuery(searchParam);
+    } else {
+      setQuery('');
+    }
+  }, [searchParams]);
 
   // Reset page when search/filter attributes change
   useEffect(() => {
