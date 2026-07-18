@@ -93,13 +93,15 @@ export default function Hero() {
         >
           <video
             ref={videoRef}
-            src={VIDEO_BG2}
             className="w-full h-full object-cover"
             loop
             playsInline
-            preload="auto"
+            preload="metadata"
             poster={imgBG}
+            muted
           >
+            <source src="https://res.cloudinary.com/dzb2hbq9e/video/upload/q_auto,f_webm/v1783787480/bg2_ijjnna.webm" type="video/webm" />
+            <source src="https://res.cloudinary.com/dzb2hbq9e/video/upload/q_auto,f_mp4/v1783787480/bg2_ijjnna.mp4" type="video/mp4" />
           </video>
         </div>
       )}
