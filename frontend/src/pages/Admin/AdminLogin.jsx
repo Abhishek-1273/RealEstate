@@ -40,7 +40,7 @@ export default function AdminLogin() {
         setError('Access denied. This portal is for admin and management staff only.');
         return;
       }
-      signIn(data.user);
+      signIn(data.user, data.token);
       navigate('/admin/dashboard');
     } catch (err) {
       setError(err.message || 'Sign in failed');

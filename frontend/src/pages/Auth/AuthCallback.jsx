@@ -33,7 +33,7 @@ export default function AuthCallback() {
           throw new Error(data.message || 'OAuth token exchange failed');
         }
 
-        signIn(data.user);
+        signIn(data.user, data.token);
         navigate('/');
       } catch (err) {
         console.error('Google OAuth error:', err);

@@ -27,7 +27,12 @@ export const WishlistProvider = ({ children }) => {
     }
     const loadWishlist = async () => {
       try {
+        const token = localStorage.getItem('hr_token');
+        const headers = {};
+        if (token) headers['Authorization'] = `Bearer ${token}`;
+
         const res = await fetch(`${API_URL}/api/auth/wishlist`, {
+          headers,
           credentials: 'include',
         });
         const data = await res.json();
@@ -52,9 +57,13 @@ export const WishlistProvider = ({ children }) => {
 
     if (user) {
       try {
+        const token = localStorage.getItem('hr_token');
+        const headers = { 'Content-Type': 'application/json' };
+        if (token) headers['Authorization'] = `Bearer ${token}`;
+
         const res = await fetch(`${API_URL}/api/auth/wishlist/toggle`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers,
           credentials: 'include',
           body: JSON.stringify({ propertyId: propId }),
         });
@@ -104,12 +113,21 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const restoreSession = async () => {
       try {
+        const localToken = localStorage.getItem('hr_token');
+        const headers = {};
+        if (localToken) {
+          headers['Authorization'] = `Bearer ${localToken}`;
+        }
+
         const res = await fetch(`${API_URL}/api/auth/me`, {
+          headers,
           credentials: 'include', // send the httpOnly cookie
         });
         const data = await res.json();
         if (res.ok && data.success) {
           setUser(data.user);
+        } else {
+          if (localToken) localStorage.removeItem('hr_token');
         }
       } catch {
         // No session or server unreachable — stay logged out silently
@@ -129,22 +147,33 @@ export const AuthProvider = ({ children }) => {
   const closeAuth = useCallback(() => setShowAuthModal(false), []);
 
   // Called after a successful /signin response — user object comes from backend
-  const signIn = useCallback((userData) => {
+  const signIn = useCallback((userData, token = null) => {
     setUser(userData);
+    if (token) {
+      localStorage.setItem('hr_token', token);
+    }
     setShowAuthModal(false);
   }, []);
 
   // Sign out — calls backend to clear the httpOnly cookie, then clears local state
   const signOut = useCallback(async () => {
     try {
+      const localToken = localStorage.getItem('hr_token');
+      const headers = {};
+      if (localToken) {
+        headers['Authorization'] = `Bearer ${localToken}`;
+      }
+
       await fetch(`${API_URL}/api/auth/signout`, {
         method: 'POST',
+        headers,
         credentials: 'include',
       });
     } catch {
       // Ignore network errors — clear local state regardless
     }
     setUser(null);
+    localStorage.removeItem('hr_token');
     // Notify other providers (WishlistProvider) to clear their state
     window.dispatchEvent(new Event('auth:signout'));
   }, []);

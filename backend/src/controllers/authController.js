@@ -54,11 +54,12 @@ export const signIn = async (req, res) => {
       if (!user.isActive) {
         return res.status(403).json({ success: false, message: 'Your account has been deactivated. Please contact support.' });
       }
-      setTokenCookie(res, user._id);
+      const token = setTokenCookie(res, user._id);
       return res.status(200).json({
         success: true,
         message: 'Welcome back!',
         isNew: false,
+        token,
         user: userPayload(user),
       });
     }
@@ -86,12 +87,13 @@ export const signIn = async (req, res) => {
       isNew = true;
     }
 
-    setTokenCookie(res, user._id);
+    const token = setTokenCookie(res, user._id);
 
     return res.status(isNew ? 201 : 200).json({
       success: true,
       message: isNew ? 'Account created successfully!' : 'Welcome back!',
       isNew,
+      token,
       user: userPayload(user),
     });
   } catch (error) {
@@ -236,12 +238,13 @@ export const verifyOtp = async (req, res) => {
     }
 
     // Set cookie session
-    setTokenCookie(res, user._id);
+    const token = setTokenCookie(res, user._id);
 
     return res.status(isNew ? 201 : 200).json({
       success: true,
       message: isNew ? 'Account created successfully!' : 'Welcome back!',
       isNew,
+      token,
       user: userPayload(user),
     });
   } catch (error) {
@@ -466,12 +469,13 @@ export const socialSignIn = async (req, res) => {
     }
 
     // Set cookie
-    setTokenCookie(res, user._id);
+    const token = setTokenCookie(res, user._id);
 
     return res.status(isNew ? 201 : 200).json({
       success: true,
       message: isNew ? `Welcome, ${name}! Registered via ${provider}.` : 'Welcome back!',
       isNew,
+      token,
       user: userPayload(user),
     });
   } catch (error) {
@@ -562,12 +566,13 @@ export const googleCallback = async (req, res) => {
     }
 
     // Set cookie
-    setTokenCookie(res, user._id);
+    const token = setTokenCookie(res, user._id);
 
     return res.status(isNew ? 201 : 200).json({
       success: true,
       message: isNew ? 'Successfully registered with Google!' : 'Welcome back!',
       isNew,
+      token,
       user: userPayload(user),
     });
 

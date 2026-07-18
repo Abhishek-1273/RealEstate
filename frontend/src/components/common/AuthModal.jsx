@@ -230,7 +230,7 @@ export default function AuthModal() {
       }
 
       setIsNew(data.isNew);
-      signIn(data.user);
+      signIn(data.user, data.token);
       setStep('success');
 
     } catch {
@@ -282,7 +282,7 @@ export default function AuthModal() {
       }
 
       setIsNew(data.isNew);
-      signIn(data.user);
+      signIn(data.user, data.token);
       setStep('success');
 
     } catch {

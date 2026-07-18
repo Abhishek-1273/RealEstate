@@ -1,9 +1,15 @@
 const API = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 const call = async (path, options = {}) => {
+  const token = localStorage.getItem('hr_token');
+  const headers = { 'Content-Type': 'application/json', ...options.headers };
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
   const res = await fetch(`${API}${path}`, {
     credentials: 'include',
-    headers: { 'Content-Type': 'application/json', ...options.headers },
+    headers,
     ...options,
   });
   const data = await res.json();
@@ -46,9 +52,17 @@ export const deleteBlogAdmin  = (id)            => call(`/api/blogs/${id}`, { me
 export const uploadImage      = async (file) => {
   const formData = new FormData();
   formData.append('file', file);
+
+  const token = localStorage.getItem('hr_token');
+  const headers = {};
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
   const res = await fetch(`${API}/api/upload`, {
     method: 'POST',
     credentials: 'include',
+    headers,
     body: formData,
   });
   const data = await res.json();

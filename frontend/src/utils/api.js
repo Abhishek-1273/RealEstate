@@ -60,9 +60,13 @@ export const fetchPropertyById = async (id) => {
 
 // ── AI Chat completions ───────────────────────────────────────────────────────
 export const sendChatMessage = async (messages) => {
+  const token = localStorage.getItem('hr_token');
+  const headers = { 'Content-Type': 'application/json' };
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+
   const res = await fetch(`${API_URL}/api/chat`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers,
     credentials: 'include',
     body: JSON.stringify({ messages }),
   });
