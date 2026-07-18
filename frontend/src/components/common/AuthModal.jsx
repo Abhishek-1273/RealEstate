@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, User, Phone, Mail, ArrowRight, CheckCircle2, Loader2, ArrowLeft } from 'lucide-react';
+import { FaFacebookF } from 'react-icons/fa6';
 import { useAuth } from '../../contexts';
 import { useNavigate } from 'react-router-dom';
 import bgImage from '../../assets/image/bg.webp';
