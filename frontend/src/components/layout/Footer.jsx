@@ -9,7 +9,6 @@ const links = {
   company: [
     { label: 'About Us', to: '/about' },
     { label: 'Our Team', to: '/about#team' },
-    { label: 'NRI Corner', to: '/nri-corner' },
     { label: 'Blog', to: '/blog' },
     { label: 'Contact Us', to: '/contact' },
     { label: 'My Wishlist', to: '/wishlist' },

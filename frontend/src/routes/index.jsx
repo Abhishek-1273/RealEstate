@@ -23,7 +23,6 @@ const ServicesIndex   = lazy(() => import('../pages/Services/Services'));
 const PrivacyPolicy   = lazy(() => import('../pages/Legal/PrivacyPolicy'));
 const TermsOfService  = lazy(() => import('../pages/Legal/TermsOfService'));
 const AuthCallback    = lazy(() => import('../pages/Auth/AuthCallback'));
-const NRICorner      = lazy(() => import('../pages/NRICorner/NRICorner'));
 
 // ── Admin panel pages ─────────────────────────────────────────────────────────
 const AdminLogin      = lazy(() => import('../pages/Admin/AdminLogin'));
@@ -69,7 +68,6 @@ export default function AppRoutes() {
           <Route path="privacy" element={<PrivacyPolicy />} />
           <Route path="terms" element={<TermsOfService />} />
           <Route path="auth/callback" element={<AuthCallback />} />
-          <Route path="nri-corner" element={<NRICorner />} />
           <Route path="*" element={<NotFound />} />
         </Route>
 

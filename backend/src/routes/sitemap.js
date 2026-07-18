@@ -15,7 +15,6 @@ router.get('/', async (req, res) => {
       '/blog',
       '/about',
       '/contact',
-      '/nri-corner',
       '/services',
       '/lease-property',
       '/buy-property',
