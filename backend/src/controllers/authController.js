@@ -147,7 +147,10 @@ export const sendOtp = async (req, res) => {
     const code = String(Math.floor(100000 + Math.random() * 900000));
     const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
 
-    console.info(`🔑 [OTP SYSTEM] Target: ${target} | Code: ${code}`);
+    // Never log OTP codes in production — log target only for debugging in dev
+    if (process.env.NODE_ENV !== 'production') {
+      console.info(`🔑 [OTP SYSTEM] OTP issued to: ${target}`);
+    }
 
     // Try Redis first (fast, auto-expiry), fallback to MongoDB
     const savedToRedis = await otpSet(target, code);

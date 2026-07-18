@@ -70,7 +70,7 @@ export default function PropertyCard({ property, view = 'grid' }) {
                   {property.priceLabel}
                 </p>
                 <p className="text-ink-muted dark:text-white/60 text-[8px] md:text-[10px] mt-0.5 font-body">
-                  ₹{Math.round(property.price / property.area).toLocaleString()}/sqft
+                  {property.area > 0 ? `₹${Math.round(property.price / property.area).toLocaleString()}/sqft` : ''}
                 </p>
               </div>
             </div>

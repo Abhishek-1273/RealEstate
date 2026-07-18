@@ -46,7 +46,7 @@ export const sendEmail = async ({ to, subject, text, html }) => {
     try {
       const senderEmail = SMTP_FROM && SMTP_FROM.includes('<')
         ? SMTP_FROM.match(/<([^>]+)>/)?.[1]
-        : (SMTP_USER && SMTP_USER.includes('@') ? SMTP_USER : 'akaygill64@gmail.com');
+        : (SMTP_USER && SMTP_USER.includes('@') ? SMTP_USER : 'noreply@hyperrelestix.in');
 
       const response = await fetch('https://api.brevo.com/v3/smtp/email', {
         method: 'POST',

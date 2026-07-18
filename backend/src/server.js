@@ -6,7 +6,6 @@ import morgan from 'morgan';
 import helmet from 'helmet';
 import compression from 'compression';
 import rateLimit from 'express-rate-limit';
-import { RedisStore } from 'rate-limit-redis';
 import connectDB from './config/db.js';
 import redis from './config/redis.js';
 import authRoutes     from './routes/auth.js';
@@ -30,8 +29,9 @@ const isProd = process.env.NODE_ENV === 'production';
 // Connect to MongoDB
 connectDB();
 
-// ── Rate Limiting (Redis-backed for persistence across restarts) ────────────
-const makeStore = () => undefined;
+// ── Rate Limiting (in-memory — persists per process instance) ────────────────
+// Note: Using in-memory store which resets on server restart.
+// The per-email OTP limiter uses Redis (Upstash) for persistence.
 
 // Auth routes: 10 requests per minute per IP
 const authLimiter = rateLimit({
@@ -40,7 +40,6 @@ const authLimiter = rateLimit({
   message: { success: false, message: 'Too many requests, please try again after a minute.' },
   standardHeaders: true,
   legacyHeaders: false,
-  store: makeStore(),
 });
 
 // General API: 100 requests per minute per IP
@@ -50,7 +49,6 @@ const apiLimiter = rateLimit({
   message: { success: false, message: 'Too many requests, please slow down.' },
   standardHeaders: true,
   legacyHeaders: false,
-  store: makeStore(),
 });
 
 // Compress all responses with gzip — reduces payload by ~70%

@@ -6,7 +6,7 @@ const router = express.Router();
 
 router.get('/', async (req, res) => {
   try {
-    const host = process.env.CLIENT_URL || 'https://real-estate-mu-plum.vercel.app';
+    const host = process.env.CLIENT_URL || 'https://www.hyperrelestix.in';
     
     // Static routes
     const staticRoutes = [
