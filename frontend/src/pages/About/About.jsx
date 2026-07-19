@@ -25,6 +25,7 @@ const values = [
 
 export default function About() {
   const [isFlipped, setIsFlipped] = useState(false);
+  const [showArrows, setShowArrows] = useState(true);
 
   const [carouselSizing, setCarouselSizing] = useState({
     activeWidth: 380,
@@ -36,6 +37,7 @@ export default function About() {
 
   useEffect(() => {
     const handleResize = () => {
+      setShowArrows(window.innerWidth >= 768);
       if (window.innerWidth < 640) {
         setCarouselSizing({
           activeWidth: 265,
@@ -259,7 +261,7 @@ export default function About() {
               restHeight={carouselSizing.restHeight}
               gap={carouselSizing.gap}
               radius={3}
-              showArrows={true}
+              showArrows={showArrows}
               arrowColor="#000000"
               arrowBackground="#ffffff"
               arrowSize={46}

@@ -87,33 +87,33 @@ export default function SearchModal() {
           initial={{ y: -30, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.1 }}
-          className="bg-white dark:bg-navy rounded-2xl p-4 flex items-center gap-3 shadow-2xl border dark:border-white/10"
+          className="bg-white dark:bg-navy rounded-2xl p-3 sm:p-4 flex items-center gap-2.5 sm:gap-3 shadow-2xl border dark:border-white/10"
         >
           <Search className="w-5 h-5 text-gray-400 dark:text-white/40 shrink-0" />
           <input
             ref={inputRef}
             type="text"
-            placeholder="Search properties, cities, types..."
+            placeholder="Search properties, cities..."
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
             onKeyDown={handleKeyDown}
-            className="flex-1 font-body bg-transparent text-navy dark:text-white text-lg placeholder-gray-400 dark:placeholder-white/35 outline-none"
+            className="flex-1 font-body bg-transparent text-navy dark:text-white text-base sm:text-lg placeholder-gray-400 dark:placeholder-white/35 outline-none min-w-0"
           />
           {searchQuery && (
-            <button onClick={() => setSearchQuery('')} className="p-1 text-gray-400 hover:text-gray-600">
+            <button onClick={() => setSearchQuery('')} className="p-1 text-gray-400 hover:text-gray-600 shrink-0">
               <X className="w-4 h-4" />
             </button>
           )}
           <button
             onClick={() => submitSearch(searchQuery)}
-            className="px-4 py-2 rounded-xl text-sm font-bold text-navy transition-all"
+            className="hidden sm:block px-4 py-2 rounded-xl text-sm font-bold text-navy transition-all shrink-0"
             style={{ background: 'linear-gradient(135deg, #D4AF37, #E8C84A)' }}
           >
             Search
           </button>
           <button
             onClick={() => setShowSearch(false)}
-            className="ml-1 p-2 rounded-full bg-gray-100 dark:bg-white/10 hover:bg-gray-200 dark:hover:bg-white/20 text-gray-600 dark:text-white/80 transition-colors"
+            className="p-2 rounded-full bg-gray-100 dark:bg-white/10 hover:bg-gray-200 dark:hover:bg-white/20 text-gray-600 dark:text-white/80 transition-colors shrink-0"
           >
             <X className="w-5 h-5" />
           </button>

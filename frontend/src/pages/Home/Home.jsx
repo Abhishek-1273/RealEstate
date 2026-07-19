@@ -173,6 +173,7 @@ function Categories({ counts = {} }) {
             sideTilt={6}
             gap={9}
             opacity={50}
+            titleFont={{ fontSize: cardSize.width < 300 ? 16 : 22, fontWeight: 800 }}
             onActiveClick={handleActiveClick}
           />
         </div>
@@ -304,6 +305,18 @@ function createCardCanvas(reraBadgeImg) {
 function WhyUs() {
   const [activeTab, setActiveTab] = useState(0);
   const [cardTexture, setCardTexture] = useState(null);
+  const [stickerSize, setStickerSize] = useState({ width: 480, height: 360 });
+
+  useEffect(() => {
+    const handleResize = () => {
+      const w = Math.min(window.innerWidth - 32, 480);
+      const h = (w * 3) / 4;
+      setStickerSize({ width: w, height: h });
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   useEffect(() => {
     const badgeImg = new Image();
@@ -384,14 +397,14 @@ function WhyUs() {
             {cardTexture ? (
               <StickerPeeling
                 image={cardTexture}
-                imageWidth={480}
-                imageHeight={360}
+                imageWidth={stickerSize.width}
+                imageHeight={stickerSize.height}
                 curlRotation={220}
                 hoverPeel={26}
                 pressPeel={45}
                 backColor="#C5A028"
                 shadowEnabled={true}
-                style={{ width: '480px', height: '360px' }}
+                style={{ width: `${stickerSize.width}px`, height: `${stickerSize.height}px` }}
               />
             ) : (
               <div className="w-full h-full aspect-[4/3] rounded-[32px] bg-mesh-dark animate-pulse" />
