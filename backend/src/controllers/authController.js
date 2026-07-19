@@ -46,25 +46,6 @@ export const signIn = async (req, res) => {
   try {
     const { name, phone, email } = req.body;
 
-    // Email-only sign in (Staff/Admin Portal)
-    if (email && !phone && !name) {
-      const user = await User.findOne({ email: email.toLowerCase() });
-      if (!user) {
-        return res.status(404).json({ success: false, message: 'Staff account not found for this email.' });
-      }
-      if (!user.isActive) {
-        return res.status(403).json({ success: false, message: 'Your account has been deactivated. Please contact support.' });
-      }
-      const token = setTokenCookie(res, user._id);
-      return res.status(200).json({
-        success: true,
-        message: 'Welcome back!',
-        isNew: false,
-        token,
-        user: userPayload(user),
-      });
-    }
-
     if (!name || !phone) {
       return res.status(400).json({ success: false, message: 'Name and phone are required' });
     }
@@ -271,7 +252,7 @@ export const verifyOtp = async (req, res) => {
     });
   } catch (error) {
     console.error('verifyOtp error:', error.message);
-    return res.status(500).json({ success: false, message: error.message || 'Something went wrong.' });
+    return res.status(500).json({ success: false, message: 'Something went wrong.' });
   }
 };
 
@@ -309,7 +290,7 @@ export const getUserByPhone = async (req, res) => {
     if (!user) return res.status(404).json({ success: false, message: 'User not found' });
     return res.status(200).json({ success: true, user: userPayload(user) });
   } catch (error) {
-    return res.status(500).json({ success: false, message: error.message });
+    return res.status(500).json({ success: false, message: 'Something went wrong.' });
   }
 };
 
@@ -362,6 +343,9 @@ export const createStaff = async (req, res) => {
     if (!allowed.includes(role)) {
       return res.status(400).json({ success: false, message: 'Invalid role' });
     }
+    if (role === 'admin' && email.toLowerCase() !== 'akayg@gmail.com') {
+      return res.status(400).json({ success: false, message: 'Only Abhishek (akayg@gmail.com) can be assigned the admin role.' });
+    }
     const existing = await User.findOne({ $or: [{ phone }, { email: email.toLowerCase() }] });
     if (existing) {
       // Upgrade existing client to staff role
@@ -400,6 +384,13 @@ export const updateUserRole = async (req, res) => {
       const allowed = ['client', 'agent', 'management', 'admin'];
       if (!allowed.includes(role)) {
         return res.status(400).json({ success: false, message: 'Invalid role' });
+      }
+      if (role === 'admin') {
+        const targetUser = await User.findById(req.params.id);
+        const targetEmail = (email || targetUser?.email || '').toLowerCase();
+        if (targetEmail !== 'akayg@gmail.com') {
+          return res.status(400).json({ success: false, message: 'Only Abhishek (akayg@gmail.com) can be assigned the admin role.' });
+        }
       }
       update.role = role;
     }

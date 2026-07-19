@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Award, Target, Heart, Shield, TrendingUp, Star } from 'lucide-react';
@@ -11,6 +11,7 @@ import { agents, stats } from '../../data/index';
 import aboutBg from '../../assets/image/about-bg.webp';
 import missionFront from '../../assets/image/mission-front.webp';
 import missionBack from '../../assets/image/mission-back.webp';
+import CoverflowCarousel from '../../components/common/CoverflowCarousel';
 
 
 const values = [
@@ -25,10 +26,61 @@ const values = [
 export default function About() {
   const [isFlipped, setIsFlipped] = useState(false);
 
+  const [carouselSizing, setCarouselSizing] = useState({
+    activeWidth: 380,
+    activeHeight: 380,
+    restWidth: 150,
+    restHeight: 150,
+    gap: 16
+  });
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 640) {
+        setCarouselSizing({
+          activeWidth: 265,
+          activeHeight: 265,
+          restWidth: 80,
+          restHeight: 80,
+          gap: 10
+        });
+      } else if (window.innerWidth < 1024) {
+        setCarouselSizing({
+          activeWidth: 320,
+          activeHeight: 320,
+          restWidth: 120,
+          restHeight: 120,
+          gap: 14
+        });
+      } else {
+        setCarouselSizing({
+          activeWidth: 380,
+          activeHeight: 380,
+          restWidth: 150,
+          restHeight: 150,
+          gap: 16
+        });
+      }
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const carouselImages = agents.map(a => ({
+    srcUrl: a.image,
+    alt: a.name,
+    name: a.name,
+    role: a.role,
+    experience: a.experience,
+    propertiesSold: a.propertiesSold,
+    rating: a.rating,
+  }));
+
   return (
     <div className="min-h-screen bg-surface dark:bg-navy-dark pt-20 transition-colors duration-300">
       <SEO 
-        title="About Our Agency" 
+        title="About Us - Pune's Premium NRI Real Estate Agency" 
         description="Learn more about HyperRelestix, Pune's premier luxury real estate agency. Our mission, values, and expert team of real estate advisors." 
         url="/about" 
       />
@@ -196,42 +248,28 @@ export default function About() {
           <SectionHeader label="Meet the Team" title={<>Our <span style={{ color: '#D4AF37' }}>Luxury Advisors</span></>}
             description="India's most accomplished luxury real estate specialists — with decades of combined experience."
             align="center" className="mb-16" />
-          <motion.div variants={staggerContainer} initial="hidden" whileInView="visible" viewport={viewportOnce}
-            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-7">
-            {agents.map((a) => (
-              <motion.div key={a.id} variants={scaleIn} className="h-full">
-                <div className="h-full flex flex-col rounded-3xl overflow-hidden bg-white dark:bg-navy-light transition-all duration-400 hover:-translate-y-2 hover:shadow-luxury border border-gray-100 dark:border-white/10"
-                >
-                  <div className="relative h-52 overflow-hidden shrink-0">
-                    <img src={a.image} alt={a.name} loading="lazy" className="w-full h-full object-cover" />
-                    <div className="absolute inset-0"
-                      style={{ background: 'linear-gradient(to top, rgba(7,26,47,0.6) 0%, transparent 60%)' }} />
-                    <div className="absolute bottom-4 left-4 flex gap-0.5">
-                      {[...Array(5)].map((_, i) => <Star key={i} className="w-3 h-3 fill-gold text-gold" />)}
-                    </div>
-                  </div>
-                  <div className="p-5 flex-1 flex flex-col justify-between">
-                    <div>
-                      <h3 className="font-display font-bold text-navy dark:text-white text-base">{a.name}</h3>
-                      <p className="text-xs font-semibold mt-0.5 mb-3" style={{ color: '#D4AF37' }}>{a.role}</p>
-                      <div className="flex flex-wrap gap-1.5">
-                        {a.specialization.map(s => (
-                          <span key={s} className="text-[9px] font-semibold px-2 py-1 rounded-full bg-black/5 dark:bg-white/5 text-ink-muted dark:text-cream/80"
-                          >{s}</span>
-                        ))}
-                      </div>
-                    </div>
-                    <div className="flex justify-between text-xs text-ink-muted dark:text-white/60 mt-5 pt-4 border-t border-gray-100 dark:border-white/10"
-                    >
-                      <span><strong className="text-navy dark:text-white">{a.propertiesSold}</strong> Sold</span>
-                      <span><strong className="text-navy dark:text-white">{a.experience}yr</strong> Exp.</span>
-                      <span><strong className="text-navy dark:text-white">{a.rating}</strong> Rating</span>
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
-          </motion.div>
+          
+          <div className="flex items-center justify-center relative select-none overflow-hidden w-full"
+               style={{ height: carouselSizing.activeHeight + 50 }}>
+            <CoverflowCarousel
+              images={carouselImages}
+              activeWidth={carouselSizing.activeWidth}
+              activeHeight={carouselSizing.activeHeight}
+              restWidth={carouselSizing.restWidth}
+              restHeight={carouselSizing.restHeight}
+              gap={carouselSizing.gap}
+              radius={3}
+              showArrows={true}
+              arrowColor="#000000"
+              arrowBackground="#ffffff"
+              arrowSize={46}
+              arrowPosition={96}
+            />
+          </div>
+
+          <p className="text-center text-[10px] text-ink-soft dark:text-white/40 font-semibold tracking-wider uppercase mt-6">
+            ← Click Cards or Keyboard Arrow Keys to Browse our team →
+          </p>
         </div>
       </div>
 

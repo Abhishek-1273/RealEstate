@@ -1,4 +1,4 @@
-import { useScroll, useSpring, motion } from 'framer-motion';
+import { useScroll, useSpring, useTransform, motion } from 'framer-motion';
 
 export default function ScrollProgress() {
   const { scrollYProgress } = useScroll();
@@ -8,10 +8,13 @@ export default function ScrollProgress() {
     restDelta: 0.001,
   });
 
+  // Fade out progress bar when at the very top of the page
+  const opacity = useTransform(scrollYProgress, [0, 0.01], [0, 1]);
+
   return (
     <motion.div
       className="scroll-progress"
-      style={{ scaleX, width: '100%' }}
+      style={{ scaleX, opacity, width: '100%' }}
     />
   );
 }

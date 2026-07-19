@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { Mail, Phone, MapPin, ArrowRight } from 'lucide-react';
 import { FaInstagram, FaXTwitter, FaLinkedinIn, FaYoutube } from 'react-icons/fa6';
 import { useAuth } from '../../contexts';
+import KineticGrid from '../common/KineticGrid';
 
 const gatedPaths = ['/services/buy', '/services/sell', '/services/lease', '/services/management'];
 
@@ -61,6 +62,7 @@ export default function Footer() {
 
   return (
     <footer className="bg-mesh-dark relative overflow-hidden">
+      <KineticGrid background="transparent" lineColor="rgba(212,175,55,0.05)" dotColor="rgba(212,175,55,0.12)" spacing={50} radius={180} />
       {/* Ambient glow spots */}
       <div className="absolute top-0 left-1/4 w-[500px] h-[500px] rounded-full pointer-events-none"
         style={{ background: 'radial-gradient(ellipse, rgba(212,175,55,0.06) 0%, transparent 70%)' }} />

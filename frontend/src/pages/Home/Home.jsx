@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   ArrowRight, Star, Shield, Award, Clock, TrendingUp,
@@ -18,6 +18,10 @@ import { submitEnquiry, fetchPropertyCounts, fetchPartners } from '../../utils/a
 import { fadeUp, scaleIn, staggerContainer, staggerFast, viewportOnce } from '../../animations/variants';
 import SEO from '../../components/common/SEO';
 import ErrorBoundary from '../../components/common/ErrorBoundary';
+import KineticGrid from '../../components/common/KineticGrid';
+import Smooth3DSlideshow from '../../components/common/Smooth3DSlideshow';
+import StickerPeeling from '../../components/common/StickerPeeling';
+import reraBadge from '../../assets/image/rera-gold-badge.png';
 
 // Subcomponents
 import FeaturedProperties from './components/FeaturedProperties';
@@ -71,55 +75,249 @@ function TrustMarquee() {
 /* ══════════════════════════════════════════════════════════════════════════
    PROPERTY CATEGORIES
 ══════════════════════════════════════════════════════════════════════════ */
+const CATEGORY_WORDS = ['Categories', 'Collections', 'Portfolios', 'Selections'];
+
+function ScrambleWordCycle() {
+  const [index, setIndex] = useState(0);
+  const [displayText, setDisplayText] = useState(CATEGORY_WORDS[0]);
+  const chars = 'ABCDEFGHJKLMNOPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz0123456789#@$&*';
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const nextIndex = (index + 1) % CATEGORY_WORDS.length;
+      const targetWord = CATEGORY_WORDS[nextIndex];
+      setIndex(nextIndex);
+
+      let iteration = 0;
+      const totalSteps = targetWord.length;
+
+      const scrambleInterval = setInterval(() => {
+        setDisplayText(
+          targetWord
+            .split('')
+            .map((char, i) => {
+              if (char === ' ') return ' ';
+              if (i < iteration) return targetWord[i];
+              return chars[Math.floor(Math.random() * chars.length)];
+            })
+            .join('')
+        );
+
+        iteration += 1 / 3;
+        if (iteration >= totalSteps + 1) {
+          clearInterval(scrambleInterval);
+          setDisplayText(targetWord);
+        }
+      }, 30);
+    }, 4000);
+
+    return () => clearInterval(interval);
+  }, [index]);
+
+  return <span>{displayText}</span>;
+}
+
 function Categories({ counts = {} }) {
+  const navigate = useNavigate();
+  const [cardSize, setCardSize] = useState({ width: 340, height: 340 });
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 640) {
+        setCardSize({ width: 265, height: 265 });
+      } else if (window.innerWidth < 1024) {
+        setCardSize({ width: 300, height: 300 });
+      } else {
+        setCardSize({ width: 340, height: 340 });
+      }
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const slides = categories.map((c) => ({
+    image: { src: c.image, alt: c.name },
+    title: `${c.name}\n${counts[c.name] ?? 0} Listings`,
+    id: c.id
+  }));
+
+  const handleActiveClick = (slide) => {
+    navigate(`/properties?category=${slide.id}`);
+  };
+
   return (
     <section className="section-pad-sm bg-surface-alt dark:bg-navy transition-colors duration-300">
       <div className="container-luxury">
         <SectionHeader
           label="Browse by Type"
-          title={<>Property <span style={{ color: '#D4AF37' }}>Categories</span></>}
+          title={
+            <>
+              Property{' '}
+              <span style={{ color: '#D4AF37' }}>
+                Collections
+              </span>
+            </>
+          }
           align="center"
           className="mb-14"
         />
-        <motion.div
-          variants={staggerContainer}
-          initial="hidden"
-          whileInView="visible"
-          viewport={viewportOnce}
-          className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-5"
-        >
-          {categories.map((c) => {
-            const Icon = CATEGORY_ICON_MAP[c.name] || HomeIcon;
-            return (
-              <motion.div key={c.id} variants={fadeUp}>
-                <Link
-                  to={`/properties?category=${c.id}`}
-                  className="group block bg-white dark:bg-navy-light rounded-3xl p-7 text-center border border-gray-150 dark:border-white/5 transition-all duration-400 hover:-translate-y-1 hover:border-gold/30 hover:shadow-[0_16px_36px_rgba(10,25,47,0.04)] dark:hover:shadow-[0_16px_36px_rgba(0,0,0,0.25)] relative overflow-hidden"
-                >
-                  <div className="w-12 h-12 rounded-2xl bg-gold/10 text-gold flex items-center justify-center mx-auto mb-5 transition-transform duration-300 group-hover:scale-110">
-                    <Icon className="w-5.5 h-5.5" style={{ color: '#D4AF37' }} />
-                  </div>
-                  <h3 className="font-display font-bold text-navy dark:text-white text-xs md:text-sm tracking-tight mb-2">
-                    {c.name}
-                  </h3>
-                  <p className="text-[10px] text-ink-soft dark:text-white/40 font-semibold tracking-wide uppercase">
-                    {counts[c.name] ?? 0} Listings
-                  </p>
-                </Link>
-              </motion.div>
-            );
-          })}
-        </motion.div>
+
+        <div className="h-[380px] flex items-center justify-center relative select-none">
+          <Smooth3DSlideshow
+            slides={slides}
+            cardWidth={cardSize.width}
+            cardHeight={cardSize.height}
+            radius={3}
+            tilt={10}
+            sideTilt={6}
+            gap={9}
+            opacity={50}
+            onActiveClick={handleActiveClick}
+          />
+        </div>
+
+        <p className="text-center text-[10px] text-ink-soft dark:text-white/40 font-semibold tracking-wider uppercase mt-4">
+          ← Arrow Keys or Click to Swivel · Click Center Card to Explore →
+        </p>
       </div>
     </section>
   );
 }
 
+function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
+  const words = text.split(' ');
+  let line = '';
+  let currentY = y;
+
+  for (let n = 0; n < words.length; n++) {
+    let testLine = line + words[n] + ' ';
+    let metrics = ctx.measureText(testLine);
+    let testWidth = metrics.width;
+    if (testWidth > maxWidth && n > 0) {
+      ctx.fillText(line, x, currentY);
+      line = words[n] + ' ';
+      currentY += lineHeight;
+    } else {
+      line = testLine;
+    }
+  }
+  ctx.fillText(line, x, currentY);
+}
+
+function createCardCanvas(reraBadgeImg) {
+  const canvas = document.createElement("canvas");
+  canvas.width = 960;
+  canvas.height = 720;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return null;
+
+  // Clip rounded corners for card aspect ratio (32px border radius -> 64px on 2x scale)
+  ctx.beginPath();
+  ctx.roundRect(0, 0, 960, 720, 64);
+  ctx.clip();
+
+  // Background gradient
+  const bgGrad = ctx.createLinearGradient(0, 0, 960, 720);
+  bgGrad.addColorStop(0, '#071626');
+  bgGrad.addColorStop(1, '#0c223c');
+  ctx.fillStyle = bgGrad;
+  ctx.fillRect(0, 0, 960, 720);
+
+  // Gold Radial Glow in Top Right
+  const glowGrad = ctx.createRadialGradient(960, 0, 0, 960, 0, 500);
+  glowGrad.addColorStop(0, 'rgba(212, 175, 55, 0.22)');
+  glowGrad.addColorStop(1, 'transparent');
+  ctx.fillStyle = glowGrad;
+  ctx.fillRect(0, 0, 960, 720);
+
+  // Top header divider line
+  ctx.strokeStyle = "rgba(255, 255, 255, 0.1)";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(80, 200);
+  ctx.lineTo(880, 200);
+  ctx.stroke();
+
+  // RERA DOCUMENT AUDIT header in gold
+  ctx.fillStyle = "#D4AF37";
+  ctx.font = "bold 20px 'Outfit', 'Inter', sans-serif";
+  ctx.textBaseline = "top";
+  ctx.fillText("RERA DOCUMENT AUDIT", 80, 80);
+
+  // Title in White
+  ctx.fillStyle = "#ffffff";
+  ctx.font = "bold 38px 'Outfit', 'Inter', sans-serif";
+  ctx.fillText("Pune Market Intelligence", 80, 120);
+
+  // Quote Text
+  ctx.fillStyle = "rgba(255, 255, 255, 0.85)";
+  ctx.font = "500 28px 'Inter', sans-serif";
+  const quoteText = '"HyperRelestix operates with complete legal compliance and fiduciary responsibility, ensuring every transaction is completely RERA-verified."';
+  wrapText(ctx, quoteText, 80, 260, 800, 44);
+
+  // Bottom Divider
+  ctx.beginPath();
+  ctx.moveTo(80, 520);
+  ctx.lineTo(880, 520);
+  ctx.stroke();
+
+  // Bottom Advisory Seal - HR circle
+  ctx.fillStyle = "rgba(212, 175, 55, 0.12)";
+  ctx.beginPath();
+  ctx.arc(130, 610, 44, 0, 2 * Math.PI);
+  ctx.fill();
+
+  ctx.strokeStyle = "rgba(212, 175, 55, 0.25)";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(130, 610, 44, 0, 2 * Math.PI);
+  ctx.stroke();
+
+  ctx.fillStyle = "#D4AF37";
+  ctx.font = "bold 24px 'Outfit', sans-serif";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText("HR", 130, 610);
+  ctx.textAlign = "left";
+
+  // Advisory Board Titles
+  ctx.fillStyle = "#ffffff";
+  ctx.font = "bold 26px 'Outfit', sans-serif";
+  ctx.fillText("Advisory Board", 200, 580);
+
+  ctx.fillStyle = "rgba(255, 255, 255, 0.4)";
+  ctx.font = "bold 16px 'Outfit', sans-serif";
+  ctx.fillText("FEMA & TAX COMPLIANCE AUDITED", 200, 620);
+
+  // Draw Gold Badge Seal Image in Top Right
+  if (reraBadgeImg) {
+    ctx.drawImage(reraBadgeImg, 760, 60, 110, 110);
+  }
+
+  return canvas;
+}
+
 /* ══════════════════════════════════════════════════════════════════════════
    WHY US (ACCORDION WITH IMAGE REVEAL / FLOATING TABS)
-══════════════════════════════════════════════════════════════════════════ */
+   ══════════════════════════════════════════════════════════════════════════ */
 function WhyUs() {
   const [activeTab, setActiveTab] = useState(0);
+  const [cardTexture, setCardTexture] = useState(null);
+
+  useEffect(() => {
+    const badgeImg = new Image();
+    badgeImg.crossOrigin = "anonymous";
+    badgeImg.onload = () => {
+      const canvas = createCardCanvas(badgeImg);
+      if (canvas) setCardTexture(canvas);
+    };
+    badgeImg.onerror = () => {
+      const canvas = createCardCanvas(null);
+      if (canvas) setCardTexture(canvas);
+    };
+    badgeImg.src = reraBadge;
+  }, []);
 
   const items = [
     {
@@ -157,8 +355,8 @@ function WhyUs() {
                   key={i}
                   onClick={() => setActiveTab(i)}
                   className={`p-6 rounded-3xl border transition-all duration-300 cursor-pointer ${activeTab === i
-                      ? 'bg-gold/5 border-gold/30 dark:bg-gold/[0.03]'
-                      : 'bg-transparent border-gray-100 dark:border-white/5 hover:border-gray-200 dark:hover:border-white/10'
+                    ? 'bg-gold/5 border-gold/30 dark:bg-gold/[0.03]'
+                    : 'bg-transparent border-gray-100 dark:border-white/5 hover:border-gray-200 dark:hover:border-white/10'
                     }`}
                 >
                   <div className="flex gap-4">
@@ -182,35 +380,22 @@ function WhyUs() {
           </div>
 
           {/* Right Column: Dynamic illustrative elements */}
-          <div className="relative">
-            <div className="aspect-[4/3] rounded-[32px] overflow-hidden bg-mesh-dark p-10 flex flex-col justify-between relative shadow-luxury">
-              <div className="absolute inset-0 opacity-20"
-                style={{ background: 'radial-gradient(circle at 100% 0%, rgba(212,175,55,0.2) 0%, transparent 60%)' }} />
-
-              <div className="relative z-10 flex items-center justify-between border-b border-white/10 pb-6">
-                <div>
-                  <p className="font-accent font-bold text-[9px] tracking-widest text-gold uppercase" style={{ color: '#D4AF37' }}>RERA Document Audit</p>
-                  <h4 className="font-display font-black text-white text-lg mt-1">Pune Market Intelligence</h4>
-                </div>
-                <div className="px-3.5 py-1.5 rounded-full bg-gold/15 border border-gold/25 text-gold text-[10px] font-bold" style={{ color: '#D4AF37', borderColor: 'rgba(212,175,55,0.25)' }}>
-                  Verified
-                </div>
-              </div>
-
-              <div className="relative z-10 py-6 my-auto">
-                <p className="text-white/80 font-body text-sm leading-relaxed max-w-sm">
-                  "HyperRelestix operates with complete legal compliance and deep fiduciary responsibility, ensuring every transaction is completely RERA-verified."
-                </p>
-              </div>
-
-              <div className="relative z-10 flex items-center gap-3 pt-6 border-t border-white/10">
-                <div className="w-10 h-10 rounded-full flex items-center justify-center bg-gold/10 text-gold text-xs font-bold" style={{ color: '#D4AF37' }}>HR</div>
-                <div>
-                  <p className="text-white text-xs font-bold font-display">Advisory Board</p>
-                  <p className="text-white/40 text-[9px] mt-0.5 uppercase tracking-wide">FEMA & Tax Compliance Audited</p>
-                </div>
-              </div>
-            </div>
+          <div className="relative aspect-[4/3] w-full max-w-[480px] mx-auto select-none flex items-center justify-center overflow-visible">
+            {cardTexture ? (
+              <StickerPeeling
+                image={cardTexture}
+                imageWidth={480}
+                imageHeight={360}
+                curlRotation={220}
+                hoverPeel={26}
+                pressPeel={45}
+                backColor="#C5A028"
+                shadowEnabled={true}
+                style={{ width: '480px', height: '360px' }}
+              />
+            ) : (
+              <div className="w-full h-full aspect-[4/3] rounded-[32px] bg-mesh-dark animate-pulse" />
+            )}
           </div>
         </div>
       </div>
@@ -401,6 +586,7 @@ function Newsletter() {
 
   return (
     <section className="section-pad-sm bg-mesh-dark relative overflow-hidden">
+      <KineticGrid background="transparent" lineColor="rgba(212,175,55,0.06)" dotColor="rgba(212,175,55,0.15)" spacing={50} radius={200} />
       <div className="absolute top-0 right-0 w-[600px] h-[600px] rounded-full pointer-events-none -translate-y-1/2 translate-x-1/3"
         style={{ background: 'radial-gradient(ellipse, rgba(212,175,55,0.07) 0%, transparent 65%)' }} />
       <div className="container-luxury relative text-center">
@@ -494,10 +680,10 @@ export default function Home() {
 
   return (
     <>
-      <SEO 
-        title="Luxury Real Estate Pune | Premium Villas & Apartments" 
-        description="Discover Pune's most exclusive luxury homes. RERA-verified premium villas, apartments, and penthouses in Koregaon Park, Baner, Kharadi, and Viman Nagar." 
-        url="/" 
+      <SEO
+        title="Luxury Real Estate Pune | Premium Villas & Apartments"
+        description="Discover Pune's most exclusive luxury homes. RERA-verified premium villas, apartments, and penthouses in Koregaon Park, Baner, Kharadi, and Viman Nagar."
+        url="/"
       />
       <Hero />
       <FeaturedProperties />

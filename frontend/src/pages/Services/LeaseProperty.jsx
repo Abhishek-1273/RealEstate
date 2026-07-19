@@ -1,20 +1,46 @@
-import { useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowRight, ArrowLeft } from 'lucide-react';
 import { fadeUp } from '../../animations/variants';
 import { Link } from 'react-router-dom';
-import { submitEnquiry } from '../../utils/api';
+import { submitEnquiry, fetchProperties } from '../../utils/api';
 import SearchableSelect from '../../components/common/SearchableSelect';
 
 const localities = ['Balewadi', 'Hadapsar', 'KP', 'NIBM Road', 'Viman Nagar', 'Kharadi', 'Punewadi', 'Kothrud', 'Karve Nagar', 'Shewalewadi Road', 'Baner', 'Pashan', 'Bawadhan', 'MG Road', 'JM Road', 'F.C. Road', 'Hinjewadi Phase I, II', 'Ravet', 'Ganga Dham Chownk', 'Swargate', 'Katraj', 'Prabhat Road', 'Bibwewadi', 'Bhekrai Nagar', 'Pimple Gurav', 'Pimple Saudagar', 'Dhayari', 'Kondhwa', 'Undri', 'Muhamad wadi', 'Handewadi', 'Wakad', 'Shivaji Nagar', 'Parvati Hill', 'Sukhsagar Nagar', 'Singhgad Road', 'Camp', 'Pimpri Gaon', 'Chinchwad Gaon', 'Bhosari', 'Nigdi', 'Bhugaon', 'Man', 'Sus', 'Malwadi', 'Warje', 'Fursungi', 'Wagholi', 'Manjari', 'Lohgaon', 'Vishrantwadi', 'Khadki', 'Nanded City', 'Other'];
-const rentRanges = ['Under ₹30K/month', '₹30K–60K/month', '₹60K–1L/month', '₹1L–2L/month', '₹2L+/month'];
-const durations = ['3 months', '6 months', '11 months', '1 year', '2+ years'];
+const formatRent = (val) => {
+  if (val >= 100000) {
+    return `₹${(val / 100000).toFixed(2).replace(/\.?0+$/, '')} L/month`;
+  }
+  return `₹${(val / 1000).toFixed(0)}K/month`;
+};
 
 export default function LeaseProperty() {
-  const [form, setForm] = useState({ purpose: 'rent', locality: '', budget: '', duration: '', name: '', phone: '', email: '', notes: '' });
+  const [form, setForm] = useState({ purpose: 'rent', locality: '', budget: '₹45K/month', duration: '', name: '', phone: '', email: '', notes: '' });
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [serverError, setServerError] = useState('');
+
+  const [priceRange, setPriceRange] = useState({ min: 15000, max: 300000, step: 5000 });
+  const [sliderValue, setSliderValue] = useState(45000);
+
+  useEffect(() => {
+    fetchProperties({ limit: 100 })
+      .then(data => {
+        const rentProps = (data.properties || []).filter(p => p.price < 1000000);
+        if (rentProps.length > 0) {
+          const prices = rentProps.map(p => p.price);
+          const min = Math.min(...prices);
+          const max = Math.max(...prices);
+          if (min !== max) {
+            setPriceRange({ min, max, step: 5000 });
+            setSliderValue(Math.round((min + max) / 2));
+            setForm(f => ({ ...f, budget: formatRent(Math.round((min + max) / 2)) }));
+          }
+        }
+      })
+      .catch(err => console.error("Failed to load properties for rent range:", err));
+  }, []);
+
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
   return (
@@ -92,30 +118,40 @@ export default function LeaseProperty() {
               </div>
               <div className="grid sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-bold text-navy dark:text-white mb-2">{form.purpose === 'rent' ? 'Monthly Budget' : 'Expected Rent'}</label>
-                  <div className="space-y-2">
-                    {rentRanges.map(r => (
-                      <button key={r} type="button" onClick={() => set('budget', r)}
-                        className={`w-full text-left px-4 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 border ${
-                          form.budget === r
-                            ? 'bg-gold/10 dark:bg-gold/20 border-gold text-gold-text dark:text-gold-light'
-                            : 'bg-white dark:bg-navy-light text-ink-muted dark:text-cream/80 border-gray-100 dark:border-white/10 hover:bg-black/5 dark:hover:bg-white/5'
-                        }`}
-                      >
-                        {r}
-                      </button>
-                    ))}
+                  <label className="block text-xs font-bold text-navy dark:text-white mb-1.5">
+                    {form.purpose === 'rent' ? 'Monthly Budget' : 'Expected Rent'}: <span className="text-gold font-extrabold ml-1">{formatRent(sliderValue)}</span>
+                  </label>
+                  <p className="text-[10px] text-ink-soft dark:text-cream/40 mb-4">Drag the slider to set your target budget.</p>
+                  
+                  <div className="px-2">
+                    <input
+                      type="range"
+                      min={priceRange.min}
+                      max={priceRange.max}
+                      step={priceRange.step}
+                      value={sliderValue}
+                      onChange={(e) => {
+                        const val = Number(e.target.value);
+                        setSliderValue(val);
+                        set('budget', formatRent(val));
+                      }}
+                      className="w-full h-2 bg-gray-200 dark:bg-white/10 rounded-lg appearance-none cursor-pointer accent-gold"
+                    />
+                    <div className="flex justify-between text-[9px] font-bold text-ink-soft dark:text-cream/30 mt-2 uppercase tracking-wider">
+                      <span>Min: {formatRent(priceRange.min)}</span>
+                      <span>Max: {formatRent(priceRange.max)}</span>
+                    </div>
                   </div>
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-navy dark:text-white mb-2">Lease Duration</label>
                   <div className="space-y-2">
-                    {durations.map(d => (
+                    {['3 months', '6 months', '11 months', '1 year', '2+ years'].map(d => (
                       <button key={d} type="button" onClick={() => set('duration', d)}
                         className={`w-full text-left px-4 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 border ${
                           form.duration === d
                             ? 'bg-gold/10 dark:bg-gold/20 border-gold text-gold-text dark:text-gold-light'
-                            : 'bg-white dark:bg-navy-light text-ink-muted dark:text-cream/80 border-gray-100 dark:border-white/10 hover:bg-black/5 dark:hover:bg-white/5'
+                            : 'bg-white dark:bg-navy-light text-ink-muted dark:text-cream/80 border-gray-150 dark:border-white/10 hover:bg-black/5 dark:hover:bg-white/5'
                         }`}
                       >
                         {d}

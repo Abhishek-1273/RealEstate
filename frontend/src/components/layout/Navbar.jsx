@@ -3,41 +3,83 @@ import { Link, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Heart, User, Menu, X, ChevronDown, ArrowRight,
-  Home, Building2, Key, Settings, Calendar, LogOut, Search,
-  Sun, Moon
+  Home, Building2, Key, Settings, Calendar, LogOut,
+  Sun, Moon, Search
 } from 'lucide-react';
 import { useAuth, useWishlist, useSearch } from '../../contexts';
 import Magnetic from '../common/Magnetic';
 import PremiumIcon from '../common/PremiumIcon';
 
 const services = [
-  { id: 'buy',    title: 'Buy Property',        desc: "Find your perfect luxury home from our verified Pune listings",        icon: <Home className="w-5 h-5" />,     link: '/services/buy',        color: 'from-gold/10 to-transparent' },
-  { id: 'sell',   title: 'Sell Property',        desc: "List with Pune's most trusted luxury real estate platform",           icon: <Building2 className="w-5 h-5" />, link: '/services/sell',       color: 'from-royal/10 to-transparent' },
-  { id: 'lease',  title: 'Lease Property',       desc: 'Premium rental solutions for discerning clients in Pune',            icon: <Key className="w-5 h-5" />,      link: '/services/lease',      color: 'from-emerald-500/10 to-transparent' },
-  { id: 'manage', title: 'Property Management',  desc: 'End-to-end care for your real estate portfolio',                     icon: <Settings className="w-5 h-5" />, link: '/services/management', color: 'from-purple-500/10 to-transparent' },
+  { id: 'buy', title: 'Buy Property', desc: "Find your perfect luxury home from our verified Pune listings", icon: <Home className="w-5 h-5" />, link: '/services/buy', color: 'from-gold/10 to-transparent' },
+  { id: 'sell', title: 'Sell Property', desc: "List with Pune's most trusted luxury real estate platform", icon: <Building2 className="w-5 h-5" />, link: '/services/sell', color: 'from-royal/10 to-transparent' },
+  { id: 'lease', title: 'Lease Property', desc: 'Premium rental solutions for discerning clients in Pune', icon: <Key className="w-5 h-5" />, link: '/services/lease', color: 'from-emerald-500/10 to-transparent' },
+  { id: 'manage', title: 'Property Management', desc: 'End-to-end care for your real estate portfolio', icon: <Settings className="w-5 h-5" />, link: '/services/management', color: 'from-purple-500/10 to-transparent' },
 ];
 
 const navLinks = [
-  { label: 'Home',       path: '/' },
-  { label: 'Services',   hasMenu: true },
+  { label: 'Home', path: '/' },
+  { label: 'Services', hasMenu: true },
   { label: 'Properties', path: '/properties' },
-  { label: 'About',      path: '/about' },
-  { label: 'Contact',    path: '/contact' },
+  { label: 'About', path: '/about' },
+  { label: 'Contact', path: '/contact' },
 ];
 
+const Path = (props) => (
+  <motion.path
+    fill="transparent"
+    strokeWidth="2.5"
+    stroke="currentColor"
+    strokeLinecap="round"
+    {...props}
+  />
+);
+
+function MenuToggle({ isOpen }) {
+  return (
+    <svg width="20" height="20" viewBox="0 0 23 23" className="flex items-center justify-center">
+      <Path
+        variants={{
+          closed: { d: "M 2 2.5 L 20 2.5" },
+          open: { d: "M 3 16.5 L 17 2.5" }
+        }}
+        animate={isOpen ? "open" : "closed"}
+        transition={{ duration: 0.3 }}
+      />
+      <Path
+        d="M 2 9.423 L 20 9.423"
+        variants={{
+          closed: { opacity: 1 },
+          open: { opacity: 0 }
+        }}
+        animate={isOpen ? "open" : "closed"}
+        transition={{ duration: 0.2 }}
+      />
+      <Path
+        variants={{
+          closed: { d: "M 2 16.346 L 20 16.346" },
+          open: { d: "M 3 2.5 L 17 16.346" }
+        }}
+        animate={isOpen ? "open" : "closed"}
+        transition={{ duration: 0.3 }}
+      />
+    </svg>
+  );
+}
+
 export default function Navbar() {
-  const [scrolled,     setScrolled]     = useState(false);
-  const [mobileOpen,   setMobileOpen]   = useState(false);
-  const [megaOpen,     setMegaOpen]     = useState(false);
-  const [profileOpen,  setProfileOpen]  = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [megaOpen, setMegaOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
 
   const { openAuth, user, signOut } = useAuth();
   const { setShowSearch } = useSearch();
   const { count } = useWishlist();
-  const navigate  = useNavigate();
-  const megaRef       = useRef(null);
-  const megaPanelRef  = useRef(null);
-  const profileRef    = useRef(null);
+  const navigate = useNavigate();
+  const megaRef = useRef(null);
+  const megaPanelRef = useRef(null);
+  const profileRef = useRef(null);
 
   const [isDark, setIsDark] = useState(() => document.documentElement.classList.contains('dark'));
 
@@ -64,7 +106,7 @@ export default function Navbar() {
   useEffect(() => {
     const fn = (e) => {
       if (
-        megaRef.current      && !megaRef.current.contains(e.target) &&
+        megaRef.current && !megaRef.current.contains(e.target) &&
         megaPanelRef.current && !megaPanelRef.current.contains(e.target)
       ) setMegaOpen(false);
     };
@@ -111,10 +153,16 @@ export default function Navbar() {
   };
 
   const { pathname } = useLocation();
-  const isHome  = pathname === '/';
+
+  useEffect(() => {
+    setMobileOpen(false);
+    setMegaOpen(false);
+    setProfileOpen(false);
+  }, [pathname]);
+  const isHome = pathname === '/';
   const isSolid = scrolled || !isHome;
 
-  const navText    = isSolid ? 'text-ink-muted dark:text-cream/90 hover:text-navy dark:hover:text-white' : 'text-white/90 hover:text-white';
+  const navText = isSolid ? 'text-ink-muted dark:text-cream/90 hover:text-navy dark:hover:text-white' : 'text-white/90 hover:text-white';
   const activeStyle = isSolid ? 'text-gold-muted dark:text-gold font-semibold' : 'text-gold font-semibold';
 
   return (
@@ -127,7 +175,7 @@ export default function Navbar() {
         className={`fixed top-0 inset-x-0 z-50 transition-all duration-500 ${isSolid
           ? 'bg-white/95 dark:bg-navy-dark/95 backdrop-blur-2xl shadow-[0_1px_0_rgba(7,26,47,0.06),0_8px_32px_rgba(7,26,47,0.06)] dark:shadow-[0_1px_0_rgba(255,255,255,0.06),0_8px_32px_rgba(3,14,27,0.4)]'
           : 'bg-transparent'
-        }`}
+          }`}
       >
         <div className="container-luxury">
           <div className="flex items-center justify-between h-[74px]">
@@ -203,7 +251,7 @@ export default function Navbar() {
               {/* Search */}
               <button
                 onClick={() => setShowSearch(true)}
-                className={`relative p-2.5 rounded-xl transition-all duration-200 group ${isSolid ? 'hover:bg-gray-100 dark:hover:bg-white/10' : 'hover:bg-white/10'}`}
+                className={`relative p-2.5 rounded-xl transition-all duration-200 group flex items-center justify-center ${isSolid ? 'hover:bg-gray-100 dark:hover:bg-white/10' : 'hover:bg-white/10'}`}
                 aria-label="Search properties"
               >
                 <Search className={`w-[18px] h-[18px] transition-colors duration-200 ${isSolid ? 'text-ink-muted dark:text-cream/90 group-hover:text-navy dark:group-hover:text-white' : 'text-white/85 group-hover:text-white'}`} />
@@ -228,9 +276,8 @@ export default function Navbar() {
                 <div ref={profileRef} className="relative ml-1">
                   <button
                     onClick={() => setProfileOpen(v => !v)}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold transition-all duration-200 ${
-                      isSolid ? 'bg-navy text-white hover:bg-navy/90' : 'bg-white/15 text-white border border-white/20 hover:bg-white/20'
-                    }`}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold transition-all duration-200 ${isSolid ? 'bg-navy text-white hover:bg-navy/90' : 'bg-white/15 text-white border border-white/20 hover:bg-white/20'
+                      }`}
                   >
                     <div
                       className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black"
@@ -288,9 +335,8 @@ export default function Navbar() {
               ) : (
                 <button
                   onClick={() => openAuth()}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium ml-1 transition-all duration-200 ${
-                    isSolid ? 'text-ink-muted hover:text-navy hover:bg-gray-100' : 'text-white/85 hover:text-white hover:bg-white/10'
-                  }`}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium ml-1 transition-all duration-200 ${isSolid ? 'text-ink-muted hover:text-navy hover:bg-gray-100' : 'text-white/85 hover:text-white hover:bg-white/10'
+                    }`}
                 >
                   <User className="w-4 h-4" /> Sign In
                 </button>
@@ -306,10 +352,11 @@ export default function Navbar() {
 
             {/* Mobile Toggle */}
             <button
-              onClick={() => setMobileOpen(true)}
-              className={`lg:hidden p-2.5 rounded-xl transition-colors ${isSolid ? 'text-navy dark:text-cream/90 hover:bg-gray-100 dark:hover:bg-white/10' : 'text-white hover:bg-white/10'}`}
+              onClick={() => setMobileOpen(v => !v)}
+              className={`lg:hidden p-2.5 rounded-xl transition-colors flex items-center justify-center ${isSolid ? 'text-navy dark:text-cream/90 hover:bg-gray-100 dark:hover:bg-white/10' : 'text-white hover:bg-white/10'}`}
+              aria-label="Toggle menu"
             >
-              <Menu className="w-5 h-5" />
+              <MenuToggle isOpen={mobileOpen} />
             </button>
           </div>
         </div>
@@ -325,9 +372,8 @@ export default function Navbar() {
             exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
             onMouseLeave={() => setMegaOpen(false)}
-            className={`fixed top-[74px] inset-x-0 z-40 border-b transition-colors duration-500 ${
-              isSolid ? 'bg-white dark:bg-navy-dark border-gray-200 dark:border-white/10' : 'bg-navy/95 dark:bg-navy-dark/95 backdrop-blur-2xl border-white/10'
-            }`}
+            className={`fixed top-[74px] inset-x-0 z-40 border-b transition-colors duration-500 ${isSolid ? 'bg-white dark:bg-navy-dark border-gray-200 dark:border-white/10' : 'bg-navy/95 dark:bg-navy-dark/95 backdrop-blur-2xl border-white/10'
+              }`}
             style={{ boxShadow: '0 16px 48px rgba(7,26,47,0.10)' }}
           >
             <div className="container-luxury py-7">
@@ -339,11 +385,10 @@ export default function Navbar() {
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: i * 0.05 }}
-                    className={`text-left p-5 rounded-2xl bg-gradient-to-br ${s.color} border transition-all duration-250 group ${
-                      isSolid 
-                        ? 'border-gray-100/80 dark:border-white/10 hover:border-gold/25 hover:shadow-card' 
+                    className={`text-left p-5 rounded-2xl bg-gradient-to-br ${s.color} border transition-all duration-250 group ${isSolid
+                        ? 'border-gray-100/80 dark:border-white/10 hover:border-gold/25 hover:shadow-card'
                         : 'border-white/10 hover:border-gold/25 hover:shadow-luxury'
-                    }`}
+                      }`}
                   >
                     <div className="flex items-start justify-between mb-4">
                       <PremiumIcon icon={s.icon} size="md" variant="gold" />
@@ -368,7 +413,7 @@ export default function Navbar() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setMobileOpen(false)}
-              className="fixed inset-0 z-[2000] w-full h-[100dvh] bg-navy/70 backdrop-blur-sm"
+              className="fixed inset-0 z-[1999] w-full h-[100dvh] bg-navy/70 backdrop-blur-sm"
             />
             <motion.div
               initial={{ x: '100%' }}
@@ -427,8 +472,7 @@ export default function Navbar() {
                       to={link.path}
                       onClick={() => setMobileOpen(false)}
                       className={({ isActive }) =>
-                        `block px-3 py-3.5 rounded-xl text-sm font-medium transition-all duration-200 ${
-                          isActive ? 'text-gold font-semibold' : 'text-white/80 hover:text-white hover:bg-white/8'
+                        `block px-3 py-3.5 rounded-xl text-sm font-medium transition-all duration-200 ${isActive ? 'text-gold font-semibold' : 'text-white/80 hover:text-white hover:bg-white/8'
                         }`
                       }
                     >

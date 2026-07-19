@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { Crown, Briefcase, Users, Plus, X, Search, Phone, Mail, Trash2, Loader2, Pencil, Building2, ChevronDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -15,6 +15,19 @@ const ROLE_META = {
 
 const ROLES = ['agent', 'management', 'admin'];
 const STAFF_ROLES = ['agent', 'management', 'admin'];
+
+const LOCALITIES = [
+  'Balewadi', 'Hadapsar', 'KP', 'NIBM Road', 'Viman Nagar', 'Kharadi',
+  'Punewadi', 'Kothrud', 'Karve Nagar', 'Shewalewadi Road', 'Baner',
+  'Pashan', 'Bawadhan', 'MG Road', 'JM Road', 'F.C. Road',
+  'Hinjewadi Phase I, II', 'Ravet', 'Ganga Dham Chownk', 'Swargate',
+  'Katraj', 'Prabhat Road', 'Bibwewadi', 'Bhekrai Nagar', 'Pimple Gurav',
+  'Pimple Saudagar', 'Dhayari', 'Kondhwa', 'Undri', 'Muhamad wadi',
+  'Handewadi', 'Wakad', 'Shivaji Nagar', 'Parvati Hill', 'Sukhsagar Nagar',
+  'Singhgad Road', 'Camp', 'Pimpri Gaon', 'Chinchwad Gaon', 'Bhosari',
+  'Nigdi', 'Bhugaon', 'Man', 'Sus', 'Malwadi', 'Warje', 'Fursungi',
+  'Wagholi', 'Manjari', 'Lohgaon', 'Vishrantwadi', 'Khadki', 'Nanded City'
+].sort();
 
 const inputCls = "w-full px-4 py-3 rounded-2xl text-sm border border-gray-150 dark:border-white/10 bg-white dark:bg-white/5 text-navy dark:text-white placeholder-gray-400 dark:placeholder-white/20 focus:outline-none focus:border-gold/50 transition-colors";
 const labelCls = "block text-[10px] font-extrabold text-gray-400 dark:text-white/30 uppercase tracking-widest mb-1.5";
@@ -133,7 +146,7 @@ function InlineRoleSelect({ value, onChange, disabled }) {
             transition={{ duration: 0.1, ease: 'easeOut' }}
             className="absolute left-0 mt-1.5 min-w-[145px] bg-white/95 dark:bg-[#0E1A2B]/95 backdrop-blur-md border border-gray-150 dark:border-white/10 rounded-2xl shadow-luxury z-50 py-1.5 overflow-hidden"
           >
-            {STAFF_ROLES.map((r) => {
+            {STAFF_ROLES.filter(r => r !== 'admin' || value === 'admin').map((r) => {
               const active = value === r;
               const meta = ROLE_META[r];
               const ItemIcon = meta.icon;
@@ -158,6 +171,113 @@ function InlineRoleSelect({ value, onChange, disabled }) {
                 </button>
               );
             })}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+function MultiSelectLocalities({ value, onChange }) {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState('');
+  const ref = useRef(null);
+
+  useEffect(() => {
+    const handleOutside = (e) => {
+      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
+    };
+    document.addEventListener('mousedown', handleOutside);
+    return () => document.removeEventListener('mousedown', handleOutside);
+  }, []);
+
+  const selected = useMemo(() => {
+    if (!value) return [];
+    return value.split(',').map(s => s.trim()).filter(Boolean);
+  }, [value]);
+
+  const handleToggle = (locality) => {
+    let next;
+    if (selected.includes(locality)) {
+      next = selected.filter(s => s !== locality);
+    } else {
+      next = [...selected, locality];
+    }
+    onChange(next.join(', '));
+  };
+
+  const filteredLocalities = useMemo(() => {
+    const q = search.toLowerCase().trim();
+    if (!q) return LOCALITIES;
+    return LOCALITIES.filter(l => l.toLowerCase().includes(q));
+  }, [search]);
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="w-full flex items-center justify-between px-4 py-3 rounded-2xl text-sm border border-gray-150 dark:border-white/10 bg-white dark:bg-[#0E1A2B] text-left transition-colors duration-200 focus:outline-none focus:border-gold/50"
+      >
+        <span className={selected.length > 0 ? "text-navy dark:text-white font-medium truncate pr-2" : "text-gray-400 dark:text-white/30"}>
+          {selected.length > 0 ? selected.join(', ') : 'Select localities'}
+        </span>
+        <div className="flex items-center gap-1.5 shrink-0">
+          {selected.length > 0 && (
+            <span className="text-[10px] bg-gold/15 text-gold-dark dark:text-gold px-2 py-0.5 rounded-full font-extrabold">
+              {selected.length}
+            </span>
+          )}
+          <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
+        </div>
+      </button>
+
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            data-lenis-prevent
+            initial={{ opacity: 0, y: -4, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -4, scale: 0.98 }}
+            transition={{ duration: 0.12, ease: 'easeOut' }}
+            className="absolute left-0 right-0 mt-1.5 max-h-64 overflow-y-auto bg-white/95 dark:bg-[#0E1A2B]/95 backdrop-blur-md border border-gray-150 dark:border-white/10 rounded-2xl shadow-luxury z-50 p-2.5 flex flex-col gap-2.5"
+          >
+            <input
+              type="text"
+              placeholder="Search locality..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-gray-150 dark:border-white/10 bg-white dark:bg-[#071A2F] text-navy dark:text-white focus:outline-none focus:border-gold/50"
+            />
+
+            <div className="overflow-y-auto max-h-44 pr-1 space-y-0.5 no-scrollbar">
+              {filteredLocalities.length === 0 ? (
+                <p className="text-[11px] text-gray-400 dark:text-white/30 text-center py-3">No matching localities</p>
+              ) : (
+                filteredLocalities.map((loc) => {
+                  const isChecked = selected.includes(loc);
+                  return (
+                    <button
+                      key={loc}
+                      type="button"
+                      onClick={() => handleToggle(loc)}
+                      className={`w-full text-left px-3 py-2 rounded-xl text-xs font-bold transition-colors flex items-center justify-between ${isChecked
+                        ? 'bg-gold/10 text-gold-dark dark:text-gold'
+                        : 'text-gray-700 dark:text-cream/80 hover:bg-gray-50 dark:hover:bg-white/5 hover:text-navy dark:hover:text-white'
+                        }`}
+                    >
+                      <span>{loc}</span>
+                      <input
+                        type="checkbox"
+                        checked={isChecked}
+                        readOnly
+                        className="rounded border-gray-300 dark:border-white/10 text-gold focus:ring-gold/30 h-3.5 w-3.5 cursor-pointer accent-gold"
+                      />
+                    </button>
+                  );
+                })
+              )}
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -214,11 +334,11 @@ function AddStaffModal({ onAdd, onClose }) {
           {form.role === 'agent' && (
             <>
               <div>
-                <label className={labelCls}>Expertise (Localities, e.g. Koregaon Park)</label>
-                <input type="text" value={form.expertise}
-                  placeholder="Specialist areas (comma-separated)"
-                  onChange={e => setForm(p => ({ ...p, expertise: e.target.value }))}
-                  className={inputCls} />
+                <label className={labelCls}>Expertise (Localities)</label>
+                <MultiSelectLocalities
+                  value={form.expertise}
+                  onChange={val => setForm(p => ({ ...p, expertise: val }))}
+                />
               </div>
               <div>
                 <label className={labelCls}>Agent Qualities / Skills</label>
@@ -236,7 +356,7 @@ function AddStaffModal({ onAdd, onClose }) {
               value={form.role}
               onChange={val => setForm(p => ({ ...p, role: val }))}
               placeholder="Select role"
-              options={STAFF_ROLES.map(r => ({ value: r, label: ROLE_META[r].label }))}
+              options={STAFF_ROLES.filter(r => r !== 'admin').map(r => ({ value: r, label: ROLE_META[r].label }))}
             />
           </div>
         </div>
@@ -814,11 +934,11 @@ function EditStaffModal({ user, onSave, onClose }) {
           {form.role === 'agent' && (
             <>
               <div>
-                <label className={labelCls}>Expertise (Localities, e.g. Koregaon Park)</label>
-                <input type="text" value={form.expertise}
-                  placeholder="Specialist areas (comma-separated)"
-                  onChange={e => setForm(p => ({ ...p, expertise: e.target.value }))}
-                  className={inputCls} />
+                <label className={labelCls}>Expertise (Localities)</label>
+                <MultiSelectLocalities
+                  value={form.expertise}
+                  onChange={val => setForm(p => ({ ...p, expertise: val }))}
+                />
               </div>
               <div>
                 <label className={labelCls}>Agent Qualities / Skills</label>
@@ -836,7 +956,7 @@ function EditStaffModal({ user, onSave, onClose }) {
               value={form.role}
               onChange={val => setForm(p => ({ ...p, role: val }))}
               placeholder="Select role"
-              options={STAFF_ROLES.map(r => ({ value: r, label: ROLE_META[r].label }))}
+              options={STAFF_ROLES.filter(r => r !== 'admin' || user.role === 'admin').map(r => ({ value: r, label: ROLE_META[r].label }))}
             />
           </div>
         </div>

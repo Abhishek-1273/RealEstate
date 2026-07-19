@@ -4,6 +4,7 @@ import { ArrowRight, Home, Building2, Key, Settings, CheckCircle2 } from 'lucide
 import { fadeUp, staggerContainer, viewportOnce } from '../../animations/variants';
 import PremiumIcon from '../../components/common/PremiumIcon';
 import { useAuth } from '../../contexts';
+import KineticGrid from '../../components/common/KineticGrid';
 
 const services = [
   {
@@ -71,6 +72,7 @@ export default function Services() {
 
       {/* ── Hero ── */}
       <div className="relative py-28 overflow-hidden bg-mesh-dark">
+        <KineticGrid background="transparent" lineColor="rgba(212,175,55,0.08)" dotColor="rgba(212,175,55,0.2)" spacing={40} radius={185} />
         <div className="absolute inset-0 pointer-events-none"
           style={{ background: 'radial-gradient(ellipse at 30% 50%, rgba(212,175,55,0.08) 0%, transparent 60%)' }} />
         <div className="container-luxury relative text-center">

@@ -9,6 +9,7 @@ import ScrollProgress from '../common/ScrollProgress';
 import AIChatbot from '../common/AIChatbot';
 import { useAuth, useSearch } from '../../contexts';
 import { pageTransition } from '../../animations/variants';
+import GoldCursorTrail from '../common/GoldCursorTrail';
 
 const MainLayout = () => {
   const { showAuthModal } = useAuth();
@@ -106,6 +107,7 @@ const MainLayout = () => {
 
   return (
     <div className="min-h-screen flex flex-col">
+      <GoldCursorTrail />
       <ScrollProgress />
       <Navbar />
 

@@ -136,9 +136,9 @@ export default function Hero() {
                 Pune's Finest
               </motion.h1>
             </div>
-            <div className="overflow-hidden mb-2">
+            <div className="overflow-hidden mb-2" style={{ width: 'fit-content', paddingRight: '20px' }}>
               <motion.div initial={{ y: '100%', opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ duration: 0.85, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}>
-                <span className="font-display font-black leading-[1.05] block"
+                <span className="font-display font-black leading-[1.05] inline-block whitespace-nowrap"
                   style={{ fontSize: 'clamp(2.8rem, 6vw, 5.2rem)', background: 'linear-gradient(135deg, #D4AF37 0%, #E8C84A 50%, #C4A028 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
                   Luxury Homes
                 </span>

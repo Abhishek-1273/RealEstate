@@ -102,8 +102,8 @@ app.use(cors({
       if (origin === clean) return callback(null, true);
     }
 
-    // In dev only: allow any Vercel preview subdomain
-    if (!isProd && origin.endsWith('.vercel.app')) return callback(null, true);
+    // Allow any Vercel preview/production subdomain (frontend is deployed on Vercel)
+    if (origin.endsWith('.vercel.app')) return callback(null, true);
 
     return callback(null, false);
   },
@@ -134,7 +134,8 @@ app.use('/sitemap.xml',    sitemapRoutes);
 
 // ── Health Check ───────────────────────────────────────────────────────────────
 app.get('/api/health', (req, res) => {
-  res.json({ success: true, message: 'HyperRelestix API running 🚀', env: process.env.NODE_ENV });
+  // FIX: Do not expose NODE_ENV or internal config in public health response
+  res.json({ success: true, message: 'HyperRelestix API running 🚀' });
 });
 
 // ── 404 ────────────────────────────────────────────────────────────────────────

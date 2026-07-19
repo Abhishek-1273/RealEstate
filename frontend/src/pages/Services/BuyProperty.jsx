@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   ArrowRight, ArrowLeft, Home, Building2, MapPin, CheckCircle2,
@@ -7,7 +7,7 @@ import {
 import { fadeUp } from '../../animations/variants';
 import { Link } from 'react-router-dom';
 import PremiumIcon from '../../components/common/PremiumIcon';
-import { submitEnquiry } from '../../utils/api';
+import { submitEnquiry, fetchProperties } from '../../utils/api';
 import SearchableSelect from '../../components/common/SearchableSelect';
 
 const ICON_MAP = {
@@ -34,12 +34,70 @@ const localities = ['Balewadi', 'Hadapsar', 'KP', 'NIBM Road', 'Viman Nagar', 'K
 const budgets = ['Under ₹2 Cr', '₹2–5 Cr', '₹5–10 Cr', '₹10–20 Cr', '₹20 Cr+'];
 const timings = ['Immediately', 'Within 3 months', '3–6 months', 'Just exploring'];
 
+const formatPrice = (val) => {
+  if (val >= 10000000) {
+    return `₹${(val / 10000000).toFixed(2).replace(/\.?0+$/, '')} Cr`;
+  }
+  return `₹${(val / 100000).toFixed(0)} Lakh`;
+};
+
+const DEFAULT_RANGES = {
+  villa: { min: 15000000, max: 250000000, defaultVal: 50000000 },
+  apartment: { min: 4000000, max: 80000000, defaultVal: 15000000 },
+  penthouse: { min: 30000000, max: 150000000, defaultVal: 60000000 },
+  farmhouse: { min: 20000000, max: 120000000, defaultVal: 40000000 },
+  commercial: { min: 10000000, max: 300000000, defaultVal: 50000000 },
+  plot: { min: 3000000, max: 50000000, defaultVal: 10000000 }
+};
+
+const matchType = (dbType, formTypeId) => {
+  if (!dbType || !formTypeId) return false;
+  const t = dbType.toLowerCase().replace(/\s+/g, '');
+  return t === formTypeId.toLowerCase();
+};
+
 export default function BuyProperty() {
   const [step, setStep] = useState(0);
-  const [form, setForm] = useState({ type: '', locality: '', budget: '', timing: '', name: '', phone: '', email: '', notes: '' });
+  const [form, setForm] = useState({ type: '', locality: '', budget: '₹2 Cr', timing: '', name: '', phone: '', email: '', notes: '' });
   const [submitted, setSubmitted]   = useState(false);
   const [loading, setLoading]       = useState(false);
   const [serverError, setServerError] = useState('');
+  
+  const [allProperties, setAllProperties] = useState([]);
+  const [priceRange, setPriceRange] = useState({ min: 4000000, max: 250000000, step: 500000 });
+  const [sliderValue, setSliderValue] = useState(20000000);
+
+  useEffect(() => {
+    fetchProperties({ limit: 100 })
+      .then(data => {
+        setAllProperties(data.properties || []);
+      })
+      .catch(err => console.error("Failed to load properties:", err));
+  }, []);
+
+  useEffect(() => {
+    if (!form.type) return;
+
+    const filtered = allProperties.filter(p => p.price >= 1000000 && matchType(p.type, form.type));
+    
+    if (filtered.length > 0) {
+      const prices = filtered.map(p => p.price);
+      const min = Math.min(...prices);
+      const max = Math.max(...prices);
+      if (min !== max) {
+        setPriceRange({ min, max, step: 500000 });
+        const initialVal = Math.round((min + max) / 2);
+        setSliderValue(initialVal);
+        setForm(f => ({ ...f, budget: formatPrice(initialVal) }));
+        return;
+      }
+    }
+
+    const range = DEFAULT_RANGES[form.type] || { min: 4000000, max: 250000000, defaultVal: 20000000 };
+    setPriceRange({ min: range.min, max: range.max, step: 500000 });
+    setSliderValue(range.defaultVal);
+    setForm(f => ({ ...f, budget: formatPrice(range.defaultVal) }));
+  }, [form.type, allProperties]);
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
@@ -182,19 +240,29 @@ export default function BuyProperty() {
                       />
                     </div>
                     <div>
-                      <label className="block font-display font-bold text-navy dark:text-white text-sm mb-3">Budget Range</label>
-                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                        {budgets.map(b => (
-                          <button key={b} onClick={() => set('budget', b)}
-                            className={`py-3 px-4 rounded-xl text-xs font-semibold transition-all duration-200 border ${
-                              form.budget === b
-                                ? 'bg-gold/10 dark:bg-gold/20 border-gold text-gold-text dark:text-gold-light'
-                                : 'bg-white dark:bg-navy-light text-ink-muted dark:text-cream/80 border-gray-100 dark:border-white/10 hover:bg-black/5 dark:hover:bg-white/5'
-                            }`}
-                          >
-                            {b}
-                          </button>
-                        ))}
+                      <label className="block font-display font-bold text-navy dark:text-white text-sm mb-1.5">
+                        Budget Range: <span className="text-gold font-extrabold ml-1">{formatPrice(sliderValue)}</span>
+                      </label>
+                      <p className="text-[11px] text-ink-soft dark:text-cream/40 mb-4">Drag the slider to set your target budget.</p>
+                      
+                      <div className="px-2">
+                        <input
+                          type="range"
+                          min={priceRange.min}
+                          max={priceRange.max}
+                          step={priceRange.step}
+                          value={sliderValue}
+                          onChange={(e) => {
+                            const val = Number(e.target.value);
+                            setSliderValue(val);
+                            set('budget', formatPrice(val));
+                          }}
+                          className="w-full h-2 bg-gray-200 dark:bg-white/10 rounded-lg appearance-none cursor-pointer accent-gold"
+                        />
+                        <div className="flex justify-between text-[10px] font-bold text-ink-soft dark:text-cream/30 mt-2 uppercase tracking-wider">
+                          <span>Min: {formatPrice(priceRange.min)}</span>
+                          <span>Max: {formatPrice(priceRange.max)}</span>
+                        </div>
                       </div>
                     </div>
                     <div>

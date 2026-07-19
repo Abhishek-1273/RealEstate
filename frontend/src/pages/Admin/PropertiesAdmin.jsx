@@ -365,7 +365,7 @@ function PropertyForm({ initial, onSave, onClose }) {
                   options={[
                     { value: '', label: 'Unassigned', display: 'Unassigned' },
                     ...agents
-                      .filter(u => u.role === 'agent')
+                      .filter(u => u.role === 'agent' && (u.isActive || u.id === form.agent?.id))
                       .map(a => ({
                         value: a.id,
                         label: `${a.name} (${a.email || 'No email'})`,

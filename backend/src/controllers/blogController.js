@@ -48,6 +48,10 @@ export const createBlog = async (req, res) => {
   try {
     const { title, excerpt, content, category, readTime, image, author, featured } = req.body;
     
+    if (!title) {
+      return res.status(400).json({ success: false, message: 'Blog title is required' });
+    }
+
     const slug = title
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, '-')
@@ -77,10 +81,22 @@ export const createBlog = async (req, res) => {
 // PUT /api/blogs/:id (Admin only)
 export const updateBlog = async (req, res) => {
   try {
-    const blog = await Blog.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
+    // FIX: Regenerate slug if title is being changed, to keep slug in sync
+    const updateData = { ...req.body };
+    if (updateData.title) {
+      updateData.slug = updateData.title
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/(^-|-$)+/g, '');
+    }
+
+    const blog = await Blog.findByIdAndUpdate(req.params.id, updateData, { new: true, runValidators: true });
     if (!blog) {
       return res.status(404).json({ success: false, message: 'Article not found' });
     }
+
+    // FIX: Cache was not invalidated after update — stale data would be served
+    await cacheDelPattern('blogs:*');
     return res.status(200).json({ success: true, blog });
   } catch (error) {
     return res.status(500).json({ success: false, message: error.message });

@@ -26,7 +26,8 @@ router.get('/', async (req, res) => {
 
 // ── Admin Routes ─────────────────────────────────────────────────────────────
 // GET /api/partners/admin - get all partners (including hidden ones)
-router.get('/admin', staffOnly, async (req, res) => {
+// FIX: staffOnly is an array [protect, requireRole(...)], must spread with ...staffOnly
+router.get('/admin', ...staffOnly, async (req, res) => {
   try {
     const cached = await cacheGet(PARTNERS_ADMIN_CACHE_KEY);
     if (cached) return res.json({ ...cached, cached: true });
@@ -41,7 +42,7 @@ router.get('/admin', staffOnly, async (req, res) => {
 });
 
 // POST /api/partners - add a partner
-router.post('/', staffOnly, async (req, res) => {
+router.post('/', ...staffOnly, async (req, res) => {
   try {
     const { name } = req.body;
     if (!name || !name.trim()) {
@@ -59,7 +60,7 @@ router.post('/', staffOnly, async (req, res) => {
 });
 
 // PUT /api/partners/:id - toggle visibility or update name
-router.put('/:id', staffOnly, async (req, res) => {
+router.put('/:id', ...staffOnly, async (req, res) => {
   try {
     const { name, visible } = req.body;
     const updateData = {};
@@ -78,7 +79,7 @@ router.put('/:id', staffOnly, async (req, res) => {
 });
 
 // DELETE /api/partners/:id - delete a partner
-router.delete('/:id', staffOnly, async (req, res) => {
+router.delete('/:id', ...staffOnly, async (req, res) => {
   try {
     const partner = await Partner.findByIdAndDelete(req.params.id);
     if (!partner) {

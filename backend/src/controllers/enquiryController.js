@@ -1,5 +1,6 @@
 import Enquiry from '../models/Enquiry.js';
 import Property from '../models/Property.js';
+import User from '../models/User.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // POST /api/enquiry  — public: all form types
@@ -10,13 +11,17 @@ export const createEnquiry = async (req, res) => {
 
     if (!type) return res.status(400).json({ success: false, message: 'Enquiry type is required' });
     if (!name) return res.status(400).json({ success: false, message: 'Name is required' });
-    if (!phone) return res.status(400).json({ success: false, message: 'Phone number is required' });
 
-    const cleanPhone = phone.replace(/\s/g, '');
-    const indianPhone = /^[6-9]\d{9}$/.test(cleanPhone);
-    const intlPhone = /^\+\d{7,15}$/.test(cleanPhone);
-    if (!indianPhone && !intlPhone) {
-      return res.status(400).json({ success: false, message: 'Enter a valid phone number' });
+    // FIX: Newsletter subscriptions are email-only — phone must NOT be required for them
+    if (type !== 'newsletter') {
+      if (!phone) return res.status(400).json({ success: false, message: 'Phone number is required' });
+
+      const cleanPhone = String(phone).replace(/\s/g, '');
+      const indianPhone = /^[6-9]\d{9}$/.test(cleanPhone);
+      const intlPhone = /^\+\d{7,15}$/.test(cleanPhone);
+      if (!indianPhone && !intlPhone) {
+        return res.status(400).json({ success: false, message: 'Enter a valid phone number' });
+      }
     }
 
     if (type === 'newsletter') {
@@ -28,7 +33,7 @@ export const createEnquiry = async (req, res) => {
     const payload = {
       type,
       name,
-      phone,
+      phone: phone || '',
       email: email || '',
       status: 'new',
       assignedTo: null,
@@ -44,9 +49,12 @@ export const createEnquiry = async (req, res) => {
           payload.propertyId = prop._id;
           payload.propertyTitle = prop.title;
           if (prop.agent && prop.agent.id) {
-            payload.assignedTo = prop.agent.id;
-            payload.assignedToName = prop.agent.name;
-            payload.assignedAt = new Date();
+            const agentUser = await User.findById(prop.agent.id);
+            if (agentUser && agentUser.isActive) {
+              payload.assignedTo = prop.agent.id;
+              payload.assignedToName = prop.agent.name;
+              payload.assignedAt = new Date();
+            }
           }
         }
       } catch (err) {

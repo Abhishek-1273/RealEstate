@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MessageSquare, X, Send, Bot, User, Sparkles, Loader } from 'lucide-react';
+import { X, Send, Bot, User, Sparkles, Loader, MessageSquare } from 'lucide-react';
 import { sendChatMessage } from '../../utils/api';
 
 export default function AIChatbot() {
@@ -136,11 +136,10 @@ export default function AIChatbot() {
                   )}
 
                   <div
-                    className={`max-w-[75%] p-3.5 rounded-2xl text-xs leading-relaxed ${
-                      m.role === 'user'
+                    className={`max-w-[75%] p-3.5 rounded-2xl text-xs leading-relaxed ${m.role === 'user'
                         ? 'bg-gold text-navy font-semibold rounded-tr-none'
                         : 'bg-white/5 text-white/90 border border-white/5 rounded-tl-none'
-                    }`}
+                      }`}
                     style={{
                       background: m.role === 'user' ? 'linear-gradient(135deg, #D4AF37, #E8C84A)' : undefined
                     }}
