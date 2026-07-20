@@ -1,8 +1,11 @@
 import { motion } from 'framer-motion';
 import { Scale, CheckCircle2, AlertTriangle, HelpCircle } from 'lucide-react';
 import { fadeUp } from '../../animations/variants';
+import { useSiteSettings } from '../../contexts';
 
 export default function TermsOfService() {
+  const { settings } = useSiteSettings();
+  const brandName = settings ? `${settings.logoTextPrimary || 'Hyper'}${settings.logoTextSecondary || 'Relestix'}` : 'HyperRelestix';
   return (
     <div className="min-h-screen bg-surface dark:bg-navy-dark pt-32 pb-20 transition-colors duration-300">
       <div className="container-luxury max-w-4xl">
@@ -39,7 +42,7 @@ export default function TermsOfService() {
                 <CheckCircle2 className="w-5 h-5 text-gold" /> 1. Acceptance of Terms
               </h2>
               <p>
-                By accessing, browsing, or utilizing the HyperRelestix luxury real estate platform, you agree to comply with and be bound by these Terms of Service. If you disagree with any segment of these provisions, you must terminate usage of the platform immediately.
+                By accessing, browsing, or utilizing the {brandName} luxury real estate platform, you agree to comply with and be bound by these Terms of Service. If you disagree with any segment of these provisions, you must terminate usage of the platform immediately.
               </p>
             </section>
 
@@ -48,7 +51,7 @@ export default function TermsOfService() {
                 <Scale className="w-5 h-5 text-gold" /> 2. Accuracy of Listing Data
               </h2>
               <p>
-                HyperRelestix aims to supply verified, RERA-registered luxury property details (pricing plans, layout plans, and availability status). However, all content is uploaded for reference convenience. Interested parties must verify details, RERA compliance certificates, and contract specifications before closing any real estate deals.
+                {brandName} aims to supply verified, RERA-registered luxury property details (pricing plans, layout plans, and availability status). However, all content is uploaded for reference convenience. Interested parties must verify details, RERA compliance certificates, and contract specifications before closing any real estate deals.
               </p>
             </section>
 

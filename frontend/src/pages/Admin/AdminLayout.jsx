@@ -5,6 +5,7 @@ import {
   FileText, LogOut, Menu, ChevronRight, Globe, Database, Settings, Award, HelpCircle
 } from 'lucide-react';
 import { useAdmin } from './AdminContext';
+import { useSiteSettings } from '../../contexts';
 
 const ROLE_COLOR = {
   admin:        '#D4AF37',
@@ -32,6 +33,7 @@ const NAV = [
 
 export default function AdminLayout() {
   const { user, signOut, isStaff } = useAdmin();
+  const { settings } = useSiteSettings();
   const navigate  = useNavigate();
   const [open, setOpen] = useState(false);
 
@@ -71,12 +73,20 @@ export default function AdminLayout() {
       {/* Logo */}
       <div className="px-6 py-6 border-b" style={{ borderColor: 'rgba(255,255,255,0.07)' }}>
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
+          <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 overflow-hidden"
             style={{ background: 'linear-gradient(135deg, #D4AF37, #E8C84A)' }}>
-            <span className="font-black text-navy text-sm" style={{ fontFamily: 'Manrope,sans-serif' }}>HR</span>
+            {settings?.logoIconImage ? (
+              <img src={settings.logoIconImage} alt="Logo" className="w-full h-full object-contain" />
+            ) : (
+              <span className="font-black text-navy text-sm" style={{ fontFamily: 'Manrope,sans-serif' }}>
+                {settings?.logoIconText || 'HR'}
+              </span>
+            )}
           </div>
           <div className="min-w-0">
-            <p className="text-white font-bold text-sm leading-none">HyperRelestix</p>
+            <p className="text-white font-bold text-sm leading-none">
+              {settings?.logoTextPrimary || 'Hyper'}{settings?.logoTextSecondary || 'Relestix'}
+            </p>
             <p className="text-white/40 text-[10px] mt-0.5">Internal Panel</p>
           </div>
         </div>
@@ -162,7 +172,9 @@ export default function AdminLayout() {
           <button onClick={() => setOpen(true)} className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-white/10 transition-colors">
             <Menu className="w-5 h-5 text-gray-600 dark:text-white/70" />
           </button>
-          <span className="font-bold text-navy dark:text-white text-sm" style={{ fontFamily: 'Manrope,sans-serif' }}>HyperRelestix Panel</span>
+          <span className="font-bold text-navy dark:text-white text-sm" style={{ fontFamily: 'Manrope,sans-serif' }}>
+            {settings?.logoTextPrimary || 'Hyper'}{settings?.logoTextSecondary || 'Relestix'} Panel
+          </span>
           <button onClick={handleSignOut} className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-white/10 transition-colors">
             <LogOut className="w-4 h-4 text-gray-500 dark:text-white/50" />
           </button>

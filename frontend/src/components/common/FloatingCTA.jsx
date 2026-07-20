@@ -2,8 +2,13 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MessageCircle, Calendar, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useSiteSettings } from '../../contexts';
 
 export default function FloatingCTA() {
+  const { settings } = useSiteSettings();
+  const brandName = settings ? `${settings.logoTextPrimary || 'Hyper'}${settings.logoTextSecondary || 'Relestix'}` : 'HyperRelestix';
+  const rawPhone = settings?.contactWhatsApp ? settings.contactWhatsApp.replace(/\D/g, '') : (settings?.contactPhone1 ? settings.contactPhone1.replace(/\D/g, '') : '919876543210');
+  const whatsappUrl = `https://wa.me/${rawPhone}?text=${encodeURIComponent(`Hi, I am interested in ${brandName} luxury properties in Pune.`)}`;
   const [expanded, setExpanded] = useState(false);
   const navigate = useNavigate();
 
@@ -28,7 +33,7 @@ export default function FloatingCTA() {
 
             {/* WhatsApp */}
             <motion.a
-              href="https://wa.me/919876543210?text=Hi%2C%20I%20am%20interested%20in%20HyperRelestix%20luxury%20properties%20in%20Pune."
+              href={whatsappUrl}
               target="_blank"
               rel="noopener noreferrer"
               initial={{ opacity: 0, scale: 0.7, y: 16 }}

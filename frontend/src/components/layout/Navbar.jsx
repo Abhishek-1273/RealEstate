@@ -6,10 +6,9 @@ import {
   Home, Building2, Key, Settings, Calendar, LogOut,
   Sun, Moon, Search
 } from 'lucide-react';
-import { useAuth, useWishlist, useSearch } from '../../contexts';
+import { useAuth, useWishlist, useSearch, useSiteSettings } from '../../contexts';
 import Magnetic from '../common/Magnetic';
 import PremiumIcon from '../common/PremiumIcon';
-import LottieIcon from '../common/LottieIcon';
 
 const services = [
   { id: 'buy', title: 'Buy Property', desc: "Find your perfect luxury home from our verified Pune listings", icon: <Home className="w-5 h-5" />, link: '/services/buy', color: 'from-gold/10 to-transparent' },
@@ -77,6 +76,7 @@ export default function Navbar() {
   const { openAuth, user, signOut } = useAuth();
   const { setShowSearch } = useSearch();
   const { count } = useWishlist();
+  const { settings } = useSiteSettings();
   const navigate = useNavigate();
   const megaRef = useRef(null);
   const megaPanelRef = useRef(null);
@@ -184,17 +184,23 @@ export default function Navbar() {
             {/* Logo */}
             <Link to="/" className="flex items-center gap-3 shrink-0 group">
               <div
-                className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:scale-105"
+                className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:scale-105 overflow-hidden"
                 style={{ background: 'linear-gradient(135deg, #E5C17D 0%, #ECD7AA 50%, #C69D59 100%)' }}
               >
-                <span className="text-navy font-display font-black text-sm leading-none tracking-tight">HR</span>
+                {settings?.logoIconImage ? (
+                  <img src={settings.logoIconImage} alt="Logo" className="w-full h-full object-contain" />
+                ) : (
+                  <span className="text-navy font-display font-black text-sm leading-none tracking-tight">
+                    {settings?.logoIconText || 'HR'}
+                  </span>
+                )}
               </div>
               <div className="leading-none">
                 <p className={`font-display font-bold text-[17px] tracking-tight transition-colors duration-300 ${isSolid ? 'text-navy dark:text-white' : 'text-white'}`}>
-                  Hyper<span style={{ color: '#E5C17D' }}>Relestix</span>
+                  {settings?.logoTextPrimary || 'Hyper'}<span style={{ color: '#E5C17D' }}>{settings?.logoTextSecondary || 'Relestix'}</span>
                 </p>
                 <p className={`text-[8px] font-accent tracking-[0.25em] uppercase mt-1 transition-colors duration-300 ${isSolid ? 'text-ink-soft dark:text-white/50' : 'text-white/70'}`}>
-                  Luxury Real Estate · Pune
+                  {settings?.logoSubtitle || 'Luxury Real Estate · Pune'}
                 </p>
               </div>
             </Link>
@@ -255,13 +261,8 @@ export default function Navbar() {
                 className={`relative p-2.5 rounded-xl transition-all duration-200 group flex items-center justify-center ${isSolid ? 'hover:bg-gray-100 dark:hover:bg-white/10' : 'hover:bg-white/10'}`}
                 aria-label="Search properties"
               >
-                <LottieIcon
-                  src="https://lottie.host/5ad26bcf-3db6-44c1-bf63-c79659a0fcd7/d6TjVv58t1.json"
-                  hoverPlay={true}
-                  autoplay={false}
-                  loop={false}
-                  className="w-[18px] h-[18px]"
-                  style={{ color: isSolid ? '#071A2F' : '#FFFFFF' }}
+                <Search
+                  className={`w-[18px] h-[18px] transition-colors duration-200 ${isSolid ? 'text-ink-muted dark:text-cream/90 group-hover:text-navy dark:group-hover:text-white' : 'text-white/85 group-hover:text-white'}`}
                 />
               </button>
 
@@ -436,11 +437,17 @@ export default function Navbar() {
               <div className="flex items-center justify-between px-6 h-[74px] shrink-0"
                 style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
                 <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-lg flex items-center justify-center"
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center overflow-hidden"
                     style={{ background: 'linear-gradient(135deg, #E5C17D, #ECD7AA)' }}>
-                    <span className="text-navy font-black text-xs">HR</span>
+                    {settings?.logoIconImage ? (
+                      <img src={settings.logoIconImage} alt="Logo" className="w-full h-full object-contain" />
+                    ) : (
+                      <span className="text-navy font-black text-xs">{settings?.logoIconText || 'HR'}</span>
+                    )}
                   </div>
-                  <span className="text-white font-display font-bold text-sm">HyperRelestix</span>
+                  <span className="text-white font-display font-bold text-sm">
+                    {settings?.logoTextPrimary || 'Hyper'}{settings?.logoTextSecondary || 'Relestix'}
+                  </span>
                 </div>
                 <button onClick={() => setMobileOpen(false)}
                   className="p-2 rounded-xl text-white/70 hover:text-white hover:bg-white/10 transition-colors">

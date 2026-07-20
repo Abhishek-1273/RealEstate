@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { ArrowRight, Home, Building2, Key, Settings, CheckCircle2 } from 'lucide-react';
 import { fadeUp, staggerContainer, viewportOnce } from '../../animations/variants';
 import PremiumIcon from '../../components/common/PremiumIcon';
-import { useAuth } from '../../contexts';
+import { useAuth, useSiteSettings } from '../../contexts';
 import KineticGrid from '../../components/common/KineticGrid';
 
 const services = [
@@ -59,6 +59,8 @@ const services = [
 
 export default function Services() {
   const { user, openAuth } = useAuth();
+  const { settings } = useSiteSettings();
+  const brandName = settings ? `${settings.logoTextPrimary || 'Hyper'}${settings.logoTextSecondary || 'Relestix'}` : 'HyperRelestix';
 
   const handleServiceClick = (e, link) => {
     if (!user) {
@@ -93,7 +95,7 @@ export default function Services() {
               Our <span style={{ color: '#D4AF37' }}>Premium</span> Services
             </h1>
             <p className="text-white/55 max-w-xl mx-auto font-body leading-relaxed">
-              From first search to final handover — HyperRelestix delivers end-to-end luxury real estate services designed for Pune's most discerning clients.
+              From first search to final handover — {brandName} delivers end-to-end luxury real estate services designed for Pune's most discerning clients.
             </p>
           </motion.div>
         </div>
@@ -158,8 +160,8 @@ export default function Services() {
             <p className="font-display font-black text-white text-2xl md:text-3xl mb-4">
               Not sure which service is right for you?
             </p>
-            <p className="text-white/50 mb-8 max-w-md mx-auto">
-              Speak with a senior HyperRelestix advisor — completely free, completely confidential.
+             <p className="text-white/50 mb-8 max-w-md mx-auto">
+              Speak with a senior {brandName} advisor — completely free, completely confidential.
             </p>
             <Link to="/contact" className="btn-primary">
               Talk to an Advisor <ArrowRight className="w-4 h-4" />

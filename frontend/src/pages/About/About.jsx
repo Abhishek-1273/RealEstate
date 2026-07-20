@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { ArrowRight, Award, Target, Heart, Shield, TrendingUp, Star } from 'lucide-react';
 import { fadeUp, fadeLeft, fadeRight, scaleIn, staggerContainer, staggerFast, viewportOnce } from '../../animations/variants';
 import SectionHeader from '../../components/common/SectionHeader';
+import { useSiteSettings } from '../../contexts';
 import CountUpNumber from '../../components/common/CountUpNumber';
 import PremiumIcon from '../../components/common/PremiumIcon';
 import SEO from '../../components/common/SEO';
@@ -25,6 +26,8 @@ const values = [
 ];
 
 export default function About() {
+  const { settings } = useSiteSettings();
+  const brandName = settings ? `${settings.logoTextPrimary || 'Hyper'}${settings.logoTextSecondary || 'Relestix'}` : 'HyperRelestix';
   const [isFlipped, setIsFlipped] = useState(false);
   const [showArrows, setShowArrows] = useState(true);
   const [team, setTeam] = useState(agents);
@@ -98,8 +101,8 @@ export default function About() {
   return (
     <div className="min-h-screen bg-surface dark:bg-navy-dark pt-20 transition-colors duration-300">
       <SEO 
-        title="About Us - Pune's Premium NRI Real Estate Agency" 
-        description="Learn more about HyperRelestix, Pune's premier luxury real estate agency. Our mission, values, and expert team of real estate advisors." 
+        title={`About Us - Pune's Premium NRI Real Estate Agency`} 
+        description={`Learn more about ${brandName}, Pune's premier luxury real estate agency. Our mission, values, and expert team of real estate advisors.`} 
         url="/about" 
       />
 
@@ -107,7 +110,7 @@ export default function About() {
       <div className="relative overflow-hidden" style={{ height: '560px' }}>
         <img
           src={aboutBg}
-          alt="HyperRelestix Office"
+          alt={`${brandName} Office`}
           className="w-full h-full object-cover"
         />
         <div className="absolute inset-0"
@@ -124,7 +127,7 @@ export default function About() {
                 India's Most Trusted <span style={{ color: '#D4AF37' }}>Luxury Realty</span>
               </h1>
               <p className="text-white/65 max-w-xl leading-relaxed mb-8">
-                Founded in 2010, HyperRelestix has redefined luxury real estate in India. From a boutique advisory practice to India's most decorated premium property platform — our story is one of relentless pursuit of excellence.
+                Founded in 2010, {brandName} has redefined luxury real estate in India. From a boutique advisory practice to India's most decorated premium property platform — our story is one of relentless pursuit of excellence.
               </p>
               <Link to="/contact" className="btn-primary">
                 Talk to Our Team <ArrowRight className="w-4 h-4" />
@@ -164,7 +167,7 @@ export default function About() {
               <SectionHeader
                 label="Our Purpose"
                 title={<>Mission & <span style={{ color: '#D4AF37' }}>Vision</span></>}
-                description="At HyperRelestix, we believe every client deserves not just a property — but a home that amplifies their aspirations."
+                description={`At ${brandName}, we believe every client deserves not just a property — but a home that amplifies their aspirations.`}
               />
               <div className="mt-8 space-y-5">
                 <div className="p-6 rounded-2xl bg-white dark:bg-navy-light border border-gray-100 dark:border-white/10 transition-colors duration-300">

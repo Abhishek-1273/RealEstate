@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAdmin } from './AdminContext';
-import { useAuth } from '../../contexts';
+import { useAuth, useSiteSettings } from '../../contexts';
 
 import { API_URL } from '../../config/api';
 const API = API_URL;
@@ -13,6 +13,7 @@ const ROLE_LABELS = {
 export default function AdminLogin() {
   const { signIn } = useAuth();
   const { user }   = useAdmin();
+  const { settings } = useSiteSettings();
   const navigate   = useNavigate();
 
   useEffect(() => {
@@ -117,14 +118,22 @@ export default function AdminLogin() {
       <div className="relative w-full max-w-md mx-4">
         {/* Logo */}
         <div className="text-center mb-10">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-4"
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-4 overflow-hidden"
             style={{ background: 'linear-gradient(135deg, #D4AF37, #E8C84A)', boxShadow: '0 8px 32px rgba(212,175,55,0.3)' }}>
-            <span className="font-black text-navy text-xl" style={{ fontFamily: 'Manrope, sans-serif' }}>HR</span>
+            {settings?.logoIconImage ? (
+              <img src={settings.logoIconImage} alt="Logo" className="w-full h-full object-contain" />
+            ) : (
+              <span className="font-black text-navy text-xl" style={{ fontFamily: 'Manrope, sans-serif' }}>
+                {settings?.logoIconText || 'HR'}
+              </span>
+            )}
           </div>
           <h1 className="text-white font-black text-2xl mb-1" style={{ fontFamily: 'Manrope, sans-serif' }}>
             Staff Portal
           </h1>
-          <p className="text-white/40 text-sm">HyperRelestix Internal Panel</p>
+          <p className="text-white/40 text-sm">
+            {settings?.logoTextPrimary || 'Hyper'}{settings?.logoTextSecondary || 'Relestix'} Internal Panel
+          </p>
         </div>
 
         {/* Card */}

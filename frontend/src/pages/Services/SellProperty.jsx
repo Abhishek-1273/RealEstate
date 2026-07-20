@@ -4,6 +4,7 @@ import { ArrowRight, ArrowLeft, Camera, CheckCircle2, ChevronDown } from 'lucide
 import { fadeUp } from '../../animations/variants';
 import { Link } from 'react-router-dom';
 import PremiumIcon from '../../components/common/PremiumIcon';
+import { useSiteSettings } from '../../contexts';
 import { submitEnquiry, fetchMasterData } from '../../utils/api';
 import CameraUploader from '../../components/common/CameraUploader';
 import SearchableSelect from '../../components/common/SearchableSelect';
@@ -86,6 +87,8 @@ function CustomSelect({ value, onChange, options, placeholder, className = "" })
 }
 
 export default function SellProperty() {
+  const { settings } = useSiteSettings();
+  const brandName = settings ? `${settings.logoTextPrimary || 'Hyper'}${settings.logoTextSecondary || 'Relestix'}` : 'HyperRelestix';
   const [step, setStep] = useState(0);
   const [form, setForm] = useState({ type: '', locality: '', area: '', bedrooms: '', furnishing: 'Fully Furnished', name: '', phone: '', email: '', askingPrice: '', notes: '', images: [] });
   const [submitted, setSubmitted]   = useState(false);
@@ -124,7 +127,7 @@ export default function SellProperty() {
             Maximise Your <span style={{ color: '#D4AF37' }}>Property's Value</span>
           </h1>
           <p className="text-white/55 mt-4 max-w-lg leading-relaxed">
-            List with HyperRelestix — Pune's most trusted luxury platform. We sell premium properties 40% faster than market average.
+            List with {brandName} — Pune's most trusted luxury platform. We sell premium properties 40% faster than market average.
           </p>
         </div>
       </div>
@@ -264,7 +267,7 @@ export default function SellProperty() {
                     <PremiumIcon icon={Camera} size="sm" variant="gold" className="mt-0.5" animate={false} />
                     <div>
                       <p className="font-semibold text-navy dark:text-white text-sm mb-1">Professional Photography Included</p>
-                      <p className="text-ink-muted dark:text-white/60 text-xs leading-relaxed">Once your listing is verified, our professional photographer will capture your property — completely complimentary for HyperRelestix listings.</p>
+                      <p className="text-ink-muted dark:text-white/60 text-xs leading-relaxed">Once your listing is verified, our professional photographer will capture your property — completely complimentary for {brandName} listings.</p>
                     </div>
                   </div>
                 </div>

@@ -532,7 +532,7 @@ export default function SettingsAdmin() {
                 style={{ background: 'linear-gradient(135deg, #E5C17D 0%, #ECD7AA 50%, #C69D59 100%)' }}
               >
                 {form.logoIconImage ? (
-                  <img src={form.logoIconImage} alt="Logo" className="w-full h-full object-cover" />
+                  <img src={form.logoIconImage} alt="Logo" className="w-full h-full object-contain" />
                 ) : (
                   <span className="text-navy font-display font-black text-sm">{form.logoIconText || 'HR'}</span>
                 )}

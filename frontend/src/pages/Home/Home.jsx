@@ -20,6 +20,7 @@ import KineticGrid from '../../components/common/KineticGrid';
 import Smooth3DSlideshow from '../../components/common/Smooth3DSlideshow';
 import StickerPeeling from '../../components/common/StickerPeeling';
 import reraBadge from '../../assets/image/rera-gold-badge.png';
+import { useSiteSettings } from '../../contexts';
 
 // Subcomponents
 import FeaturedProperties from './components/FeaturedProperties';
@@ -123,7 +124,7 @@ function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
   ctx.fillText(line, x, currentY);
 }
 
-function createCardCanvas(reraBadgeImg) {
+function createCardCanvas(reraBadgeImg, brandName, logoAbbr) {
   const canvas = document.createElement("canvas");
   canvas.width = 960;
   canvas.height = 720;
@@ -171,7 +172,7 @@ function createCardCanvas(reraBadgeImg) {
   // Quote Text
   ctx.fillStyle = "rgba(255, 255, 255, 0.85)";
   ctx.font = "500 28px 'Inter', sans-serif";
-  const quoteText = '"HyperRelestix operates with complete legal compliance and fiduciary responsibility, ensuring every transaction is completely RERA-verified."';
+  const quoteText = `"${brandName} operates with complete legal compliance and fiduciary responsibility, ensuring every transaction is completely RERA-verified."`;
   wrapText(ctx, quoteText, 80, 260, 800, 44);
 
   // Bottom Divider
@@ -196,7 +197,7 @@ function createCardCanvas(reraBadgeImg) {
   ctx.font = "bold 24px 'Outfit', sans-serif";
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
-  ctx.fillText("HR", 130, 610);
+  ctx.fillText(logoAbbr, 130, 610);
   ctx.textAlign = "left";
 
   // Advisory Board Titles
@@ -220,6 +221,10 @@ function createCardCanvas(reraBadgeImg) {
    WHY US (ACCORDION WITH IMAGE REVEAL / FLOATING TABS)
    ══════════════════════════════════════════════════════════════════════════ */
 function WhyUs() {
+  const { settings } = useSiteSettings();
+  const brandName = settings ? `${settings.logoTextPrimary || 'Hyper'}${settings.logoTextSecondary || 'Relestix'}` : 'HyperRelestix';
+  const logoAbbr = settings?.logoIconText || 'HR';
+
   const [activeTab, setActiveTab] = useState(0);
   const [cardTexture, setCardTexture] = useState(null);
   const [stickerSize, setStickerSize] = useState({ width: 480, height: 360 });
@@ -239,15 +244,15 @@ function WhyUs() {
     const badgeImg = new Image();
     badgeImg.crossOrigin = "anonymous";
     badgeImg.onload = () => {
-      const canvas = createCardCanvas(badgeImg);
+      const canvas = createCardCanvas(badgeImg, brandName, logoAbbr);
       if (canvas) setCardTexture(canvas);
     };
     badgeImg.onerror = () => {
-      const canvas = createCardCanvas(null);
+      const canvas = createCardCanvas(null, brandName, logoAbbr);
       if (canvas) setCardTexture(canvas);
     };
     badgeImg.src = reraBadge;
-  }, []);
+  }, [brandName, logoAbbr]);
 
   const items = [
     {
@@ -273,7 +278,7 @@ function WhyUs() {
         <div className="grid lg:grid-cols-2 gap-16 items-center">
           <div>
             <SectionHeader
-              label="Why HyperRelestix"
+              label={`Why ${brandName}`}
               title={<>Setting the Standard in <span style={{ color: '#D4AF37' }}>Advisory</span></>}
               description="We do not just list properties. We provide a full-service, secure transactional ecosystem built on transparency."
               className="mb-10"

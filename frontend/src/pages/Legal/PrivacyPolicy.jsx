@@ -1,8 +1,12 @@
 import { motion } from 'framer-motion';
 import { Shield, Eye, Lock, FileText } from 'lucide-react';
 import { fadeUp } from '../../animations/variants';
+import { useSiteSettings } from '../../contexts';
 
 export default function PrivacyPolicy() {
+  const { settings } = useSiteSettings();
+  const brandName = settings ? `${settings.logoTextPrimary || 'Hyper'}${settings.logoTextSecondary || 'Relestix'}` : 'HyperRelestix';
+  const privacyEmail = settings?.contactEmail1 || 'hello@hyperrelestix.in';
   return (
     <div className="min-h-screen bg-surface dark:bg-navy-dark pt-32 pb-20 transition-colors duration-300">
       <div className="container-luxury max-w-4xl">
@@ -39,7 +43,7 @@ export default function PrivacyPolicy() {
                 <Eye className="w-5 h-5 text-gold" /> 1. Information We Collect
               </h2>
               <p>
-                At HyperRelestix, we collect personal information you provide directly to us when exploring listings, submitting enquirires, scheduling site visits, or contacting our luxury property advisors. This information includes your name, email address, phone number, and properties of interest.
+                At {brandName}, we collect personal information you provide directly to us when exploring listings, submitting enquirires, scheduling site visits, or contacting our luxury property advisors. This information includes your name, email address, phone number, and properties of interest.
               </p>
             </section>
 
@@ -75,7 +79,7 @@ export default function PrivacyPolicy() {
                 Contact Our Compliance Officer
               </h2>
               <p className="text-xs">
-                If you have questions regarding this Privacy Policy or data security actions, you may email us directly at <a href="mailto:privacy@hyperrelestix.in" className="text-gold font-bold hover:underline">privacy@hyperrelestix.in</a>.
+                If you have questions regarding this Privacy Policy or data security actions, you may email us directly at <a href={`mailto:${privacyEmail}`} className="text-gold font-bold hover:underline">{privacyEmail}</a>.
               </p>
             </section>
 

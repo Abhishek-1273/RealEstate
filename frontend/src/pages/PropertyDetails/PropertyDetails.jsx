@@ -15,7 +15,7 @@ import 'swiper/css/navigation';
 import 'swiper/css/pagination';
 import 'swiper/css/thumbs';
 import 'swiper/css/free-mode';
-import { useWishlist, useAuth } from '../../contexts';
+import { useWishlist, useAuth, useSiteSettings } from '../../contexts';
 import PropertyCard from '../../components/common/PropertyCard';
 import { fetchPropertyById, fetchProperties } from '../../utils/api';
 import { getDynamicOgImage } from '../../utils/ogImage';
@@ -88,6 +88,8 @@ export default function PropertyDetails() {
   const { id } = useParams();
   const { toggleWishlist, isWishlisted } = useWishlist();
   const { user, openAuth } = useAuth();
+  const { settings } = useSiteSettings();
+  const brandName = settings ? `${settings.logoTextPrimary || 'Hyper'}${settings.logoTextSecondary || 'Relestix'}` : 'HyperRelestix';
 
   const [amenityCategory, setAmenityCategory] = useState('education');
   const [mapCenter, setMapCenter] = useState(null);
@@ -264,7 +266,7 @@ export default function PropertyDetails() {
     <div className="min-h-screen bg-surface dark:bg-navy-dark pt-20 transition-colors duration-300">
       <SEO 
         title={`${property.title} in ${property.location}, ${property.city}`}
-        description={`${property.type} for sale in ${property.location}, ${property.city}. Price: ${property.priceLabel}. ${property.description || `Discover this verified premium listing on HyperRelestix.`}`}
+        description={`${property.type} for sale in ${property.location}, ${property.city}. Price: ${property.priceLabel}. ${property.description || `Discover this verified premium listing on ${brandName}.`}`}
         image={getDynamicOgImage(property)}
         url={`/properties/${id}`}
       />

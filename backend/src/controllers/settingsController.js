@@ -24,7 +24,7 @@ export const updateSettings = async (req, res) => {
 
     // Update fields from body
     const fieldsToUpdate = [
-      'logoIconText', 'logoTextPrimary', 'logoTextSecondary', 'logoSubtitle',
+      'logoIconText', 'logoIconImage', 'logoTextPrimary', 'logoTextSecondary', 'logoSubtitle',
       'heroTagline', 'heroTitleLine1', 'heroTitleLine2Highlight', 'heroTitleLine3', 'heroDescription', 'heroVideoUrl', 'heroMobileImageUrl',
       'contactPhone1', 'contactPhone2', 'contactEmail1', 'contactEmail2', 'contactAddress', 'contactOfficeHoursWeekdays', 'contactOfficeHoursSunday', 'contactWhatsApp'
     ];

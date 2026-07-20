@@ -78,7 +78,7 @@ export default function Footer() {
                 style={{ background: 'linear-gradient(135deg, #D4AF37 0%, #E8C84A 50%, #A8882B 100%)' }}
               >
                 {settings?.logoIconImage ? (
-                  <img src={settings.logoIconImage} alt="Logo" className="w-full h-full object-cover" />
+                  <img src={settings.logoIconImage} alt="Logo" className="w-full h-full object-contain" />
                 ) : (
                   <span className="text-navy font-display font-black text-sm leading-none">{settings?.logoIconText || 'HR'}</span>
                 )}
@@ -164,7 +164,7 @@ export default function Footer() {
       <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
         <div className="container-luxury py-5 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-white/35 text-xs">
-            © 2025 HyperRelestix Realty Pvt. Ltd. All rights reserved.
+            © {new Date().getFullYear()} {settings?.logoTextPrimary || 'Hyper'}{settings?.logoTextSecondary || 'Relestix'} Realty Pvt. Ltd. All rights reserved.
           </p>
           <div className="flex items-center gap-5">
             <Link to="/privacy" className="text-white/35 hover:text-gold text-xs transition-colors duration-200">
