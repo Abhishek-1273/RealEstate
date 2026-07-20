@@ -539,10 +539,10 @@ export default function SettingsAdmin() {
               </div>
               <div className="min-w-0">
                 <p className="font-display font-bold text-sm tracking-tight text-white">
-                  {form.logoTextPrimary || 'Hyper'}<span style={{ color: '#E5C17D' }}>{form.logoTextSecondary || 'Relestix'}</span>
+                  {form.logoTextPrimary || ''}<span style={{ color: '#E5C17D' }}>{form.logoTextSecondary || ''}</span>
                 </p>
                 <p className="text-[8px] font-accent tracking-[0.2em] text-white/50 uppercase mt-0.5 truncate">
-                  {form.logoSubtitle || 'Luxury Real Estate · Pune'}
+                  {form.logoSubtitle || ''}
                 </p>
               </div>
             </div>

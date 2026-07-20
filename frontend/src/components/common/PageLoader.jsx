@@ -1,6 +1,9 @@
 import { motion } from 'framer-motion';
+import { useSiteSettings } from '../../contexts';
 
 export default function PageLoader() {
+  const { settings } = useSiteSettings();
+
   return (
     <div
       className="fixed inset-0 z-[200] flex flex-col items-center justify-center"
@@ -13,23 +16,29 @@ export default function PageLoader() {
         transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
         className="flex flex-col items-center gap-5"
       >
-        {/* HR Monogram */}
+        {/* Monogram / Logo Image */}
         <div
-          className="w-20 h-20 rounded-2xl flex items-center justify-center"
+          className="w-20 h-20 rounded-2xl flex items-center justify-center overflow-hidden"
           style={{
             background: 'linear-gradient(135deg, #D4AF37 0%, #E8C84A 50%, #A8882B 100%)',
             boxShadow: '0 0 60px rgba(212,175,55,0.3)',
           }}
         >
-          <span className="text-navy font-display font-black text-3xl leading-none tracking-tight">HR</span>
+          {settings?.logoIconImage ? (
+            <img src={settings.logoIconImage} alt="Logo" className="w-full h-full object-contain" />
+          ) : (
+            <span className="text-navy font-display font-black text-3xl leading-none tracking-tight">
+              {settings?.logoIconText || 'HR'}
+            </span>
+          )}
         </div>
 
         <div className="text-center">
           <p className="font-display font-bold text-white text-xl tracking-tight">
-            Hyper<span style={{ color: '#D4AF37' }}>Relestix</span>
+            {settings?.logoTextPrimary || 'Hyper'}<span style={{ color: '#D4AF37' }}>{settings?.logoTextSecondary || 'Relestix'}</span>
           </p>
           <p className="text-white/40 text-[9px] font-accent tracking-[0.3em] uppercase mt-1">
-            Luxury Real Estate · Pune
+            {settings?.logoSubtitle || 'Luxury Real Estate · Pune'}
           </p>
         </div>
 
@@ -47,3 +56,4 @@ export default function PageLoader() {
     </div>
   );
 }
+
