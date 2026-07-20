@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { Crown, Briefcase, Users, Plus, X, Search, Phone, Mail, Trash2, Loader2, Pencil, Building2, ChevronDown } from 'lucide-react';
+import { Crown, Briefcase, Users, Plus, X, Search, Phone, Mail, Trash2, Loader2, Pencil, ChevronDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { getUsers, createStaff, updateUserRole, deleteUser, getProperties, getEnquiries } from '../../utils/adminApi';
+import { getUsers, createStaff, updateUserRole, deleteUser, getProperties } from '../../utils/adminApi';
 import { useAdmin } from './AdminContext';
 import { SkeletonTable } from '../../components/common/Skeleton';
 
@@ -13,7 +13,6 @@ const ROLE_META = {
   client: { label: 'Client', color: '#6B7280', bg: '#F3F4F6', darkBg: 'rgba(107,114,128,0.12)', border: 'rgba(107,114,128,0.15)', icon: Users }
 };
 
-const ROLES = ['agent', 'management', 'admin'];
 const STAFF_ROLES = ['agent', 'management', 'admin'];
 
 const LOCALITIES = [
@@ -102,81 +101,6 @@ function CustomSelect({ value, onChange, options, placeholder, className = "" })
   );
 }
 
-function InlineRoleSelect({ value, onChange, disabled }) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef(null);
-  const isDark = document.documentElement.classList.contains('dark');
-
-  useEffect(() => {
-    const handleOutside = (e) => {
-      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
-    };
-    document.addEventListener('mousedown', handleOutside);
-    return () => document.removeEventListener('mousedown', handleOutside);
-  }, []);
-
-  const rm = ROLE_META[value] || ROLE_META.client;
-  const RoleIcon = rm.icon;
-
-  return (
-    <div className="relative inline-block text-left" ref={ref}>
-      <button
-        type="button"
-        disabled={disabled}
-        onClick={() => setOpen(!open)}
-        className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider px-3.5 py-1.5 rounded-full cursor-pointer transition-all duration-200 hover:scale-[1.03] active:scale-[0.98] border focus:outline-none disabled:opacity-50 select-none shadow-sm"
-        style={{
-          background: isDark ? rm.darkBg : rm.bg,
-          color: rm.color,
-          borderColor: rm.border
-        }}
-      >
-        <RoleIcon className="w-3.5 h-3.5 shrink-0" />
-        <span>{rm.label}</span>
-        <ChevronDown className="w-3.5 h-3.5 opacity-60" />
-      </button>
-
-      <AnimatePresence>
-        {open && (
-          <motion.div
-            data-lenis-prevent
-            initial={{ opacity: 0, y: -4, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -4, scale: 0.95 }}
-            transition={{ duration: 0.1, ease: 'easeOut' }}
-            className="absolute left-0 mt-1.5 min-w-[145px] bg-white/95 dark:bg-[#0E1A2B]/95 backdrop-blur-md border border-gray-150 dark:border-white/10 rounded-2xl shadow-luxury z-50 py-1.5 overflow-hidden"
-          >
-            {STAFF_ROLES.filter(r => r !== 'admin' || value === 'admin').map((r) => {
-              const active = value === r;
-              const meta = ROLE_META[r];
-              const ItemIcon = meta.icon;
-              return (
-                <button
-                  key={r}
-                  type="button"
-                  onClick={() => {
-                    onChange(r);
-                    setOpen(false);
-                  }}
-                  className={`w-full text-left px-4 py-2.5 text-xs font-bold transition-colors flex items-center justify-between ${active
-                      ? 'bg-gold/10 text-gold-dark dark:text-gold'
-                      : 'text-gray-705 dark:text-white/80 hover:bg-gray-50 dark:hover:bg-white/5'
-                    }`}
-                >
-                  <div className="flex items-center gap-2">
-                    <ItemIcon className="w-3.5 h-3.5 shrink-0" style={{ color: meta.color }} />
-                    <span>{meta.label}</span>
-                  </div>
-                  {active && <span className="text-[8px] text-gold">●</span>}
-                </button>
-              );
-            })}
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  );
-}
 
 function MultiSelectLocalities({ value, onChange }) {
   const [open, setOpen] = useState(false);
@@ -286,7 +210,17 @@ function MultiSelectLocalities({ value, onChange }) {
 }
 
 function AddStaffModal({ onAdd, onClose }) {
-  const [form, setForm] = useState({ name: '', phone: '', email: '', role: 'management', department: '', expertise: '', qualities: '' });
+  const { user: loggedInUser } = useAdmin();
+  const isManager = loggedInUser?.role === 'management';
+  const [form, setForm] = useState({ 
+    name: '', 
+    phone: '', 
+    email: '', 
+    role: isManager ? 'agent' : 'management', 
+    department: '', 
+    expertise: '', 
+    qualities: '' 
+  });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -356,7 +290,10 @@ function AddStaffModal({ onAdd, onClose }) {
               value={form.role}
               onChange={val => setForm(p => ({ ...p, role: val }))}
               placeholder="Select role"
-              options={STAFF_ROLES.filter(r => r !== 'admin').map(r => ({ value: r, label: ROLE_META[r].label }))}
+              options={isManager ? [
+                { value: 'agent', label: 'Agent' }
+              ] : STAFF_ROLES.filter(r => r !== 'admin').map(r => ({ value: r, label: ROLE_META[r].label }))}
+              className={isManager ? "pointer-events-none opacity-60" : ""}
             />
           </div>
         </div>
@@ -415,14 +352,6 @@ export default function UsersAdmin() {
     await load();
   };
 
-  const handleRoleChange = async (userId, role) => {
-    setUpdating(userId);
-    try {
-      await updateUserRole(userId, { role });
-      setUsers(prev => prev.map(u => u.id === userId ? { ...u, role } : u));
-    } catch (e) { alert(e.message); }
-    finally { setUpdating(null); }
-  };
 
   const handleToggleActive = async (u) => {
     setUpdating(u.id);
@@ -452,7 +381,22 @@ export default function UsersAdmin() {
 
   const staffUsers = users.filter(u => u.role !== 'client');
 
-  const filtered = staffUsers.filter(u => {
+  const selfUser = staffUsers.find(u => u.id === user?.id || u.id === user?._id);
+
+  const visibleStaff = staffUsers.filter(u => {
+    // 1. Exclude self from the main directory list
+    if (u.id === user?.id || u.id === user?._id) return false;
+
+    // 2. Managers can only see Agents
+    if (user?.role === 'management') {
+      return u.role === 'agent';
+    }
+
+    // 3. Admins see everyone except themselves
+    return true;
+  });
+
+  const filtered = visibleStaff.filter(u => {
     const matchesRole = roleFilter === 'all' || u.role === roleFilter;
     const matchesSearch = !search ||
       u.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -461,8 +405,10 @@ export default function UsersAdmin() {
     return matchesRole && matchesSearch;
   });
 
-  const roleCounts = ROLES.reduce((acc, r) => {
-    acc[r] = staffUsers.filter(u => u.role === r).length;
+  const visibleRoles = user?.role === 'management' ? ['agent'] : ['agent', 'management', 'admin'];
+
+  const roleCounts = visibleRoles.reduce((acc, r) => {
+    acc[r] = visibleStaff.filter(u => u.role === r).length;
     return acc;
   }, {});
 
@@ -472,17 +418,24 @@ export default function UsersAdmin() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-black text-navy dark:text-white mb-0.5" style={{ fontFamily: 'Plus Jakarta Sans,sans-serif' }}>Staff Directory</h1>
-          <p className="text-gray-500 dark:text-white/40 text-sm">{staffUsers.length} active team members</p>
+          <p className="text-gray-500 dark:text-white/40 text-sm">
+            {user?.role === 'management' 
+              ? `${visibleStaff.length} active agents`
+              : `${visibleStaff.length} active team members`
+            }
+          </p>
         </div>
-        <button onClick={() => setShowAdd(true)}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold text-navy hover:scale-[1.02] active:scale-[0.98] transition-transform cursor-pointer shadow-md shadow-gold/15"
-          style={{ background: 'linear-gradient(135deg, #D4AF37, #E8C84A)' }}>
-          <Plus className="w-4 h-4" /> Add Staff
-        </button>
+        {user?.role === 'admin' && (
+          <button onClick={() => setShowAdd(true)}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold text-navy hover:scale-[1.02] active:scale-[0.98] transition-transform cursor-pointer shadow-md shadow-gold/15"
+            style={{ background: 'linear-gradient(135deg, #D4AF37, #E8C84A)' }}>
+            <Plus className="w-4 h-4" /> Add Staff
+          </button>
+        )}
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-        {ROLES.map(r => {
+      <div className={`grid grid-cols-1 ${visibleRoles.length === 3 ? 'sm:grid-cols-3' : 'sm:grid-cols-1 max-w-sm'} gap-4 mb-6`}>
+        {visibleRoles.map(r => {
           const m = ROLE_META[r];
           const isActive = roleFilter === r;
           const CardIcon = m.icon;
@@ -540,7 +493,10 @@ export default function UsersAdmin() {
             value={roleFilter}
             onChange={setRoleFilter}
             placeholder="All Roles"
-            options={[
+            options={user?.role === 'management' ? [
+              { value: 'all', label: 'All Roles' },
+              { value: 'agent', label: 'Agent' }
+            ] : [
               { value: 'all', label: 'All Roles' },
               { value: 'agent', label: 'Agent' },
               { value: 'management', label: 'Management' },
@@ -549,6 +505,54 @@ export default function UsersAdmin() {
           />
         </div>
       </div>
+
+      {/* Logged In User's Own Profile Card (Self) */}
+      {selfUser && (
+        <div className="mb-6 p-5 rounded-3xl bg-gradient-to-r from-gold/5 via-gold-light/0 to-transparent border border-gold/15 dark:border-gold/25 relative overflow-hidden bg-white dark:bg-[#0E1A2B] transition-all">
+          <div className="absolute top-0 right-0 px-3.5 py-1 bg-gold/15 dark:bg-gold/20 border-l border-b border-gold/15 text-gold-dark dark:text-gold text-[9px] font-black uppercase tracking-wider rounded-bl-2xl">
+            Your Profile (Self)
+          </div>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5">
+            <div className="flex items-center gap-4">
+              {(() => {
+                const meta = ROLE_META[selfUser.role] || ROLE_META.agent;
+                return (
+                  <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-lg font-black shrink-0"
+                    style={{ background: meta.darkBg, color: meta.color, border: `1.5px solid ${meta.border}` }}>
+                    {selfUser.name.charAt(0).toUpperCase()}
+                  </div>
+                );
+              })()}
+              <div>
+                <div className="flex items-center gap-2.5">
+                  <h3 className="font-display font-extrabold text-base text-navy dark:text-white leading-none">{selfUser.name}</h3>
+                  {(() => {
+                    const meta = ROLE_META[selfUser.role] || ROLE_META.agent;
+                    const Icon = meta.icon;
+                    return (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-black uppercase"
+                        style={{ background: meta.bg, color: meta.color, border: `1px solid ${meta.border}` }}>
+                        <Icon className="w-2.5 h-2.5" />
+                        {meta.label}
+                      </span>
+                    );
+                  })()}
+                </div>
+                <div className="flex flex-wrap gap-4 mt-2.5 text-xs text-gray-500 dark:text-white/40 font-medium">
+                  <span className="flex items-center gap-1.5"><Phone className="w-3.5 h-3.5 text-gray-400" /> {selfUser.phone}</span>
+                  {selfUser.email && <span className="flex items-center gap-1.5"><Mail className="w-3.5 h-3.5 text-gray-400" /> {selfUser.email}</span>}
+                </div>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <button onClick={() => setEditingUser(selfUser)}
+                className="px-4 py-2 rounded-xl bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 text-xs font-bold text-navy dark:text-white hover:bg-gray-50 dark:hover:bg-white/10 transition-all cursor-pointer">
+                Edit Profile
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="bg-white dark:bg-[#0E1A2B] rounded-3xl border border-gray-100 dark:border-white/10 shadow-sm overflow-hidden transition-colors duration-300">
         {loading ? (
@@ -872,6 +876,8 @@ export default function UsersAdmin() {
 }
 
 function EditStaffModal({ user, onSave, onClose }) {
+  const { user: loggedInUser } = useAdmin();
+  const isManager = loggedInUser?.role === 'management';
   const [form, setForm] = useState({
     name: user.name,
     phone: user.phone,
@@ -956,7 +962,10 @@ function EditStaffModal({ user, onSave, onClose }) {
               value={form.role}
               onChange={val => setForm(p => ({ ...p, role: val }))}
               placeholder="Select role"
-              options={STAFF_ROLES.filter(r => r !== 'admin' || user.role === 'admin').map(r => ({ value: r, label: ROLE_META[r].label }))}
+              options={isManager ? [
+                { value: 'agent', label: 'Agent' }
+              ] : STAFF_ROLES.filter(r => r !== 'admin' || user.role === 'admin').map(r => ({ value: r, label: ROLE_META[r].label }))}
+              className={isManager ? "pointer-events-none opacity-60" : ""}
             />
           </div>
         </div>
@@ -994,7 +1003,6 @@ function AgentDetailsModal({ agent, onClose }) {
     })();
   }, [agent]);
 
-  const isDark = document.documentElement.classList.contains('dark');
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">

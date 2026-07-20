@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { NavLink, Link, Outlet, useNavigate } from 'react-router-dom';
 import {
-  LayoutDashboard, Users, Building2, Inbox,
-  FileText, LogOut, Menu, X, ChevronRight, Globe,
+  LayoutDashboard, Users, Building2,
+  FileText, LogOut, Menu, ChevronRight, Globe, Database, Settings, Award, HelpCircle
 } from 'lucide-react';
 import { useAdmin } from './AdminContext';
 
@@ -19,11 +19,15 @@ const ROLE_LABEL = {
 };
 
 const NAV = [
-  { to: '/admin/dashboard',  label: 'Dashboard',       Icon: LayoutDashboard, roles: ['admin', 'management'] },
-  { to: '/admin/properties', label: 'Properties',      Icon: Building2,        roles: ['admin', 'management'] },
-  { to: '/admin/blogs',      label: 'Blog Manager',    Icon: FileText,         roles: ['admin', 'management'] },
-  { to: '/admin/partners',   label: 'Partners',        Icon: Globe,            roles: ['admin', 'management'] },
-  { to: '/admin/users',      label: 'Staff Directory', Icon: Users,            roles: ['admin'] },
+  { to: '/panel/dashboard',    label: 'Dashboard',       Icon: LayoutDashboard, roles: ['admin', 'management'] },
+  { to: '/panel/properties',   label: 'Properties',      Icon: Building2,        roles: ['admin', 'management'] },
+  { to: '/panel/blogs',        label: 'Blogs & Reviews', Icon: FileText,         roles: ['admin', 'management'] },
+  { to: '/panel/partners',     label: 'Partners',        Icon: Globe,            roles: ['admin', 'management'] },
+  { to: '/panel/advisors',     label: 'Advisors Panel',  Icon: Award,            roles: ['admin', 'management'] },
+  { to: '/panel/faqs',         label: 'FAQ Manager',     Icon: HelpCircle,       roles: ['admin', 'management'] },
+  { to: '/panel/settings',     label: 'Site Settings',   Icon: Settings,         roles: ['admin', 'management'] },
+  { to: '/panel/users',        label: 'Staff Directory', Icon: Users,            roles: ['admin'] },
+  { to: '/panel/master-data',  label: 'Master Data',     Icon: Database,         roles: ['admin'] },
 ];
 
 export default function AdminLayout() {
@@ -50,7 +54,7 @@ export default function AdminLayout() {
   }, []);
 
   if (!isStaff) {
-    navigate('/admin/login');
+    navigate('/panel/login');
     return null;
   }
 
@@ -59,7 +63,7 @@ export default function AdminLayout() {
 
   const handleSignOut = async () => {
     await signOut();
-    navigate('/admin/login');
+    navigate('/panel/login');
   };
 
   const SidebarContent = () => (

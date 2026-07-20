@@ -1,10 +1,10 @@
 import { useState, useEffect, useRef, createContext, useContext } from 'react';
 import { createPortal } from 'react-dom';
-import { Plus, Pencil, Trash2, Loader2, X, Building2, ChevronDown, Search, Star } from 'lucide-react';
+import { Plus, Pencil, Trash2, Loader2, X, Building2, ChevronDown, Search, Star, Check } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getProperties, createProperty, updateProperty, deleteProperty, uploadImage, getUsers } from '../../utils/adminApi';
+import { fetchMasterData } from '../../utils/api';
 import { useAdmin } from './AdminContext';
-import ImageUploader from '../../components/common/ImageUploader';
 import { SkeletonTable } from '../../components/common/Skeleton';
 
 const FormContext = createContext(null);
@@ -123,81 +123,8 @@ const EMPTY = {
   amenities: [],
 };
 
-function AgentOption({ agent, propertyLocation }) {
-  const [expanded, setExpanded] = useState(false);
-  
-  const areas = agent.expertise ? agent.expertise.split(',').map(s => s.trim()) : [];
-  const isRecommended = propertyLocation && areas.some(areaStr => 
-    areaStr.toLowerCase() === propertyLocation.toLowerCase() || 
-    propertyLocation.toLowerCase().includes(areaStr.toLowerCase())
-  );
-  
-  let expertiseText = '';
-  let hasMore = false;
-  let moreCount = 0;
-  
-  if (areas.length > 0) {
-    if (isRecommended) {
-      const match = areas.find(areaStr => 
-        areaStr.toLowerCase() === propertyLocation.toLowerCase() || 
-        propertyLocation.toLowerCase().includes(areaStr.toLowerCase())
-      );
-      expertiseText = `⭐ Specialist in ${match}`;
-      if (areas.length > 1) {
-        hasMore = true;
-        moreCount = areas.length - 1;
-      }
-    } else if (areas.length > 2) {
-      hasMore = true;
-      moreCount = areas.length - 2;
-      expertiseText = expanded ? areas.join(', ') : `${areas.slice(0, 2).join(', ')}`;
-    } else {
-      expertiseText = areas.join(', ');
-    }
-  }
 
-  return (
-    <div 
-      onClick={(e) => {
-        if (e.target.closest('.toggle-expand-btn')) {
-          e.stopPropagation();
-          setExpanded(!expanded);
-        }
-      }}
-      className="flex flex-col items-stretch w-full py-1 text-xs text-left"
-    >
-      <div className="flex items-start justify-between w-full">
-        <div className="flex flex-col items-start min-w-0 flex-1">
-          <span className="font-bold text-navy dark:text-white truncate">{agent.name}</span>
-          {expertiseText && (
-            <span className={`text-[9px] font-medium mt-0.5 whitespace-normal break-words leading-relaxed ${isRecommended ? 'text-amber-500 font-extrabold' : 'text-gray-405 dark:text-white/30'}`}>
-              {isRecommended && !expanded ? expertiseText : (expanded ? `Areas: ${areas.join(', ')}` : `Specialty: ${expertiseText}`)}
-              {hasMore && (
-                <button
-                  type="button"
-                  className="toggle-expand-btn ml-1 px-1.5 py-0.5 rounded bg-gold/10 hover:bg-gold/20 text-gold text-[8px] font-black uppercase transition-colors inline-block focus:outline-none"
-                >
-                  {expanded ? 'Less' : `+${moreCount} More`}
-                </button>
-              )}
-            </span>
-          )}
-        </div>
-        <span className={`shrink-0 px-2 py-0.5 rounded text-[8px] font-black uppercase ml-3 ${
-          agent.activeLeads > 3 
-            ? 'bg-red-500/10 text-red-500 border border-red-500/10' 
-            : agent.activeLeads > 0 
-            ? 'bg-yellow-500/10 text-yellow-500 border border-yellow-500/10' 
-            : 'bg-green-500/10 text-green-500 border border-green-500/10'
-        }`}>
-          {agent.activeLeads || 0} Leads
-        </span>
-      </div>
-    </div>
-  );
-}
-
-function PropertyForm({ initial, onSave, onClose }) {
+function PropertyForm({ initial, onSave, onClose, masterData }) {
   const [agents, setAgents] = useState([]);
   const [form, setForm] = useState(() => {
     if (!initial) return EMPTY;
@@ -221,12 +148,6 @@ function PropertyForm({ initial, onSave, onClose }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [galleryLoading, setGalleryLoading] = useState(false);
-  const [customLocation, setCustomLocation] = useState(() => {
-    if (initial && initial.location) {
-      return !CITIES.includes(initial.location);
-    }
-    return false;
-  });
 
   const set = (k, v) => setForm(p => ({ ...p, [k]: v }));
 
@@ -284,9 +205,9 @@ function PropertyForm({ initial, onSave, onClose }) {
     finally { setLoading(false); }
   };
 
-  return (
+  return createPortal(
     <FormContext.Provider value={{ form, set }}>
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+      <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
         <div className="bg-white dark:bg-[#0E1A2B] rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col border border-transparent dark:border-white/10 transition-colors duration-300">
           <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-white/10">
             <h3 className="font-bold text-navy dark:text-white text-base" style={{ fontFamily: 'Manrope,sans-serif' }}>
@@ -300,43 +221,19 @@ function PropertyForm({ initial, onSave, onClose }) {
           <div className="overflow-y-auto flex-1 px-6 py-5">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="sm:col-span-2"><F label="Title" name="title" required /></div>
-              <F label="Type" name="type" options={TYPES} required />
+              <F label="Type" name="type" options={masterData.propertyType.length > 0 ? masterData.propertyType : TYPES} required />
               <div>
-                <div className="flex items-center justify-between mb-1">
-                  <label className={labelCls}>
-                    Location / Area <span className="text-red-400 ml-0.5">*</span>
-                  </label>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setCustomLocation(!customLocation);
-                      set('location', ''); // clear previous value on toggle
-                    }}
-                    className="text-[9px] font-black text-gold hover:text-gold-light uppercase tracking-wider transition-colors cursor-pointer"
-                    style={{ color: '#D4AF37' }}
-                  >
-                    {customLocation ? '← Select List' : '✎ Custom'}
-                  </button>
-                </div>
-                {customLocation ? (
-                  <input
-                    type="text"
-                    value={form.location || ''}
-                    onChange={e => set('location', e.target.value)}
-                    placeholder="e.g. Koregaon Park, Kalyani Nagar..."
-                    className={inputCls}
-                    required
-                  />
-                ) : (
-                  <CustomSelect
-                    value={form.location}
-                    onChange={val => set('location', val)}
-                    placeholder="Select Location"
-                    options={CITIES}
-                  />
-                )}
+                <label className={labelCls}>
+                  Location / Area <span className="text-red-400 ml-0.5">*</span>
+                </label>
+                <CustomSelect
+                  value={form.location}
+                  onChange={val => set('location', val)}
+                  placeholder="Select Location"
+                  options={masterData.locality.length > 0 ? masterData.locality : CITIES}
+                />
               </div>
-              <F label="City" name="city" required />
+              <F label="City" name="city" options={masterData.city.length > 0 ? masterData.city : ['Pune', 'Mumbai']} required />
               <F label="Price (₹ in numbers)" name="price" type="number" required />
               <F label="Price Label (₹45 Cr)" name="priceLabel" />
               <F label="Bedrooms" name="bedrooms" type="number" />
@@ -425,17 +322,49 @@ function PropertyForm({ initial, onSave, onClose }) {
               </div>
               <div className="sm:col-span-2"><F label="Description" name="description" type="textarea" /></div>
               <div className="sm:col-span-2">
-                <label className={labelCls}>Amenities (Comma separated)</label>
-                <textarea
-                  value={(form.amenities || []).join(', ')}
-                  onChange={e => setForm(p => ({
-                    ...p,
-                    amenities: e.target.value.split(',').map(s => s.trim())
-                  }))}
-                  rows={2}
-                  className={`${inputCls} resize-none`}
-                  placeholder="e.g. Infinity Pool, Private Elevator, Smart Automation, 24/7 Concierge"
-                />
+                <label className={labelCls}>Amenities</label>
+                <div className="flex flex-wrap gap-2.5 mt-2.5 p-1">
+                  {(masterData.amenity && masterData.amenity.length > 0
+                    ? masterData.amenity
+                    : ['Infinity Pool', 'Swimming Pool', 'Private Elevator', 'Smart Automation', '24/7 Concierge', 'Gym', 'Club House', 'Kids Play Area', 'Lush Gardens', 'High-speed Elevators', 'Power Backup', 'Vastu Compliant', 'Sea View']
+                  ).map((amn) => {
+                    const isChecked = (form.amenities || []).includes(amn);
+                    return (
+                      <label
+                        key={amn}
+                        className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border cursor-pointer select-none transition-all duration-200 ${
+                          isChecked
+                            ? 'bg-[#EFA300]/5 dark:bg-[#D4AF37]/5 border-[#D4AF37]/45 shadow-sm shadow-[#D4AF37]/5 scale-[1.01]'
+                            : 'bg-white dark:bg-[#071A2F]/30 border-gray-200 dark:border-white/[0.06] hover:bg-gray-50 dark:hover:bg-white/[0.02]'
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={isChecked}
+                          onChange={(e) => {
+                            const next = e.target.checked
+                              ? [...(form.amenities || []), amn]
+                              : (form.amenities || []).filter(a => a !== amn);
+                            set('amenities', next);
+                          }}
+                          className="sr-only"
+                        />
+                        <div
+                          className={`w-4 h-4 rounded-md flex items-center justify-center border transition-all duration-200 shrink-0 ${
+                            isChecked
+                              ? 'bg-gradient-to-br from-[#D4AF37] to-[#F1C40F] border-transparent text-[#071A2F]'
+                              : 'bg-white dark:bg-[#0E1A2B] border-gray-300 dark:border-white/20 text-transparent'
+                          }`}
+                        >
+                          <Check className="w-2.5 h-2.5 stroke-[3.5]" />
+                        </div>
+                        <span className="text-xs font-bold text-navy dark:text-cream/90 transition-colors">
+                          {amn}
+                        </span>
+                      </label>
+                    );
+                  })}
+                </div>
               </div>
               <div>
                 <label className={labelCls}>Map Latitude</label>
@@ -493,7 +422,8 @@ function PropertyForm({ initial, onSave, onClose }) {
           </div>
         </div>
       </div>
-    </FormContext.Provider>
+    </FormContext.Provider>,
+    document.body
   );
 }
 
@@ -507,6 +437,12 @@ export default function PropertiesAdmin() {
   const [deleting, setDeleting] = useState(null);
   const [propertyToDelete, setPropertyToDelete] = useState(null);
   const [deleteError, setDeleteError] = useState('');
+  const [masterData, setMasterData] = useState({
+    locality: [],
+    city: [],
+    amenity: [],
+    propertyType: []
+  });
 
   // Search & Filter states
   const [search, setSearch] = useState('');
@@ -522,7 +458,14 @@ export default function PropertiesAdmin() {
     finally { setLoading(false); }
   };
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    load();
+    fetchMasterData()
+      .then(data => {
+        if (data) setMasterData(data);
+      })
+      .catch(err => console.error("Failed to load master data options:", err));
+  }, []);
 
   const handleCreate = async (body) => {
     await createProperty(body);
@@ -842,6 +785,7 @@ export default function PropertiesAdmin() {
           initial={editing}
           onSave={editing ? handleUpdate : handleCreate}
           onClose={() => { setShowForm(false); setEditing(null); }}
+          masterData={masterData}
         />
       )}
 

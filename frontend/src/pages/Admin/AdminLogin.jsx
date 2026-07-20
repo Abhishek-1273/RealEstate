@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAdmin } from './AdminContext';
 import { useAuth } from '../../contexts';
@@ -14,6 +14,12 @@ export default function AdminLogin() {
   const { signIn } = useAuth();
   const { user }   = useAdmin();
   const navigate   = useNavigate();
+
+  useEffect(() => {
+    if (user && (user.role === 'admin' || user.role === 'management')) {
+      navigate('/panel/dashboard', { replace: true });
+    }
+  }, [user, navigate]);
 
   const [step, setStep]     = useState('email'); // 'email' | 'otp'
   const [email, setEmail]   = useState('');
@@ -67,7 +73,7 @@ export default function AdminLogin() {
         return;
       }
       signIn(data.user, data.token);
-      navigate('/admin/dashboard');
+      navigate('/panel/dashboard');
     } catch (err) {
       setError(err.message || 'OTP verification failed');
     } finally {

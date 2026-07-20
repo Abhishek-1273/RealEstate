@@ -1,7 +1,7 @@
 import { useState, useEffect, lazy, Suspense } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowRight, MapPin, ChevronDown } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import SectionHeader from '../../../components/common/SectionHeader';
 import { cities } from '../../../data/index';
 import ErrorBoundary from '../../../components/common/ErrorBoundary';

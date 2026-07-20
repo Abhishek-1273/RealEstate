@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   ArrowRight, ArrowLeft, Home, Building2, MapPin, CheckCircle2,
@@ -7,7 +7,7 @@ import {
 import { fadeUp } from '../../animations/variants';
 import { Link } from 'react-router-dom';
 import PremiumIcon from '../../components/common/PremiumIcon';
-import { submitEnquiry, fetchProperties } from '../../utils/api';
+import { submitEnquiry, fetchProperties, fetchMasterData } from '../../utils/api';
 import SearchableSelect from '../../components/common/SearchableSelect';
 
 const ICON_MAP = {
@@ -31,7 +31,6 @@ const propertyTypes = [
 ];
 
 const localities = ['Balewadi', 'Hadapsar', 'KP', 'NIBM Road', 'Viman Nagar', 'Kharadi', 'Punewadi', 'Kothrud', 'Karve Nagar', 'Shewalewadi Road', 'Baner', 'Pashan', 'Bawadhan', 'MG Road', 'JM Road', 'F.C. Road', 'Hinjewadi Phase I, II', 'Ravet', 'Ganga Dham Chownk', 'Swargate', 'Katraj', 'Prabhat Road', 'Bibwewadi', 'Bhekrai Nagar', 'Pimple Gurav', 'Pimple Saudagar', 'Dhayari', 'Kondhwa', 'Undri', 'Muhamad wadi', 'Handewadi', 'Wakad', 'Shivaji Nagar', 'Parvati Hill', 'Sukhsagar Nagar', 'Singhgad Road', 'Camp', 'Pimpri Gaon', 'Chinchwad Gaon', 'Bhosari', 'Nigdi', 'Bhugaon', 'Man', 'Sus', 'Malwadi', 'Warje', 'Fursungi', 'Wagholi', 'Manjari', 'Lohgaon', 'Vishrantwadi', 'Khadki', 'Nanded City'];
-const budgets = ['Under ₹2 Cr', '₹2–5 Cr', '₹5–10 Cr', '₹10–20 Cr', '₹20 Cr+'];
 const timings = ['Immediately', 'Within 3 months', '3–6 months', 'Just exploring'];
 
 const formatPrice = (val) => {
@@ -66,6 +65,7 @@ export default function BuyProperty() {
   const [allProperties, setAllProperties] = useState([]);
   const [priceRange, setPriceRange] = useState({ min: 4000000, max: 250000000, step: 500000 });
   const [sliderValue, setSliderValue] = useState(20000000);
+  const [dynamicLocalities, setDynamicLocalities] = useState([]);
 
   useEffect(() => {
     fetchProperties({ limit: 100 })
@@ -73,6 +73,12 @@ export default function BuyProperty() {
         setAllProperties(data.properties || []);
       })
       .catch(err => console.error("Failed to load properties:", err));
+
+    fetchMasterData()
+      .then(data => {
+        if (data && data.locality) setDynamicLocalities(data.locality);
+      })
+      .catch(err => console.error("Failed to load localities master data:", err));
   }, []);
 
   useEffect(() => {
@@ -235,7 +241,7 @@ export default function BuyProperty() {
                       <SearchableSelect
                         value={form.locality}
                         onChange={val => set('locality', val)}
-                        options={localities}
+                        options={dynamicLocalities.length > 0 ? dynamicLocalities : localities}
                         placeholder="Choose locality (e.g. Balewadi, KP, Sus...)"
                       />
                     </div>

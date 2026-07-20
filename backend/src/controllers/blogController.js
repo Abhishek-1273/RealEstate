@@ -1,5 +1,5 @@
 import Blog from '../models/Blog.js';
-import { cacheGet, cacheSet, cacheDelPattern, cacheDel } from '../utils/cache.js';
+import { cacheGet, cacheSet, cacheDelPattern } from '../utils/cache.js';
 
 // GET /api/blogs
 export const getAllBlogs = async (req, res) => {

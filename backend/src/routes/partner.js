@@ -8,7 +8,6 @@ const PARTNERS_ADMIN_CACHE_KEY = 'partners:admin';
 
 const router = express.Router();
 
-// ── Public Routes ────────────────────────────────────────────────────────────
 // GET /api/partners - get all visible partners
 router.get('/', async (req, res) => {
   try {
@@ -24,9 +23,7 @@ router.get('/', async (req, res) => {
   }
 });
 
-// ── Admin Routes ─────────────────────────────────────────────────────────────
 // GET /api/partners/admin - get all partners (including hidden ones)
-// FIX: staffOnly is an array [protect, requireRole(...)], must spread with ...staffOnly
 router.get('/admin', ...staffOnly, async (req, res) => {
   try {
     const cached = await cacheGet(PARTNERS_ADMIN_CACHE_KEY);

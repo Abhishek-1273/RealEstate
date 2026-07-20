@@ -1,6 +1,7 @@
 import { BrowserRouter } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
 import { WishlistProvider, AuthProvider, SearchProvider } from './contexts';
+import { SettingsProvider } from './contexts/SettingsContext';
 import AppRoutes from './routes';
 import ScrollToTop from './components/common/ScrollToTop';
 import ErrorBoundary from './components/common/ErrorBoundary';
@@ -12,19 +13,22 @@ const App = () => (
   <HelmetProvider>
     <BrowserRouter>
       <ScrollToTop />
-      <AuthProvider>
-        <WishlistProvider>
-          <SearchProvider>
-            <ErrorBoundary>
-              <AppRoutes />
-              <Analytics />
-              <PwaInstallPrompt />
-            </ErrorBoundary>
-          </SearchProvider>
-        </WishlistProvider>
-      </AuthProvider>
+      <SettingsProvider>
+        <AuthProvider>
+          <WishlistProvider>
+            <SearchProvider>
+              <ErrorBoundary>
+                <AppRoutes />
+                <Analytics />
+                <PwaInstallPrompt />
+              </ErrorBoundary>
+            </SearchProvider>
+          </WishlistProvider>
+        </AuthProvider>
+      </SettingsProvider>
     </BrowserRouter>
   </HelmetProvider>
 );
 
 export default App;
+

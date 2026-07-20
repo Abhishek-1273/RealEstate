@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Mail, Phone, MapPin, ArrowRight } from 'lucide-react';
 import { FaInstagram, FaXTwitter, FaLinkedinIn, FaYoutube } from 'react-icons/fa6';
-import { useAuth } from '../../contexts';
+import { useAuth, useSiteSettings } from '../../contexts';
 import KineticGrid from '../common/KineticGrid';
 
 const gatedPaths = ['/services/buy', '/services/sell', '/services/lease', '/services/management'];
@@ -36,13 +36,6 @@ const links = {
   ],
 };
 
-const socials = [
-  { icon: <FaInstagram />, href: 'https://instagram.com', label: 'Instagram' },
-  { icon: <FaXTwitter />, href: 'https://x.com', label: 'X (Twitter)' },
-  { icon: <FaLinkedinIn />, href: 'https://linkedin.com', label: 'LinkedIn' },
-  { icon: <FaYoutube />, href: 'https://youtube.com', label: 'YouTube' },
-];
-
 const columns = [
   { title: 'Company', items: links.company },
   { title: 'Services', items: links.services },
@@ -52,6 +45,14 @@ const columns = [
 
 export default function Footer() {
   const { user, openAuth } = useAuth();
+  const { settings } = useSiteSettings();
+
+  const dynamicSocials = [
+    { icon: <FaInstagram />, href: settings?.socials?.instagram || '#', label: 'Instagram' },
+    { icon: <FaXTwitter />, href: settings?.socials?.twitter || '#', label: 'X (Twitter)' },
+    { icon: <FaLinkedinIn />, href: settings?.socials?.linkedin || '#', label: 'LinkedIn' },
+    { icon: <FaYoutube />, href: settings?.socials?.facebook || '#', label: 'Facebook' },
+  ];
 
   const handleLinkClick = (e, to) => {
     if (!user && gatedPaths.includes(to)) {
@@ -73,17 +74,21 @@ export default function Footer() {
           <div className="col-span-2 lg:col-span-4">
             <Link to="/" className="inline-flex items-center gap-3 mb-7 group">
               <div
-                className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:scale-105"
+                className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:scale-105 overflow-hidden"
                 style={{ background: 'linear-gradient(135deg, #D4AF37 0%, #E8C84A 50%, #A8882B 100%)' }}
               >
-                <span className="text-navy font-display font-black text-sm leading-none">HR</span>
+                {settings?.logoIconImage ? (
+                  <img src={settings.logoIconImage} alt="Logo" className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-navy font-display font-black text-sm leading-none">{settings?.logoIconText || 'HR'}</span>
+                )}
               </div>
               <div>
                 <p className="font-display font-bold text-xl text-white leading-none">
-                  Hyper<span style={{ color: '#D4AF37' }}>Relestix</span>
+                  {settings?.logoTextPrimary || 'Hyper'}<span style={{ color: '#D4AF37' }}>{settings?.logoTextSecondary || 'Relestix'}</span>
                 </p>
                 <p className="text-white/40 text-[8px] font-accent tracking-[0.25em] uppercase mt-0.5">
-                  Luxury Real Estate · Pune
+                  {settings?.logoSubtitle || 'Luxury Real Estate · Pune'}
                 </p>
               </div>
             </Link>
@@ -94,9 +99,9 @@ export default function Footer() {
 
             <div className="space-y-3.5 mb-7">
               {[
-                { icon: <MapPin className="w-3.5 h-3.5 shrink-0" />, text: 'Level 12, Panchshil Tech Park, Yerwada, Pune 411006' },
-                { icon: <Phone className="w-3.5 h-3.5 shrink-0" />, text: '+91 98765 43210' },
-                { icon: <Mail className="w-3.5 h-3.5 shrink-0" />, text: 'hello@hyperrelestix.in' },
+                { icon: <MapPin className="w-3.5 h-3.5 shrink-0" />, text: settings?.contactAddress || 'Level 12, Panchshil Tech Park, Yerwada, Pune 411006' },
+                { icon: <Phone className="w-3.5 h-3.5 shrink-0" />, text: settings?.contactPhone1 || '+91 98765 43210' },
+                { icon: <Mail className="w-3.5 h-3.5 shrink-0" />, text: settings?.contactEmail1 || 'hello@hyperrelestix.in' },
               ].map((item, i) => (
                 <div key={i} className="flex items-start gap-3 text-white/55 text-xs leading-relaxed">
                   <span className="mt-0.5" style={{ color: '#D4AF37' }}>{item.icon}</span>
@@ -106,7 +111,7 @@ export default function Footer() {
             </div>
 
             <div className="flex items-center gap-2">
-              {socials.map((s, i) => (
+              {dynamicSocials.map((s, i) => (
                 <a
                   key={i}
                   href={s.href}

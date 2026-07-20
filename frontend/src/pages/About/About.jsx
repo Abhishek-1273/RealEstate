@@ -12,6 +12,7 @@ import aboutBg from '../../assets/image/about-bg.webp';
 import missionFront from '../../assets/image/mission-front.webp';
 import missionBack from '../../assets/image/mission-back.webp';
 import CoverflowCarousel from '../../components/common/CoverflowCarousel';
+import { fetchAdvisors } from '../../utils/api';
 
 
 const values = [
@@ -26,6 +27,7 @@ const values = [
 export default function About() {
   const [isFlipped, setIsFlipped] = useState(false);
   const [showArrows, setShowArrows] = useState(true);
+  const [team, setTeam] = useState(agents);
 
   const [carouselSizing, setCarouselSizing] = useState({
     activeWidth: 380,
@@ -69,7 +71,20 @@ export default function About() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const carouselImages = agents.map(a => ({
+  // Fetch active team members from the backend database
+  useEffect(() => {
+    fetchAdvisors()
+      .then(data => {
+        if (data && data.length > 0) {
+          setTeam(data);
+        }
+      })
+      .catch(err => {
+        console.warn('Could not load dynamic advisors, using defaults:', err);
+      });
+  }, []);
+
+  const carouselImages = team.map(a => ({
     srcUrl: a.image,
     alt: a.name,
     name: a.name,
@@ -78,6 +93,7 @@ export default function About() {
     propertiesSold: a.propertiesSold,
     rating: a.rating,
   }));
+
 
   return (
     <div className="min-h-screen bg-surface dark:bg-navy-dark pt-20 transition-colors duration-300">

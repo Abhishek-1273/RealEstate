@@ -32,16 +32,21 @@ const BlogsAdmin      = lazy(() => import('../pages/Admin/BlogsAdmin'));
 const PropertiesAdmin = lazy(() => import('../pages/Admin/PropertiesAdmin'));
 const UsersAdmin      = lazy(() => import('../pages/Admin/UsersAdmin'));
 const PartnersAdmin   = lazy(() => import('../pages/Admin/PartnersAdmin'));
+const MasterDataAdmin = lazy(() => import('../pages/Admin/MasterDataAdmin'));
+const SettingsAdmin   = lazy(() => import('../pages/Admin/SettingsAdmin'));
+const AdvisorsAdmin   = lazy(() => import('../pages/Admin/AdvisorsAdmin'));
+const TestimonialsAdmin = lazy(() => import('../pages/Admin/TestimonialsAdmin'));
+const FaqsAdmin       = lazy(() => import('../pages/Admin/FaqsAdmin'));
 
 // ── Guard: redirect to login if not staff ─────────────────────────────────────
 function PanelGuard({ children, requiredRoles }) {
   const { user, loading } = useAdmin();
   if (loading) return <PageLoader />;
   if (!user || (user.role !== 'admin' && user.role !== 'management')) {
-    return <Navigate to="/admin/login" replace />;
+    return <Navigate to="/panel/login" replace />;
   }
   if (requiredRoles && !requiredRoles.includes(user.role)) {
-    return <Navigate to="/admin/dashboard" replace />;
+    return <Navigate to="/panel/dashboard" replace />;
   }
   return children;
 }
@@ -71,8 +76,8 @@ export default function AppRoutes() {
           <Route path="*" element={<NotFound />} />
         </Route>
 
-        {/* ── Admin panel ───────────────────────────────────────────────────── */}
-        <Route path="/admin/*" element={
+        {/* ── Panel ───────────────────────────────────────────────────────── */}
+        <Route path="/panel/*" element={
           <AdminProvider>
             <Routes>
               <Route path="login" element={<AdminLogin />} />
@@ -87,8 +92,6 @@ export default function AppRoutes() {
                     <Dashboard />
                   </PanelGuard>
                 } />
-
-
 
                 {/* Blog Manager — admin + management */}
                 <Route path="blogs" element={
@@ -115,6 +118,41 @@ export default function AppRoutes() {
                 <Route path="users" element={
                   <PanelGuard requiredRoles={['admin']}>
                     <UsersAdmin />
+                  </PanelGuard>
+                } />
+
+                {/* Master Data — admin only */}
+                <Route path="master-data" element={
+                  <PanelGuard requiredRoles={['admin']}>
+                    <MasterDataAdmin />
+                  </PanelGuard>
+                } />
+
+                {/* Website Settings — admin + management */}
+                <Route path="settings" element={
+                  <PanelGuard requiredRoles={['admin','management']}>
+                    <SettingsAdmin />
+                  </PanelGuard>
+                } />
+
+                {/* Advisors Management — admin + management */}
+                <Route path="advisors" element={
+                  <PanelGuard requiredRoles={['admin','management']}>
+                    <AdvisorsAdmin />
+                  </PanelGuard>
+                } />
+
+                {/* Testimonials Management — admin + management */}
+                <Route path="testimonials" element={
+                  <PanelGuard requiredRoles={['admin','management']}>
+                    <TestimonialsAdmin />
+                  </PanelGuard>
+                } />
+
+                {/* FAQ Management — admin + management */}
+                <Route path="faqs" element={
+                  <PanelGuard requiredRoles={['admin','management']}>
+                    <FaqsAdmin />
                   </PanelGuard>
                 } />
 

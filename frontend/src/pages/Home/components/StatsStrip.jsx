@@ -1,9 +1,18 @@
 import { motion } from 'framer-motion';
 import CountUpNumber from '../../../components/common/CountUpNumber';
-import { stats } from '../../../data/index';
+import { useSiteSettings } from '../../../contexts/SettingsContext';
 import { scaleIn, staggerFast, viewportOnce } from '../../../animations/variants';
 
 export default function StatsStrip() {
+  const { settings } = useSiteSettings();
+  
+  const dynamicStats = [
+    { label: 'Premium Properties sold', value: settings.stats?.propertiesSold ?? 1500, suffix: '+' },
+    { label: 'Average Client Satisfaction', value: settings.stats?.happyClients ?? 98, suffix: '%' },
+    { label: 'Years of Pune Market Expertise', value: settings.stats?.experience ?? 12, suffix: '+' },
+    { label: 'Total Deals Closed Successfully', value: settings.stats?.dealsClosed ?? 350, suffix: '+' },
+  ];
+
   return (
     <section className="py-24 bg-mesh-dark relative overflow-hidden">
       {/* Ambient */}
@@ -17,7 +26,7 @@ export default function StatsStrip() {
           viewport={viewportOnce}
           className="grid grid-cols-2 lg:grid-cols-4 gap-10"
         >
-          {stats.map((s, i) => (
+          {dynamicStats.map((s, i) => (
             <motion.div key={i} variants={scaleIn} className="text-center">
               <p className="font-display font-black text-white leading-none mb-3 text-3xl sm:text-4xl md:text-5xl lg:text-[3.5rem]">
                 <CountUpNumber end={s.value} duration={2.5} />

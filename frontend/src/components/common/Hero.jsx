@@ -1,20 +1,12 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Volume2, VolumeX, Star } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect, useRef } from 'react';
+import { motion } from 'framer-motion';
+import { Star } from 'lucide-react';
 import imgBG from '../../assets/image/bg.webp';
 import ServiceShuffle from './ServiceShuffle';
+import { useSiteSettings } from '../../contexts';
 
-// ── Video backgrounds hosted on Cloudinary CDN ────────────────────────────────
-// q_auto = automatic quality optimisation, f_auto = best format per browser
-// (WebM for Chrome/Firefox, MP4 for Safari) — served from edge nodes globally
-const VIDEO_BG = 'https://res.cloudinary.com/dzb2hbq9e/video/upload/q_auto/v1783787482/bg_eylysx.mp4';
-const VIDEO_BG2 = 'https://res.cloudinary.com/dzb2hbq9e/video/upload/q_auto/v1783787480/bg2_ijjnna.mp4';
-
-
-// ─── Hero ─────────────────────────────────────────────────────────────────────
 export default function Hero() {
-  const navigate = useNavigate();
+  const { settings } = useSiteSettings();
 
   // Video state
   const videoRef = useRef(null);
@@ -36,39 +28,33 @@ export default function Hero() {
     const vid = videoRef.current;
     if (!vid) return;
 
+    // Reset video ready state when src changes
+    setVideoReady(false);
+    setVideoError(false);
+
     const onCanPlay = () => {
       setVideoReady(true);
-      // Try to play unmuted first, fallback to muted if blocked by browser policy
-      vid.muted = false;
-      const playPromise = vid.play();
-      if (playPromise !== undefined) {
-        playPromise.catch(() => {
-          vid.muted = true;
-          vid.play().catch(err => console.log("Video play failed:", err));
-        });
-      }
+      vid.muted = true;
+      vid.play().catch(err => console.log("Video play failed:", err));
     };
     const onError = () => setVideoError(true);
 
     vid.addEventListener('canplaythrough', onCanPlay);
     vid.addEventListener('error', onError);
 
-    // Start loading
     vid.load();
 
     return () => {
       vid.removeEventListener('canplaythrough', onCanPlay);
       vid.removeEventListener('error', onError);
     };
-  }, [isMobile]);
+  }, [isMobile, settings?.heroVideoUrl]);
 
-  // ── Show video background when ready, else fallback to image ───────────────
   const showVideo = !isMobile && videoReady && !videoError;
+  const activeFallbackImage = settings?.heroMobileImageUrl || imgBG;
 
   return (
     <section className="relative lg:min-h-screen lg:flex lg:items-center overflow-hidden" style={{ maxWidth: '100vw' }}>
-
-      {/* ══ BACKGROUND ══════════════════════════════════════════════════════ */}
 
       {/* Fallback image — always rendered, hidden once video is ready */}
       <div
@@ -76,8 +62,8 @@ export default function Hero() {
         style={{ opacity: showVideo ? 0 : 1 }}
       >
         <img
-          src={imgBG}
-          alt="Luxury property"
+          src={activeFallbackImage}
+          alt="Luxury property background"
           className="w-full h-full object-cover"
           loading="eager"
           fetchPriority="high"
@@ -86,22 +72,22 @@ export default function Hero() {
       </div>
 
       {/* Desktop video — hidden on mobile, fades in when ready */}
-      {!isMobile && (
+      {!isMobile && settings?.heroVideoUrl && (
         <div
           className="absolute inset-0 transition-opacity duration-1000"
           style={{ opacity: showVideo ? 1 : 0 }}
         >
           <video
             ref={videoRef}
+            key={settings.heroVideoUrl}
             className="w-full h-full object-cover"
             loop
             playsInline
             preload="metadata"
-            poster={imgBG}
+            poster={activeFallbackImage}
             muted
           >
-            <source src="https://res.cloudinary.com/dzb2hbq9e/video/upload/q_auto,f_webm/v1783787480/bg2_ijjnna.webm" type="video/webm" />
-            <source src="https://res.cloudinary.com/dzb2hbq9e/video/upload/q_auto,f_mp4/v1783787480/bg2_ijjnna.mp4" type="video/mp4" />
+            <source src={settings.heroVideoUrl} />
           </video>
         </div>
       )}
@@ -116,8 +102,6 @@ export default function Hero() {
         />
       </div>
 
-      {/* Mute toggle button removed by user request */}
-
       {/* ══ CONTENT ═════════════════════════════════════════════════════════ */}
       <div className="container-luxury relative z-10 pt-28 pb-16 lg:pt-32 lg:pb-20">
 
@@ -128,33 +112,39 @@ export default function Hero() {
               className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full mb-7"
               style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.16)', backdropFilter: 'blur(12px)' }}>
               <span className="w-1.5 h-1.5 rounded-full animate-pulse-gold" style={{ background: '#D4AF37', boxShadow: '0 0 8px rgba(212,175,55,0.8)' }} />
-              <span className="text-white/85 text-[10px] font-accent font-semibold tracking-[0.2em] uppercase">Pune's Premier NRI Property Platform</span>
+              <span className="text-white/85 text-[10px] font-accent font-semibold tracking-[0.2em] uppercase">
+                {settings?.heroTagline || "Pune's Premier NRI Property Platform"}
+              </span>
             </motion.div>
+            
             <div className="overflow-hidden mb-2">
               <motion.h1 initial={{ y: '100%', opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ duration: 0.85, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
                 className="font-display font-black text-white leading-[1.05]" style={{ fontSize: 'clamp(2.8rem, 6vw, 5.2rem)' }}>
-                Pune's Finest
+                {settings?.heroTitleLine1 || "Pune's Finest"}
               </motion.h1>
             </div>
+            
             <div className="overflow-hidden mb-2" style={{ width: 'fit-content', paddingRight: '20px' }}>
               <motion.div initial={{ y: '100%', opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ duration: 0.85, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}>
                 <span className="font-display font-black leading-[1.05] inline-block whitespace-nowrap"
                   style={{ fontSize: 'clamp(2.8rem, 6vw, 5.2rem)', background: 'linear-gradient(135deg, #D4AF37 0%, #E8C84A 50%, #C4A028 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
-                  Luxury Homes
+                  {settings?.heroTitleLine2Highlight || "Luxury Homes"}
                 </span>
               </motion.div>
             </div>
+            
             <div className="overflow-hidden mb-7">
               <motion.h1 initial={{ y: '100%', opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ duration: 0.85, delay: 0.4, ease: [0.22, 1, 0.36, 1] }}
                 className="font-display font-black text-white/90 leading-[1.05]" style={{ fontSize: 'clamp(2.8rem, 6vw, 5.2rem)' }}>
-                For NRIs
+                {settings?.heroTitleLine3 || "For NRIs"}
               </motion.h1>
             </div>
+
             <motion.p initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: 0.55 }}
-              className="text-white/65 font-body text-lg leading-[1.85] mb-9 max-w-[480px]">
-              Premium properties across Pune &amp; Pimpri-Chinchwad —
-              exclusively curated for NRI investors who demand the very best.
+              className="text-white/65 font-body text-base leading-[1.85] mb-9 max-w-[480px]">
+              {settings?.heroDescription || "Pune's premier luxury real estate agency, specializing in helping NRI clients find elite properties and handle secure investments entirely remotely."}
             </motion.p>
+
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.7 }} className="flex items-center gap-8 mb-10">
               {[
                 { num: '500+', label: 'Pune Properties' },
@@ -175,28 +165,31 @@ export default function Hero() {
 
         {/* ── Mobile: stacked layout ── */}
         <div className="lg:hidden flex flex-col w-full">
-          {/* Text */}
           <div className="mb-6 w-full overflow-hidden">
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.1 }}
               className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full mb-5"
               style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.16)', backdropFilter: 'blur(12px)' }}>
               <span className="w-1.5 h-1.5 rounded-full" style={{ background: '#D4AF37' }} />
-              <span className="text-white/85 text-[9px] font-semibold tracking-widest uppercase">Pune's Premier NRI Platform</span>
+              <span className="text-white/85 text-[9px] font-semibold tracking-widest uppercase">
+                {settings?.heroTagline || "Pune's Premier NRI Property Platform"}
+              </span>
             </motion.div>
-            {/* Heading split into lines so it never overflows */}
+
             <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: 0.2 }}
               className="font-display font-black text-white leading-tight mb-2"
               style={{ fontSize: 'clamp(1.75rem, 7.5vw, 2.5rem)' }}>
-              Pune's Finest<br />
+              {settings?.heroTitleLine1 || "Pune's Finest"}<br />
               <span style={{ background: 'linear-gradient(135deg,#D4AF37,#E8C84A)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
-                Luxury Homes
+                {settings?.heroTitleLine2Highlight || "Luxury Homes"}
               </span><br />
-              For NRIs
+              {settings?.heroTitleLine3 || "For NRIs"}
             </motion.h1>
+
             <motion.p initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.35 }}
               className="text-white/60 text-xs leading-relaxed mb-5 max-w-[320px]">
-              Premium properties across Pune &amp; Pimpri-Chinchwad — curated for NRI investors.
+              {settings?.heroDescription || "Pune's premier luxury real estate agency, specializing in helping NRI clients find elite properties and handle secure investments entirely remotely."}
             </motion.p>
+
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }} className="flex items-center gap-5">
               {[
                 { num: '500+', label: 'Properties' },
@@ -211,10 +204,8 @@ export default function Hero() {
             </motion.div>
           </div>
 
-          {/* Service Cards — auto-shuffle swipe */}
           <ServiceShuffle />
 
-          {/* NRI Trust Badges — BELOW the cards */}
           <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.9 }}
             className="flex flex-wrap gap-2 justify-center mt-5 pb-4">
             {['FEMA Compliant', 'Remote Buying', 'RERA Verified', 'NRI Desk'].map(badge => (
@@ -230,4 +221,3 @@ export default function Hero() {
     </section>
   );
 }
-

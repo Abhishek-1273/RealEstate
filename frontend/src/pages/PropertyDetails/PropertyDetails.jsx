@@ -9,7 +9,7 @@ import {
   ChevronDown
 } from 'lucide-react';
 import { Swiper, SwiperSlide } from 'swiper/react';
-import { Navigation, Pagination, Thumbs, FreeMode } from 'swiper/modules';
+import { Pagination, Thumbs, FreeMode } from 'swiper/modules';
 import 'swiper/css';
 import 'swiper/css/navigation';
 import 'swiper/css/pagination';
@@ -196,7 +196,7 @@ export default function PropertyDetails() {
     if (navigator.share) {
       try {
         await navigator.share(shareData);
-      } catch (err) {
+      } catch {
         // Share was canceled or failed — this is expected user behavior, not an error
       }
     } else {

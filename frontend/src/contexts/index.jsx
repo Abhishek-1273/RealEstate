@@ -114,6 +114,7 @@ export const AuthProvider = ({ children }) => {
     const restoreSession = async () => {
       try {
         const localToken = localStorage.getItem('hr_token');
+        console.log('[restoreSession] Starting session restore. Token present in localStorage:', !!localToken);
         const headers = {};
         if (localToken) {
           headers['Authorization'] = `Bearer ${localToken}`;
@@ -125,13 +126,17 @@ export const AuthProvider = ({ children }) => {
           signal: controller.signal,
         });
         const data = await res.json();
+        console.log('[restoreSession] Response status:', res.status, 'success:', data?.success);
         if (res.ok && data.success) {
+          console.log('[restoreSession] Session restored successfully for user:', data.user.email);
           setUser(data.user);
         } else {
+          console.warn('[restoreSession] Authentication failed. Clearing token from localStorage. Message:', data?.message);
           if (localToken) localStorage.removeItem('hr_token');
         }
       } catch (err) {
         if (err.name === 'AbortError') return;
+        console.error('[restoreSession] Error during restore:', err);
         // No session or server unreachable — stay logged out silently
       } finally {
         setAuthLoading(false);
@@ -246,3 +251,6 @@ export const useSearch = () => {
   if (!ctx) throw new Error('useSearch must be used within SearchProvider');
   return ctx;
 };
+
+export { SettingsProvider, useSiteSettings } from './SettingsContext';
+

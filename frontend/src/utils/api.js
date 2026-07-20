@@ -100,3 +100,38 @@ export const fetchPartners = async () => {
   if (!res.ok || !data.success) throw new Error(data.message || 'Failed to fetch partners');
   return data.partners;
 };
+
+// ── Master Data ───────────────────────────────────────────────────────────────
+export const fetchMasterData = async () => {
+  const res = await fetch(`${API_URL}/api/master-data`, {
+    credentials: 'include',
+  });
+  const data = await res.json();
+  if (!res.ok || !data.success) throw new Error(data.message || 'Failed to fetch master data');
+  return data.data; // returns { locality: [], city: [], amenity: [], propertyType: [] }
+};
+
+// ── Advisors ──────────────────────────────────────────────────────────────────
+export const fetchAdvisors = async () => {
+  const res = await fetch(`${API_URL}/api/advisors`);
+  const data = await res.json();
+  if (!res.ok || !data.success) throw new Error(data.message || 'Failed to fetch advisors');
+  return data.advisors;
+};
+
+// ── Testimonials ──────────────────────────────────────────────────────────────
+export const fetchTestimonials = async () => {
+  const res = await fetch(`${API_URL}/api/testimonials`);
+  const data = await res.json();
+  if (!res.ok || !data.success) throw new Error(data.message || 'Failed to fetch testimonials');
+  return data.testimonials;
+};
+
+// ── FAQs ──────────────────────────────────────────────────────────────────────
+export const fetchFaqs = async () => {
+  const res = await fetch(`${API_URL}/api/faqs`);
+  const data = await res.json();
+  if (!res.ok || !data.success) throw new Error(data.message || 'Failed to fetch faqs');
+  return data.faqs;
+};
+

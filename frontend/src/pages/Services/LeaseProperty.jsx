@@ -1,9 +1,9 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowRight, ArrowLeft } from 'lucide-react';
 import { fadeUp } from '../../animations/variants';
 import { Link } from 'react-router-dom';
-import { submitEnquiry, fetchProperties } from '../../utils/api';
+import { submitEnquiry, fetchProperties, fetchMasterData } from '../../utils/api';
 import SearchableSelect from '../../components/common/SearchableSelect';
 
 const localities = ['Balewadi', 'Hadapsar', 'KP', 'NIBM Road', 'Viman Nagar', 'Kharadi', 'Punewadi', 'Kothrud', 'Karve Nagar', 'Shewalewadi Road', 'Baner', 'Pashan', 'Bawadhan', 'MG Road', 'JM Road', 'F.C. Road', 'Hinjewadi Phase I, II', 'Ravet', 'Ganga Dham Chownk', 'Swargate', 'Katraj', 'Prabhat Road', 'Bibwewadi', 'Bhekrai Nagar', 'Pimple Gurav', 'Pimple Saudagar', 'Dhayari', 'Kondhwa', 'Undri', 'Muhamad wadi', 'Handewadi', 'Wakad', 'Shivaji Nagar', 'Parvati Hill', 'Sukhsagar Nagar', 'Singhgad Road', 'Camp', 'Pimpri Gaon', 'Chinchwad Gaon', 'Bhosari', 'Nigdi', 'Bhugaon', 'Man', 'Sus', 'Malwadi', 'Warje', 'Fursungi', 'Wagholi', 'Manjari', 'Lohgaon', 'Vishrantwadi', 'Khadki', 'Nanded City', 'Other'];
@@ -22,6 +22,7 @@ export default function LeaseProperty() {
 
   const [priceRange, setPriceRange] = useState({ min: 15000, max: 300000, step: 5000 });
   const [sliderValue, setSliderValue] = useState(45000);
+  const [dynamicLocalities, setDynamicLocalities] = useState([]);
 
   useEffect(() => {
     fetchProperties({ limit: 100 })
@@ -39,6 +40,12 @@ export default function LeaseProperty() {
         }
       })
       .catch(err => console.error("Failed to load properties for rent range:", err));
+
+    fetchMasterData()
+      .then(data => {
+        if (data && data.locality) setDynamicLocalities(data.locality);
+      })
+      .catch(err => console.error("Failed to load localities master data:", err));
   }, []);
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
@@ -112,7 +119,7 @@ export default function LeaseProperty() {
                 <SearchableSelect
                   value={form.locality}
                   onChange={val => set('locality', val)}
-                  options={localities}
+                  options={dynamicLocalities.length > 0 ? dynamicLocalities : localities}
                   placeholder="Choose locality (e.g. Balewadi, KP, Sus...)"
                 />
               </div>

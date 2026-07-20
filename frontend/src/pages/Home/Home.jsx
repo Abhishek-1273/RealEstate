@@ -1,10 +1,8 @@
 import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
-  ArrowRight, Star, Shield, Award, Clock, TrendingUp,
-  CheckCircle2, MapPin, Home as HomeIcon, Building2,
-  Building, Store, Trees, Layers
+  ArrowRight, Star, Shield, Award, Clock, CheckCircle2
 } from 'lucide-react';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Pagination, Autoplay } from 'swiper/modules';
@@ -13,9 +11,9 @@ import 'swiper/css/pagination';
 
 import Hero from '../../components/common/Hero';
 import SectionHeader from '../../components/common/SectionHeader';
-import { testimonials, categories, companyLogos } from '../../data/index';
-import { submitEnquiry, fetchPropertyCounts, fetchPartners } from '../../utils/api';
-import { fadeUp, scaleIn, staggerContainer, staggerFast, viewportOnce } from '../../animations/variants';
+import { testimonials, categories } from '../../data/index';
+import { submitEnquiry, fetchPropertyCounts, fetchPartners, fetchTestimonials } from '../../utils/api';
+import { fadeUp, viewportOnce } from '../../animations/variants';
 import SEO from '../../components/common/SEO';
 import ErrorBoundary from '../../components/common/ErrorBoundary';
 import KineticGrid from '../../components/common/KineticGrid';
@@ -29,93 +27,12 @@ import StatsStrip from './components/StatsStrip';
 import ExploreCities from './components/ExploreCities';
 import BlogPreview from './components/BlogPreview';
 
-const CATEGORY_ICON_MAP = {
-  'Luxury Villas': HomeIcon,
-  'Apartments': Building2,
-  'Penthouses': Building,
-  'Commercial': Store,
-  'Farm Houses': Trees,
-  'Plots': Layers,
-};
 
-/* ══════════════════════════════════════════════════════════════════════════
-   TRUST MARQUEE
-══════════════════════════════════════════════════════════════════════════ */
-function TrustMarquee() {
-  const logos = [...companyLogos, ...companyLogos]; // doubled is sufficient for seamless -50% scroll
-  return (
-    <section className="py-16 bg-white dark:bg-navy-dark border-y border-gray-100 dark:border-white/10 transition-colors duration-300">
-      <div className="container-luxury mb-8 text-center">
-        <p className="text-[11px] font-accent text-gold font-bold tracking-[0.28em] uppercase mb-1">
-          Trusted Financing Partners
-        </p>
-        <div className="h-[2px] w-8 bg-gold/50 mx-auto mt-2 rounded-full" />
-      </div>
-      <div className="relative overflow-hidden py-2">
-        <div className="flex gap-6 animate-scroll whitespace-nowrap w-max hover:[animation-play-state:paused] py-2">
-          {logos.map((l, i) => (
-            <div
-              key={i}
-              className="inline-flex items-center justify-center px-8 py-4.5 bg-white dark:bg-navy border border-gray-200/60 dark:border-white/10 rounded-2xl shadow-[0_4px_16px_rgba(10,25,47,0.02)] transition-all duration-300 hover:border-gold/30 hover:shadow-[0_12px_24px_rgba(229,193,125,0.12)] hover:-translate-y-1 group cursor-pointer"
-            >
-              <span className="font-display font-extrabold text-sm tracking-widest uppercase text-navy/45 dark:text-cream/50 group-hover:text-gold transition-colors duration-300">
-                {l.name}
-              </span>
-            </div>
-          ))}
-        </div>
-        {/* Fade edges */}
-        <div className="absolute inset-y-0 left-0 w-32 pointer-events-none bg-gradient-to-r from-white dark:from-navy-dark to-transparent z-10" />
-        <div className="absolute inset-y-0 right-0 w-32 pointer-events-none bg-gradient-to-l from-white dark:from-navy-dark to-transparent z-10" />
-      </div>
-    </section>
-  );
-}
 
 /* ══════════════════════════════════════════════════════════════════════════
    PROPERTY CATEGORIES
 ══════════════════════════════════════════════════════════════════════════ */
-const CATEGORY_WORDS = ['Categories', 'Collections', 'Portfolios', 'Selections'];
 
-function ScrambleWordCycle() {
-  const [index, setIndex] = useState(0);
-  const [displayText, setDisplayText] = useState(CATEGORY_WORDS[0]);
-  const chars = 'ABCDEFGHJKLMNOPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz0123456789#@$&*';
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const nextIndex = (index + 1) % CATEGORY_WORDS.length;
-      const targetWord = CATEGORY_WORDS[nextIndex];
-      setIndex(nextIndex);
-
-      let iteration = 0;
-      const totalSteps = targetWord.length;
-
-      const scrambleInterval = setInterval(() => {
-        setDisplayText(
-          targetWord
-            .split('')
-            .map((char, i) => {
-              if (char === ' ') return ' ';
-              if (i < iteration) return targetWord[i];
-              return chars[Math.floor(Math.random() * chars.length)];
-            })
-            .join('')
-        );
-
-        iteration += 1 / 3;
-        if (iteration >= totalSteps + 1) {
-          clearInterval(scrambleInterval);
-          setDisplayText(targetWord);
-        }
-      }, 30);
-    }, 4000);
-
-    return () => clearInterval(interval);
-  }, [index]);
-
-  return <span>{displayText}</span>;
-}
 
 function Categories({ counts = {} }) {
   const navigate = useNavigate();
@@ -459,6 +376,24 @@ function BuyingJourney() {
    TESTIMONIALS (CAROUSEL / SWIPER)
 ══════════════════════════════════════════════════════════════════════════ */
 function Testimonials() {
+  const [list, setList] = useState([]);
+
+  useEffect(() => {
+    let active = true;
+    const load = async () => {
+      try {
+        const data = await fetchTestimonials();
+        if (active) setList(data || []);
+      } catch (err) {
+        console.error('Failed to load testimonials:', err);
+      }
+    };
+    load();
+    return () => { active = false; };
+  }, []);
+
+  const activeTestimonials = list.length > 0 ? list : testimonials;
+
   return (
     <section className="section-pad bg-white dark:bg-navy-dark transition-colors duration-300">
       <div className="container-luxury">
@@ -479,8 +414,8 @@ function Testimonials() {
             breakpoints={{ 768: { slidesPerView: 2 }, 1024: { slidesPerView: 3 } }}
             className="pb-14 animate-fade-in"
           >
-            {testimonials.map((t) => (
-              <SwiperSlide key={t.id}>
+            {activeTestimonials.map((t) => (
+              <SwiperSlide key={t._id || t.id}>
                 <div
                   className="rounded-3xl p-8 h-full flex flex-col transition-all duration-400 hover:-translate-y-1 bg-white dark:bg-navy-light border border-gray-150 dark:border-white/10 shadow-card"
                 >

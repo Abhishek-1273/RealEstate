@@ -1,12 +1,13 @@
 import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { Plus, Edit, Trash2, X, Loader2, FileText, ChevronDown, Search, Mail } from 'lucide-react';
+import { Plus, Edit, Trash2, X, Loader2, FileText, ChevronDown, Search } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { fetchBlogs } from '../../utils/api';
 import { createBlogAdmin, updateBlogAdmin, deleteBlogAdmin } from '../../utils/adminApi';
 import { useAdmin } from './AdminContext';
 import ImageUploader from '../../components/common/ImageUploader';
 import { SkeletonTable } from '../../components/common/Skeleton';
+import TestimonialsAdmin from './TestimonialsAdmin';
 
 const CATEGORIES = ['Market Updates', 'NRI Guides', 'Luxury Design', 'Investment Tips', 'Pune Trends'];
 
@@ -148,7 +149,7 @@ function BlogEditModal({ blog, onSave, onClose }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
-      <div className="bg-white dark:bg-[#0E1A2B] rounded-3xl shadow-2xl w-full max-w-lg p-6 border border-gray-150 dark:border-white/10 transition-colors duration-300 max-h-[90vh] overflow-y-auto scrollbar-thin">
+      <div className="bg-white dark:bg-[#0E1A2B] rounded-3xl shadow-2xl w-full max-w-lg p-6 border border-gray-150 dark:border-white/10 transition-colors duration-300 max-h-[90vh] overflow-y-auto no-scrollbar">
         <div className="flex items-center justify-between mb-5">
           <h3 className="font-bold text-navy dark:text-white text-base" style={{ fontFamily: 'Plus Jakarta Sans,sans-serif' }}>
             {blog ? 'Edit Blog Article' : 'Write New Article'}
@@ -243,6 +244,7 @@ function BlogEditModal({ blog, onSave, onClose }) {
 }
 
 export default function BlogsAdmin() {
+  const [activeTab, setActiveTab] = useState('blogs');
   const [blogs, setBlogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [modalBlog, setModalBlog] = useState(null);
@@ -312,19 +314,46 @@ export default function BlogsAdmin() {
 
   return (
     <div className="pb-8">
-      
-      {/* Title Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-black text-navy dark:text-white mb-0.5" style={{ fontFamily: 'Plus Jakarta Sans,sans-serif' }}>Blog Manager</h1>
-          <p className="text-gray-500 dark:text-white/40 text-sm">{blogs.length} published articles</p>
-        </div>
-        <button onClick={() => setShowAdd(true)}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold text-navy hover:scale-[1.02] active:scale-[0.98] transition-transform cursor-pointer shadow-md shadow-gold/15"
-          style={{ background: 'linear-gradient(135deg, #D4AF37, #E8C84A)' }}>
-          <Plus className="w-4 h-4" /> Write Article
+      {/* Tab Switcher */}
+      <div className="flex gap-2 border-b border-gray-200 dark:border-white/10 pb-px mb-6">
+        <button
+          onClick={() => setActiveTab('blogs')}
+          className={`flex items-center gap-2 px-4 py-3 text-sm font-semibold transition-all border-b-2 -mb-px ${
+            activeTab === 'blogs'
+              ? 'border-gold text-gold font-extrabold'
+              : 'border-transparent text-gray-500 hover:text-navy dark:text-white/50 dark:hover:text-white'
+          }`}
+        >
+          Blog Articles
+        </button>
+        <button
+          onClick={() => setActiveTab('testimonials')}
+          className={`flex items-center gap-2 px-4 py-3 text-sm font-semibold transition-all border-b-2 -mb-px ${
+            activeTab === 'testimonials'
+              ? 'border-gold text-gold font-extrabold'
+              : 'border-transparent text-gray-550 hover:text-navy dark:text-white/50 dark:hover:text-white'
+          }`}
+        >
+          Client Testimonials
         </button>
       </div>
+
+      {activeTab === 'testimonials' ? (
+        <TestimonialsAdmin />
+      ) : (
+        <>
+          {/* Title Header */}
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h1 className="text-2xl font-black text-navy dark:text-white mb-0.5" style={{ fontFamily: 'Plus Jakarta Sans,sans-serif' }}>Blog Manager</h1>
+              <p className="text-gray-550 dark:text-white/40 text-sm">{blogs.length} published articles</p>
+            </div>
+            <button onClick={() => setShowAdd(true)}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold text-navy hover:scale-[1.02] active:scale-[0.98] transition-transform cursor-pointer shadow-md shadow-gold/15"
+              style={{ background: 'linear-gradient(135deg, #D4AF37, #E8C84A)' }}>
+              <Plus className="w-4 h-4" /> Write Article
+            </button>
+          </div>
 
       {/* Search & Category Filter Bar */}
       <div className="flex flex-col sm:flex-row gap-3.5 mb-6">
@@ -576,6 +605,8 @@ export default function BlogsAdmin() {
           )}
         </AnimatePresence>,
         document.body
+      )}
+        </>
       )}
 
     </div>

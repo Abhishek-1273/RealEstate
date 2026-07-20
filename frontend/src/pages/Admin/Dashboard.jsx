@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
-import { TrendingUp, Inbox, Building2, Users, ArrowRight, Loader2, Calendar, FileText, Globe, Pencil } from 'lucide-react';
+import { Inbox, Building2, Users, ArrowRight, Calendar, FileText, Globe } from 'lucide-react';
 import { getProperties, getUsers, getPartnersAdmin, getEnquiries } from '../../utils/adminApi';
 import { fetchBlogs } from '../../utils/api';
 import { useAdmin } from './AdminContext';
@@ -54,8 +54,6 @@ export default function Dashboard() {
   const [recentBlogs, setRecentBlogs] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Detect dark mode for styles
-  const isDark = document.documentElement.classList.contains('dark');
 
   useEffect(() => {
     (async () => {
@@ -235,7 +233,7 @@ export default function Dashboard() {
                 <h3 className="font-bold text-navy dark:text-white text-sm" style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}>Recent Luxury Listings</h3>
                 <p className="text-[10px] text-gray-400 dark:text-white/35">Latest premium properties added to database</p>
               </div>
-              <RouterLink to="/admin/properties" className="text-xs font-bold text-gold hover:text-gold-light flex items-center gap-1 group transition-colors shrink-0">
+              <RouterLink to="/panel/properties" className="text-xs font-bold text-gold hover:text-gold-light flex items-center gap-1 group transition-colors shrink-0">
                 <span>Manage listings</span>
                 <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
               </RouterLink>
@@ -279,7 +277,7 @@ export default function Dashboard() {
           </div>
           
           <div className="p-4 border-t border-gray-100 dark:border-white/5 bg-gray-50/20 dark:bg-white/[0.01] text-center">
-            <RouterLink to="/admin/properties" className="text-xs font-semibold text-gray-500 dark:text-white/40 hover:text-navy dark:hover:text-white transition-colors">
+            <RouterLink to="/panel/properties" className="text-xs font-semibold text-gray-500 dark:text-white/40 hover:text-navy dark:hover:text-white transition-colors">
               Configure inventory and upload details
             </RouterLink>
           </div>
@@ -294,7 +292,7 @@ export default function Dashboard() {
                   <h3 className="font-bold text-navy dark:text-white text-sm" style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}>Recent Editorial Blogs</h3>
                   <p className="text-[10px] text-gray-400 dark:text-white/35">Latest published guides and market studies</p>
                 </div>
-                <RouterLink to="/admin/blogs" className="text-xs font-bold text-gold hover:text-gold-light flex items-center gap-1 group transition-colors shrink-0">
+                <RouterLink to="/panel/blogs" className="text-xs font-bold text-gold hover:text-gold-light flex items-center gap-1 group transition-colors shrink-0">
                   <span>Manage blogs</span>
                   <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
                 </RouterLink>
@@ -336,7 +334,7 @@ export default function Dashboard() {
             </div>
 
             <div className="p-4 border-t border-gray-100 dark:border-white/5 bg-gray-50/20 dark:bg-white/[0.01] text-center">
-              <RouterLink to="/admin/blogs" className="text-xs font-semibold text-gray-500 dark:text-white/40 hover:text-navy dark:hover:text-white transition-colors">
+              <RouterLink to="/panel/blogs" className="text-xs font-semibold text-gray-500 dark:text-white/40 hover:text-navy dark:hover:text-white transition-colors">
                 Write editorial posts and publish articles
               </RouterLink>
             </div>

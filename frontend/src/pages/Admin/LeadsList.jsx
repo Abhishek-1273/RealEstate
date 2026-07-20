@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { Search, Filter, ChevronDown, Loader2, UserPlus } from 'lucide-react';
+import { Search, Filter, ChevronDown, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getEnquiries, getUsers, assignLead } from '../../utils/adminApi';
 import { useAdmin } from './AdminContext';

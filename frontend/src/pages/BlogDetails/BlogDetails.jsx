@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useLocation } from 'react-router-dom';
 import { motion, useScroll } from 'framer-motion';
-import { ArrowLeft, Clock, Calendar, Mail } from 'lucide-react';
+import { ArrowLeft, Clock, Mail } from 'lucide-react';
 import { FaXTwitter, FaLinkedinIn, FaFacebookF } from 'react-icons/fa6';
 import { fetchBlogBySlug, fetchBlogs } from '../../utils/api';
 import { fadeUp } from '../../animations/variants';

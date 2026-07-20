@@ -7,7 +7,6 @@ import helmet from 'helmet';
 import compression from 'compression';
 import rateLimit from 'express-rate-limit';
 import connectDB from './config/db.js';
-import redis from './config/redis.js';
 import authRoutes     from './routes/auth.js';
 import enquiryRoutes  from './routes/enquiry.js';
 import propertyRoutes from './routes/property.js';
@@ -16,6 +15,11 @@ import blogRoutes     from './routes/blog.js';
 import uploadRoutes   from './routes/upload.js';
 import partnerRoutes  from './routes/partner.js';
 import sitemapRoutes  from './routes/sitemap.js';
+import masterDataRoutes from './routes/masterData.js';
+import settingsRoutes from './routes/settings.js';
+import advisorRoutes  from './routes/advisor.js';
+import testimonialRoutes from './routes/testimonial.js';
+import faqRoutes from './routes/faq.js';
 import { sanitizeInput } from './middleware/sanitize.js';
 
 const app = express();
@@ -27,7 +31,9 @@ const PORT = process.env.PORT || 5000;
 const isProd = process.env.NODE_ENV === 'production';
 
 // Connect to MongoDB
-connectDB();
+connectDB().then(() => {
+  import('./utils/seeder.js').then(({ seedDefaultData }) => seedDefaultData());
+});
 
 // ── Rate Limiting (in-memory — persists per process instance) ────────────────
 // Note: Using in-memory store which resets on server restart.
@@ -130,6 +136,11 @@ app.use('/api/chat',       apiLimiter,  chatRoutes);
 app.use('/api/blogs',      apiLimiter,  blogRoutes);
 app.use('/api/upload',     apiLimiter,  uploadRoutes);
 app.use('/api/partners',   apiLimiter,  partnerRoutes);
+app.use('/api/master-data', apiLimiter,  masterDataRoutes);
+app.use('/api/settings',    apiLimiter,  settingsRoutes);
+app.use('/api/advisors',    apiLimiter,  advisorRoutes);
+app.use('/api/testimonials', apiLimiter, testimonialRoutes);
+app.use('/api/faqs',        apiLimiter,  faqRoutes);
 app.use('/sitemap.xml',    sitemapRoutes);
 
 // ── Health Check ───────────────────────────────────────────────────────────────
@@ -145,7 +156,7 @@ app.use((req, res) => {
 
 // ── Global Error Handler ───────────────────────────────────────────────────────
 // Never expose raw error stacks in production responses
-app.use((err, req, res, next) => {
+app.use((err, req, res, _next) => {
   const statusCode = err.statusCode || 500;
   if (!isProd) console.error(err.stack);
   res.status(statusCode).json({

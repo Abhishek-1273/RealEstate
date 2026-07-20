@@ -179,7 +179,7 @@ export default function LeadDetail() {
   return (
     <div className="max-w-4xl mx-auto">
       {/* Back */}
-      <Link to="/admin/leads" className="inline-flex items-center gap-2 text-sm text-gray-500 dark:text-white/40 hover:text-navy dark:hover:text-white mb-6 transition-colors">
+      <Link to="/panel/leads" className="inline-flex items-center gap-2 text-sm text-gray-500 dark:text-white/40 hover:text-navy dark:hover:text-white mb-6 transition-colors">
         <ArrowLeft className="w-4 h-4" /> Back to Leads
       </Link>
 

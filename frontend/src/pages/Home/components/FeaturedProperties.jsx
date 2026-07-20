@@ -21,6 +21,7 @@ export default function FeaturedProperties() {
         }
       } catch (err) {
         // Fallback already matches static featuredProperties
+        console.warn("Failed to fetch featured properties, using static fallback:", err);
       }
     };
     getFeatured();

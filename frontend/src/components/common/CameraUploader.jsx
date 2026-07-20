@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Camera, UploadCloud, X, Loader2, Video, StopCircle } from 'lucide-react';
+import { Camera, UploadCloud, X, Loader2, StopCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { uploadImage } from '../../utils/adminApi';
 

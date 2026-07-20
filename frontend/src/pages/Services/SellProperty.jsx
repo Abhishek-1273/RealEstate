@@ -4,7 +4,7 @@ import { ArrowRight, ArrowLeft, Camera, CheckCircle2, ChevronDown } from 'lucide
 import { fadeUp } from '../../animations/variants';
 import { Link } from 'react-router-dom';
 import PremiumIcon from '../../components/common/PremiumIcon';
-import { submitEnquiry } from '../../utils/api';
+import { submitEnquiry, fetchMasterData } from '../../utils/api';
 import CameraUploader from '../../components/common/CameraUploader';
 import SearchableSelect from '../../components/common/SearchableSelect';
 
@@ -91,6 +91,20 @@ export default function SellProperty() {
   const [submitted, setSubmitted]   = useState(false);
   const [loading, setLoading]       = useState(false);
   const [serverError, setServerError] = useState('');
+  const [dynamicLocalities, setDynamicLocalities] = useState([]);
+  const [dynamicTypes, setDynamicTypes] = useState([]);
+
+  useEffect(() => {
+    fetchMasterData()
+      .then(data => {
+        if (data) {
+          if (data.locality) setDynamicLocalities(data.locality);
+          if (data.propertyType) setDynamicTypes(data.propertyType);
+        }
+      })
+      .catch(err => console.error("Failed to load SellProperty master data:", err));
+  }, []);
+
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
   return (
@@ -160,7 +174,7 @@ export default function SellProperty() {
                   <div>
                     <label className="block text-xs font-bold text-navy dark:text-white mb-2">Property Type</label>
                     <div className="flex flex-wrap gap-2">
-                      {propTypes.map(t => (
+                      {(dynamicTypes.length > 0 ? dynamicTypes : propTypes).map(t => (
                         <button key={t} onClick={() => set('type', t)}
                           className={`px-4 py-2 rounded-full text-xs font-semibold transition-all duration-200 border ${
                             form.type === t
@@ -178,7 +192,7 @@ export default function SellProperty() {
                     <SearchableSelect
                       value={form.locality}
                       onChange={val => set('locality', val)}
-                      options={localities}
+                      options={dynamicLocalities.length > 0 ? dynamicLocalities : localities}
                       placeholder="Choose locality (e.g. Balewadi, KP, Sus...)"
                     />
                   </div>
@@ -312,9 +326,12 @@ export default function SellProperty() {
                     <label className="block text-xs font-bold text-navy dark:text-white mb-1.5">Email Address</label>
                     <input value={form.email} onChange={e => set('email', e.target.value)} type="email" placeholder="anjali@company.com" className="input-luxury" />
                   </div>
+                  {serverError && <p className="text-red-500 text-xs mt-2">{serverError}</p>}
                   <div className="flex gap-3 pt-2">
-                    <button type="button" onClick={() => setStep(1)} className="btn-outline"><ArrowLeft className="w-4 h-4" /> Back</button>
-                    <button type="submit" className="btn-primary flex-1">List My Property <ArrowRight className="w-4 h-4" /></button>
+                    <button type="button" disabled={loading} onClick={() => setStep(1)} className="btn-outline"><ArrowLeft className="w-4 h-4" /> Back</button>
+                    <button type="submit" disabled={loading} className="btn-primary flex-1">
+                      {loading ? 'Listing Property...' : 'List My Property'} <ArrowRight className="w-4 h-4" />
+                    </button>
                   </div>
                 </form>
               </motion.div>

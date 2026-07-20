@@ -2,13 +2,14 @@ import { useState, useEffect, useRef } from 'react';
 import { Link, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Heart, User, Menu, X, ChevronDown, ArrowRight,
+  Heart, User, X, ChevronDown, ArrowRight,
   Home, Building2, Key, Settings, Calendar, LogOut,
   Sun, Moon, Search
 } from 'lucide-react';
 import { useAuth, useWishlist, useSearch } from '../../contexts';
 import Magnetic from '../common/Magnetic';
 import PremiumIcon from '../common/PremiumIcon';
+import LottieIcon from '../common/LottieIcon';
 
 const services = [
   { id: 'buy', title: 'Buy Property', desc: "Find your perfect luxury home from our verified Pune listings", icon: <Home className="w-5 h-5" />, link: '/services/buy', color: 'from-gold/10 to-transparent' },
@@ -254,7 +255,14 @@ export default function Navbar() {
                 className={`relative p-2.5 rounded-xl transition-all duration-200 group flex items-center justify-center ${isSolid ? 'hover:bg-gray-100 dark:hover:bg-white/10' : 'hover:bg-white/10'}`}
                 aria-label="Search properties"
               >
-                <Search className={`w-[18px] h-[18px] transition-colors duration-200 ${isSolid ? 'text-ink-muted dark:text-cream/90 group-hover:text-navy dark:group-hover:text-white' : 'text-white/85 group-hover:text-white'}`} />
+                <LottieIcon
+                  src="https://lottie.host/5ad26bcf-3db6-44c1-bf63-c79659a0fcd7/d6TjVv58t1.json"
+                  hoverPlay={true}
+                  autoplay={false}
+                  loop={false}
+                  className="w-[18px] h-[18px]"
+                  style={{ color: isSolid ? '#071A2F' : '#FFFFFF' }}
+                />
               </button>
 
               {/* Wishlist */}
@@ -313,7 +321,7 @@ export default function Navbar() {
                           </Link>
                           {user.role && user.role !== 'client' && (
                             <Link
-                              to="/admin/dashboard"
+                              to="/panel/dashboard"
                               onClick={() => setProfileOpen(false)}
                               className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-semibold hover:bg-yellow-50 dark:hover:bg-amber-950/20 text-[#92400E] dark:text-gold-light transition-colors"
                             >
@@ -386,8 +394,8 @@ export default function Navbar() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: i * 0.05 }}
                     className={`text-left p-5 rounded-2xl bg-gradient-to-br ${s.color} border transition-all duration-250 group ${isSolid
-                        ? 'border-gray-100/80 dark:border-white/10 hover:border-gold/25 hover:shadow-card'
-                        : 'border-white/10 hover:border-gold/25 hover:shadow-luxury'
+                      ? 'border-gray-100/80 dark:border-white/10 hover:border-gold/25 hover:shadow-card'
+                      : 'border-white/10 hover:border-gold/25 hover:shadow-luxury'
                       }`}
                   >
                     <div className="flex items-start justify-between mb-4">
@@ -497,7 +505,7 @@ export default function Navbar() {
                 {/* Staff Panel link — only for non-client roles */}
                 {user && user.role && user.role !== 'client' && (
                   <Link
-                    to="/admin/dashboard"
+                    to="/panel/dashboard"
                     onClick={() => setMobileOpen(false)}
                     className="flex items-center gap-3 px-3 py-3.5 rounded-xl text-sm font-semibold transition-all"
                     style={{ color: '#D4AF37', background: 'rgba(212,175,55,0.08)' }}

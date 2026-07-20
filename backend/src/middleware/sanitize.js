@@ -5,7 +5,8 @@
 const sanitizeValue = (val) => {
   if (typeof val === 'string') {
     return val
-      .replace(/[\x00-\x1F\x7F-\x9F]/g, '') // strip control chars
+      // eslint-disable-next-line no-control-regex
+      .replace(/[\u0000-\u001F\u007F-\u009F]/g, '') // strip control chars
       .replace(/<[^>]*>/g, '')             // strip HTML/XML tags
       .trim();
   }

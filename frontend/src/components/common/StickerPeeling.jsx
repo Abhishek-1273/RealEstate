@@ -26,16 +26,9 @@ import {
     Mesh,
     Group,
     ShadowMaterial,
-    PCFSoftShadowMap,
+    PCFShadowMap,
 } from "three";
 
-const RenderTarget = {
-    current: () => "preview",
-    canvas: "canvas",
-    export: "export",
-    thumbnail: "thumbnail",
-    preview: "preview",
-};
 
 const DEFAULT_IMAGE =
     "https://imagedelivery.net/IEUjvl3YUlxY-MrTpOAWDQ/cbf541e7-a558-45e7-11e8-7e63e9d1a800/w=800";
@@ -226,7 +219,7 @@ export default function StickerPeeling(props) {
     const curlAmountMotion = useMotionValue(0);
     const animatedCurlRef = useRef({ amount: 0 });
 
-    const [textureLoaded, setTextureLoaded] = useState(false);
+    const [_textureLoaded, setTextureLoaded] = useState(false);
     const [contextLost, setContextLost] = useState(false);
     const [sceneReady, setSceneReady] = useState(false);
 
@@ -403,7 +396,7 @@ export default function StickerPeeling(props) {
         if (rendererRef.current) {
             try {
                 rendererRef.current.dispose();
-            } catch (_) {}
+            } catch {}
             rendererRef.current = null;
         }
 
@@ -427,9 +420,9 @@ export default function StickerPeeling(props) {
             );
             renderer.setPixelRatio(1);
             renderer.shadowMap.enabled = true;
-            renderer.shadowMap.type = PCFSoftShadowMap;
+            renderer.shadowMap.type = PCFShadowMap;
             rendererRef.current = renderer;
-        } catch (_) {
+        } catch {
             setContextLost(true);
             return null;
         }
@@ -1230,7 +1223,7 @@ export default function StickerPeeling(props) {
         if (rendererRef.current) {
             try {
                 rendererRef.current.dispose();
-            } catch (_) {}
+            } catch {}
             rendererRef.current = null;
         }
         if (sceneRef.current) {
@@ -1241,7 +1234,7 @@ export default function StickerPeeling(props) {
                     child.dispose?.();
                 }
                 sceneRef.current.clear();
-            } catch (_) {}
+            } catch {}
             sceneRef.current = null;
         }
         cameraRef.current = null;

@@ -77,3 +77,32 @@ export const deleteUser       = (id)          => call(`/api/auth/users/${id}`, {
 export const createPartner    = (body)      => call('/api/partners', { method: 'POST', body: JSON.stringify(body) });
 export const updatePartner    = (id, body)  => call(`/api/partners/${id}`, { method: 'PUT', body: JSON.stringify(body) });
 export const deletePartner    = (id)        => call(`/api/partners/${id}`, { method: 'DELETE' });
+
+// ── Master Data ───────────────────────────────────────────────────────────────
+export const getMasterDataList   = ()                 => call('/api/master-data/list');
+export const createMasterData    = (category, value) => call('/api/master-data', { method: 'POST', body: JSON.stringify({ category, value }) });
+export const updateMasterData    = (id, payload)     => call(`/api/master-data/${id}`, { method: 'PUT', body: JSON.stringify(typeof payload === 'string' ? { value: payload } : payload) });
+export const deleteMasterData    = (id)              => call(`/api/master-data/${id}`, { method: 'DELETE' });
+
+// ── Site Settings ─────────────────────────────────────────────────────────────
+export const getSettingsAdmin    = ()       => call('/api/settings');
+export const updateSettingsAdmin = (body)   => call('/api/settings', { method: 'PUT', body: JSON.stringify(body) });
+
+// ── Advisors ──────────────────────────────────────────────────────────────────
+export const getAdvisorsAdmin    = (params = {}) => call(`/api/advisors?${new URLSearchParams(params)}`);
+export const createAdvisorAdmin  = (body)   => call('/api/advisors', { method: 'POST', body: JSON.stringify(body) });
+export const updateAdvisorAdmin  = (id, body) => call(`/api/advisors/${id}`, { method: 'PUT', body: JSON.stringify(body) });
+export const deleteAdvisorAdmin  = (id)     => call(`/api/advisors/${id}`, { method: 'DELETE' });
+
+// ── Testimonials ──────────────────────────────────────────────────────────────
+export const getTestimonialsAdmin   = (params = {}) => call(`/api/testimonials?${new URLSearchParams(params)}`);
+export const createTestimonialAdmin = (body)   => call('/api/testimonials', { method: 'POST', body: JSON.stringify(body) });
+export const updateTestimonialAdmin = (id, body) => call(`/api/testimonials/${id}`, { method: 'PUT', body: JSON.stringify(body) });
+export const deleteTestimonialAdmin = (id)     => call(`/api/testimonials/${id}`, { method: 'DELETE' });
+
+// ── FAQs ──────────────────────────────────────────────────────────────────────
+export const getFaqsAdmin   = (params = {}) => call(`/api/faqs?${new URLSearchParams(params)}`);
+export const createFaqAdmin = (body)   => call('/api/faqs', { method: 'POST', body: JSON.stringify(body) });
+export const updateFaqAdmin = (id, body) => call(`/api/faqs/${id}`, { method: 'PUT', body: JSON.stringify(body) });
+export const deleteFaqAdmin = (id)     => call(`/api/faqs/${id}`, { method: 'DELETE' });
+

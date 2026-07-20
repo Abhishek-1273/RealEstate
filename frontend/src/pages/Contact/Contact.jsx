@@ -3,19 +3,14 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useLocation } from 'react-router-dom';
 import { Phone, Mail, MapPin, Clock, ChevronDown, ChevronUp, ArrowRight } from 'lucide-react';
 import { fadeUp, fadeLeft, fadeRight, staggerContainer, viewportOnce } from '../../animations/variants';
-import { faqs } from '../../data/index';
+import { faqs as staticFaqs } from '../../data/index';
 import SectionHeader from '../../components/common/SectionHeader';
 import PremiumIcon from '../../components/common/PremiumIcon';
-import { useAuth } from '../../contexts';
-import { submitEnquiry } from '../../utils/api';
+import { useAuth, useSiteSettings } from '../../contexts';
+import { submitEnquiry, fetchFaqs } from '../../utils/api';
 import SEO from '../../components/common/SEO';
 
-const CONTACTS = [
-  { icon: <MapPin className="w-5 h-5" />, label: 'Visit Us', val: 'Level 12, Panchshil Tech Park\nYerwada, Pune 411006', href: '#' },
-  { icon: <Phone className="w-5 h-5" />, label: 'Call Us', val: '+91 98765 43210\n+91 98765 43211', href: 'tel:+919876543210' },
-  { icon: <Mail className="w-5 h-5" />, label: 'Email Us', val: 'hello@hyperrelestix.in\ncareers@hyperrelestix.in', href: 'mailto:hello@hyperrelestix.in' },
-  { icon: <Clock className="w-5 h-5" />, label: 'Office Hours', val: 'Mon–Sat: 9:00 AM – 7:00 PM\nSunday: 10:00 AM – 4:00 PM', href: null },
-];
+// Dynamic contacts will be generated inside the component based on site settings
 
 function CustomSelect({ value, onChange, options, placeholder, className = "" }) {
   const [open, setOpen] = useState(false);
@@ -93,10 +88,18 @@ function CustomSelect({ value, onChange, options, placeholder, className = "" })
 export default function Contact() {
   const { user, openAuth } = useAuth();
   const location = useLocation();
+  const { settings } = useSiteSettings();
+  const contacts = [
+    { icon: <MapPin className="w-5 h-5" />, label: 'Visit Us', val: settings?.contactAddress || 'Level 12, Panchshil Tech Park\nYerwada, Pune 411006', href: '#' },
+    { icon: <Phone className="w-5 h-5" />, label: 'Call Us', val: `${settings?.contactPhone1 || '+91 98765 43210'}\n${settings?.contactPhone2 || '+91 98765 43211'}`, href: `tel:${settings?.contactPhone1 || '+919876543210'}` },
+    { icon: <Mail className="w-5 h-5" />, label: 'Email Us', val: `${settings?.contactEmail1 || 'hello@hyperrelestix.in'}\n${settings?.contactEmail2 || 'careers@hyperrelestix.in'}`, href: `mailto:${settings?.contactEmail1 || 'hello@hyperrelestix.in'}` },
+    { icon: <Clock className="w-5 h-5" />, label: 'Office Hours', val: `${settings?.contactOfficeHoursWeekdays || 'Mon–Sat: 9:00 AM – 7:00 PM'}\n${settings?.contactOfficeHoursSunday || 'Sunday: 10:00 AM – 4:00 PM'}`, href: null },
+  ];
+
   const [form, setForm] = useState({
-    name: '',
-    phone: '',
-    email: '',
+    name: user?.name || '',
+    phone: user?.phone || '',
+    email: user?.email || '',
     subject: location.state?.subject || '',
     message: location.state?.message || '',
     timezone: 'Dubai (GST)',
@@ -106,6 +109,24 @@ export default function Contact() {
   const [loading, setLoading]       = useState(false);
   const [serverError, setServerError] = useState('');
   const [openFaq, setOpenFaq]         = useState(null);
+  const [faqsList, setFaqsList] = useState([]);
+
+  useEffect(() => {
+    let active = true;
+    const load = async () => {
+      try {
+        const data = await fetchFaqs();
+        if (active) setFaqsList(data || []);
+      } catch (err) {
+        console.error('Failed to load FAQs:', err);
+      }
+    };
+    load();
+    return () => { active = false; };
+  }, []);
+
+  const activeFaqs = faqsList.length > 0 ? faqsList : staticFaqs;
+
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
   useEffect(() => {
@@ -153,7 +174,7 @@ export default function Contact() {
           viewport={viewportOnce}
           className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-16"
         >
-          {CONTACTS.map((c, i) => (
+          {contacts.map((c, i) => (
             <motion.div key={i} variants={fadeUp}>
               <div
                 className="p-6 rounded-2xl h-full bg-white dark:bg-navy-light border border-gray-100 dark:border-white/10 shadow-card transition-all duration-300 hover:-translate-y-1"
@@ -314,8 +335,8 @@ export default function Contact() {
               <div className="absolute inset-0 flex items-center justify-center flex-col gap-4">
                 <PremiumIcon icon={MapPin} variant="gold" size="xl" />
                 <div className="text-center">
-                  <p className="text-white font-display font-bold text-sm">HyperRelestix Pune HQ</p>
-                  <p className="text-white/55 text-xs mt-1">Level 12, Panchshil Tech Park, Yerwada</p>
+                  <p className="text-white font-display font-bold text-sm">{(settings?.logoTextPrimary || 'Hyper') + (settings?.logoTextSecondary || 'Relestix')} Pune HQ</p>
+                  <p className="text-white/55 text-xs mt-1">{settings?.contactAddress || 'Level 12, Panchshil Tech Park, Yerwada'}</p>
                 </div>
                 <a
                   href="https://maps.google.com/?q=Panchshil+Tech+Park+Pune"
@@ -355,8 +376,8 @@ export default function Contact() {
         <div className="container-luxury max-w-3xl">
           <SectionHeader label="FAQ" title={<>Frequently Asked <span style={{ color: '#D4AF37' }}>Questions</span></>} align="center" className="mb-12" />
           <div className="space-y-3">
-            {faqs.map((faq, i) => (
-              <motion.div key={faq.id} variants={fadeUp} initial="hidden" whileInView="visible" viewport={viewportOnce}>
+            {activeFaqs.map((faq, i) => (
+              <motion.div key={faq._id || faq.id} variants={fadeUp} initial="hidden" whileInView="visible" viewport={viewportOnce}>
                 <button
                   onClick={() => setOpenFaq(openFaq === i ? null : i)}
                   className={`w-full text-left p-5 rounded-2xl transition-all duration-300 border ${

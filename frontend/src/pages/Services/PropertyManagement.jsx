@@ -244,8 +244,9 @@ export default function PropertyManagement() {
                     {tiers.find(t => t.id === selected)?.name} — {tiers.find(t => t.id === selected)?.price}
                   </span>
                 </div>
-                <button type="submit" className="btn-primary w-full justify-center">
-                  Request Management Services <ArrowRight className="w-4 h-4" />
+                {serverError && <p className="text-red-500 text-xs mt-2">{serverError}</p>}
+                <button type="submit" disabled={loading} className="btn-primary w-full justify-center">
+                  {loading ? 'Submitting Request...' : 'Request Management Services'} <ArrowRight className="w-4 h-4" />
                 </button>
               </form>
             </motion.div>

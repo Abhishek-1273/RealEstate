@@ -4,7 +4,7 @@ import { useSearchParams } from 'react-router-dom';
 import { Search, Grid3X3, List, ChevronDown, MapPin, Loader2, ArrowUpDown } from 'lucide-react';
 import PropertyCard from '../../components/common/PropertyCard';
 import { properties as staticProperties } from '../../data/properties';
-import { fetchProperties } from '../../utils/api';
+import { fetchProperties, fetchMasterData } from '../../utils/api';
 import { fadeUp, staggerContainer } from '../../animations/variants';
 import SEO from '../../components/common/SEO';
 
@@ -91,6 +91,20 @@ export default function Properties() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
+  const [dynamicLocalities, setDynamicLocalities] = useState([]);
+  const [dynamicTypes, setDynamicTypes] = useState([]);
+
+  useEffect(() => {
+    fetchMasterData()
+      .then(data => {
+        if (data) {
+          if (data.locality) setDynamicLocalities(['All', ...data.locality]);
+          if (data.propertyType) setDynamicTypes(['All', ...data.propertyType]);
+        }
+      })
+      .catch(err => console.error("Failed to load search filters master data:", err));
+  }, []);
+
   // ── Read and Sync URL params ─────────────────────────────────────────────
   useEffect(() => {
     const categoryParam = searchParams.get('category');
@@ -105,13 +119,14 @@ export default function Properties() {
     }
     
     if (cityParam) {
-      const match = CITIES.find(c => c.toLowerCase() === cityParam.toLowerCase());
+      const activeCities = dynamicLocalities.length > 0 ? dynamicLocalities : CITIES;
+      const match = activeCities.find(c => c.toLowerCase() === cityParam.toLowerCase());
       if (match) {
         setCity(match);
       } else {
         // If it is a Pune locality, set the city to Pune and set the search query to the locality
-        const localities = ['Balewadi', 'Hadapsar', 'KP', 'NIBM Road', 'Viman Nagar', 'Kharadi', 'Punewadi', 'Kothrud', 'Karve Nagar', 'Shewalewadi Road', 'Baner', 'Pashan', 'Bawadhan', 'MG Road', 'JM Road', 'F.C. Road', 'Hinjewadi Phase I, II', 'Ravet', 'Ganga Dham Chownk', 'Swargate', 'Katraj', 'Prabhat Road', 'Bibwewadi', 'Bhekrai Nagar', 'Pimple Gurav', 'Pimple Saudagar', 'Dhayari', 'Kondhwa', 'Undri', 'Muhamad wadi', 'Handewadi', 'Wakad', 'Shivaji Nagar', 'Parvati Hill', 'Sukhsagar Nagar', 'Singhgad Road', 'Camp', 'Pimpri Gaon', 'Chinchwad Gaon', 'Bhosari', 'Nigdi', 'Bhugaon', 'Man', 'Sus', 'Malwadi', 'Warje', 'Fursungi', 'Wagholi', 'Manjari', 'Lohgaon', 'Vishrantwadi', 'Khadki', 'Nanded City'];
-        const matchedLocality = localities.find(l => l.toLowerCase() === cityParam.toLowerCase());
+        const listLocs = dynamicLocalities.length > 0 ? dynamicLocalities.slice(1) : ['Balewadi', 'Hadapsar', 'KP', 'NIBM Road', 'Viman Nagar', 'Kharadi', 'Punewadi', 'Kothrud', 'Karve Nagar', 'Shewalewadi Road', 'Baner', 'Pashan', 'Bawadhan', 'MG Road', 'JM Road', 'F.C. Road', 'Hinjewadi Phase I, II', 'Ravet', 'Ganga Dham Chownk', 'Swargate', 'Katraj', 'Prabhat Road', 'Bibwewadi', 'Bhekrai Nagar', 'Pimple Gurav', 'Pimple Saudagar', 'Dhayari', 'Kondhwa', 'Undri', 'Muhamad wadi', 'Handewadi', 'Wakad', 'Shivaji Nagar', 'Parvati Hill', 'Sukhsagar Nagar', 'Singhgad Road', 'Camp', 'Pimpri Gaon', 'Chinchwad Gaon', 'Bhosari', 'Nigdi', 'Bhugaon', 'Man', 'Sus', 'Malwadi', 'Warje', 'Fursungi', 'Wagholi', 'Manjari', 'Lohgaon', 'Vishrantwadi', 'Khadki', 'Nanded City'];
+        const matchedLocality = listLocs.find(l => l.toLowerCase() === cityParam.toLowerCase());
         if (matchedLocality) {
           setCity('Pune');
           setQuery(matchedLocality);
@@ -126,7 +141,7 @@ export default function Properties() {
     } else {
       setQuery('');
     }
-  }, [searchParams]);
+  }, [searchParams, dynamicLocalities]);
 
   // Reset page when search/filter attributes change
   useEffect(() => {
@@ -312,7 +327,7 @@ export default function Properties() {
                         transition={{ duration: 0.15, ease: 'easeOut' }}
                         className="absolute left-0 right-0 md:right-auto md:w-48 top-full mt-2 max-h-60 overflow-y-auto bg-white/95 dark:bg-navy/95 backdrop-blur-md border border-gray-150 dark:border-white/10 rounded-2xl shadow-luxury z-50 py-1.5 no-scrollbar"
                       >
-                        {CITIES.map((c) => (
+                        {(dynamicLocalities.length > 0 ? dynamicLocalities : CITIES).map((c) => (
                           <button
                             key={c}
                             onClick={() => {
@@ -398,7 +413,7 @@ export default function Properties() {
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 pt-1">
               {/* Type pills */}
               <div className="flex gap-1.5 overflow-x-auto no-scrollbar items-center shrink-0 py-1.5">
-                {TYPES.map(t => (
+                {(dynamicTypes.length > 0 ? dynamicTypes : TYPES).map(t => (
                   <button key={t} onClick={() => setType(t)}
                     className={`px-3.5 h-[36px] rounded-lg text-[11px] font-semibold whitespace-nowrap transition-all duration-250 shrink-0 flex items-center justify-center ${type === t
                         ? 'bg-gradient-to-r from-gold to-gold-light text-navy shadow-[0_3px_10px_rgba(212,175,55,0.25)]'

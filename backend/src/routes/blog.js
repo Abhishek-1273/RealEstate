@@ -6,7 +6,7 @@ import {
   updateBlog,
   deleteBlog
 } from '../controllers/blogController.js';
-import { protect, managementPlus } from '../middleware/auth.js';
+import { managementPlus } from '../middleware/auth.js';
 
 const router = express.Router();
 

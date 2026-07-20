@@ -45,7 +45,6 @@ const SERVICES = [
 export default function ServiceShuffle() {
   const navigate = useNavigate();
   const { user, openAuth } = useAuth();
-  const [stack, setStack] = useState([0, 1, 2, 3]);
   const [activeIdx, setActiveIdx] = useState(0);
   const [hoveredIdx, setHoveredIdx] = useState(null);
 
@@ -59,26 +58,9 @@ export default function ServiceShuffle() {
   const mobileCurrentIdx = useRef(0);
   const lastUserInteraction = useRef(0);
 
-  const handleScroll = () => {
-    if (!mobileScrollRef.current) return;
-    lastUserInteraction.current = Date.now();
-    const scrollLeft = mobileScrollRef.current.scrollLeft;
-    const CARD_STEP = 275 + 16; // card width + gap
-    const idx = Math.round(scrollLeft / CARD_STEP);
-    mobileCurrentIdx.current = Math.max(0, Math.min(idx, SERVICES.length - 1));
-  };
 
-  // Shuffle callback to bring a clicked card to the front
   const handleCardClick = useCallback((idx) => {
     setActiveIdx(idx);
-    setStack(prev => {
-      const next = [...prev];
-      while (next[0] !== idx) {
-        const top = next.shift();
-        next.push(top);
-      }
-      return next;
-    });
     // Reset tilts
     setTiltX(0);
     setTiltY(0);
@@ -89,12 +71,6 @@ export default function ServiceShuffle() {
     const timer = setInterval(() => {
       if (hoveredIdx === null) {
         setActiveIdx(prev => (prev + 1) % SERVICES.length);
-        setStack(prev => {
-          const next = [...prev];
-          const top = next.shift();
-          next.push(top);
-          return next;
-        });
       }
     }, 4500);
     return () => clearInterval(timer);
@@ -146,71 +122,6 @@ export default function ServiceShuffle() {
     }
   }, [user, openAuth, navigate]);
 
-  // Dynamic layout calculations based on position in stack
-  const getCardTransform = (pos, isCardHovered) => {
-    switch (pos) {
-      case 0: // Front Center Card (Active)
-        return {
-          x: 0,
-          y: isCardHovered ? -15 : 0,
-          z: 120,
-          scale: 1,
-          rotateX: tiltX,
-          rotateY: tiltY,
-          rotateZ: 0,
-          opacity: 1,
-          filter: 'blur(0px)',
-        };
-      case 1: // Right Peeking Card
-        return {
-          x: 130,
-          y: isCardHovered ? -8 : 0,
-          z: 60,
-          scale: 0.86,
-          rotateX: 0,
-          rotateY: -15,
-          rotateZ: -1.5,
-          opacity: 0.9,
-          filter: 'blur(0px)',
-        };
-      case 2: // Far-Right Peeking Card
-        return {
-          x: 260,
-          y: isCardHovered ? -8 : 0,
-          z: 10,
-          scale: 0.78,
-          rotateX: 0,
-          rotateY: -20,
-          rotateZ: -2.5,
-          opacity: 0.72,
-          filter: 'blur(0px)',
-        };
-      case 3: // Left Peeking Card
-        return {
-          x: -130,
-          y: isCardHovered ? -8 : 0,
-          z: 60,
-          scale: 0.86,
-          rotateX: 0,
-          rotateY: 15,
-          rotateZ: 1.5,
-          opacity: 0.9,
-          filter: 'blur(0px)',
-        };
-      default:
-        return {
-          x: 0,
-          y: 0,
-          z: 0,
-          scale: 1,
-          rotateX: 0,
-          rotateY: 0,
-          rotateZ: 0,
-          opacity: 1,
-          filter: 'blur(0px)',
-        };
-    }
-  };
 
   return (
     <div className="w-full flex justify-center items-center">
