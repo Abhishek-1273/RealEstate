@@ -125,6 +125,15 @@ function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
 }
 
 function createCardCanvas(reraBadgeImg, brandName, logoAbbr) {
+  // Extract capital letters from brandName (e.g. KinProperty -> KP, HyperRelestix -> HR)
+  const brandInitials = brandName
+    ? brandName.replace(/[^A-Z]/g, '').slice(0, 3)
+    : 'HR';
+
+  const displayAbbr = (logoAbbr && logoAbbr.length <= 3)
+    ? logoAbbr
+    : (brandInitials || 'HR');
+
   const canvas = document.createElement("canvas");
   canvas.width = 960;
   canvas.height = 720;
@@ -197,7 +206,7 @@ function createCardCanvas(reraBadgeImg, brandName, logoAbbr) {
   ctx.font = "bold 24px 'Outfit', sans-serif";
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
-  ctx.fillText(logoAbbr, 130, 610);
+  ctx.fillText(displayAbbr, 130, 610);
   ctx.textAlign = "left";
 
   // Advisory Board Titles

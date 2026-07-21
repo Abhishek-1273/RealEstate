@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAdmin } from './AdminContext';
 import { useAuth, useSiteSettings } from '../../contexts';
+import PageLoader from '../../components/common/PageLoader';
 
 import { API_URL } from '../../config/api';
 const API = API_URL;
@@ -12,7 +13,7 @@ const ROLE_LABELS = {
 
 export default function AdminLogin() {
   const { signIn } = useAuth();
-  const { user }   = useAdmin();
+  const { user, loading: sessionLoading }   = useAdmin();
   const { settings } = useSiteSettings();
   const navigate   = useNavigate();
 
@@ -21,6 +22,10 @@ export default function AdminLogin() {
       navigate('/panel/dashboard', { replace: true });
     }
   }, [user, navigate]);
+
+  if (sessionLoading) {
+    return <PageLoader />;
+  }
 
   const [step, setStep]     = useState('email'); // 'email' | 'otp'
   const [email, setEmail]   = useState('');

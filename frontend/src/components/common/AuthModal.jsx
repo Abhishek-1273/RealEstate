@@ -30,7 +30,7 @@ const itemVariants = {
 };
 
 export default function AuthModal() {
-  const { closeAuth, signIn, pendingRedirect } = useAuth();
+  const { user, closeAuth, signIn, pendingRedirect } = useAuth();
   const navigate = useNavigate();
 
   const [tab, setTab]                 = useState('login'); // 'login' | 'signup'
@@ -47,6 +47,13 @@ export default function AuthModal() {
   const [loading, setLoading]         = useState(false);
   const [serverError, setServerError] = useState('');
   const [otpSuccessMessage, setOtpSuccessMessage] = useState('');
+
+  // Auto-close modal if user session is successfully restored / active
+  useEffect(() => {
+    if (user) {
+      closeAuth();
+    }
+  }, [user, closeAuth]);
 
   // ── Scroll lock while modal is open ────────────────────────────────────────
   useEffect(() => {

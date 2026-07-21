@@ -56,18 +56,29 @@ export default function SettingsAdmin() {
   const handleLogoUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    setUploading(true);
+
     setError('');
-    try {
-      const url = await uploadImage(file);
-      handleChange('logoIconImage', url);
-      setSuccess('Logo icon uploaded successfully!');
-      setTimeout(() => setSuccess(''), 3000);
-    } catch (err) {
-      setError(err.message || 'Logo upload failed.');
-    } finally {
-      setUploading(false);
-    }
+    const img = new window.Image();
+    img.src = URL.createObjectURL(file);
+    img.onload = async () => {
+      URL.revokeObjectURL(img.src);
+      if (img.width !== img.height) {
+        setError('Logo icon must be a square image (equal width and height).');
+        return;
+      }
+
+      setUploading(true);
+      try {
+        const url = await uploadImage(file);
+        handleChange('logoIconImage', url);
+        setSuccess('Logo icon uploaded successfully!');
+        setTimeout(() => setSuccess(''), 3000);
+      } catch (err) {
+        setError(err.message || 'Logo upload failed.');
+      } finally {
+        setUploading(false);
+      }
+    };
   };
 
   const handleSubmit = async (e) => {
@@ -176,6 +187,7 @@ export default function SettingsAdmin() {
                       value={form.logoIconText || ''}
                       onChange={(e) => handleChange('logoIconText', e.target.value)}
                       placeholder="e.g. HR"
+                      maxLength={3}
                       className={inputCls}
                     />
                   </div>
