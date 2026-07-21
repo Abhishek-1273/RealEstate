@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useSiteSettings } from '../../contexts/SettingsContext';
 import { updateSettingsAdmin, uploadImage } from '../../utils/adminApi';
 import { Loader2, Save, Globe, Eye, Image, PhoneCall, Share2, TrendingUp } from 'lucide-react';
@@ -14,6 +14,15 @@ export default function SettingsAdmin() {
   const [success, setSuccess] = useState('');
   const [uploading, setUploading] = useState(false);
   const [activeTab, setActiveTab] = useState('branding');
+
+  // Cropper states
+  const [cropSrc, setCropSrc] = useState(null);
+  const [cropZoom, setCropZoom] = useState(1);
+  const [cropPos, setCropPos] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const cropImgRef = useRef(null);
+  const [cropFileName, setCropFileName] = useState('');
 
   // Keep form in sync when context loads settings
   useEffect(() => {
@@ -53,32 +62,108 @@ export default function SettingsAdmin() {
     }
   };
 
-  const handleLogoUpload = async (e) => {
+  const handleLogoUpload = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    setCropFileName(file.name);
+    setCropZoom(1);
+    setCropPos({ x: 0, y: 0 });
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      setCropSrc(reader.result);
+    };
+    reader.readAsDataURL(file);
+    e.target.value = ''; // Reset file input
+  };
+
+  const closeCropper = () => {
+    setCropSrc(null);
+  };
+
+  const handlePointerDown = (e) => {
+    setIsDragging(true);
+    setDragStart({ x: e.clientX - cropPos.x, y: e.clientY - cropPos.y });
+    e.currentTarget.setPointerCapture(e.pointerId);
+  };
+
+  const handlePointerMove = (e) => {
+    if (!isDragging) return;
+    setCropPos({
+      x: e.clientX - dragStart.x,
+      y: e.clientY - dragStart.y
+    });
+  };
+
+  const handlePointerUp = (e) => {
+    if (!isDragging) return;
+    setIsDragging(false);
+    e.currentTarget.releasePointerCapture(e.pointerId);
+  };
+
+  const executeCrop = async () => {
+    const img = cropImgRef.current;
+    if (!img) return;
+
+    setUploading(true);
     setError('');
-    const img = new window.Image();
-    img.src = URL.createObjectURL(file);
-    img.onload = async () => {
-      URL.revokeObjectURL(img.src);
-      if (img.width !== img.height) {
-        setError('Logo icon must be a square image (equal width and height).');
-        return;
+
+    try {
+      const canvas = document.createElement('canvas');
+      const size = 500;
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) throw new Error('Could not create canvas context');
+
+      // Clear with white background
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, size, size);
+
+      // Math for displaying image coordinates exactly as seen in 240x240 frame
+      const naturalW = img.naturalWidth;
+      const naturalH = img.naturalHeight;
+      const ratio = Math.min(240 / naturalW, 240 / naturalH);
+      const fitW = naturalW * ratio;
+      const fitH = naturalH * ratio;
+
+      const initialX = (240 - fitW) / 2;
+      const initialY = (240 - fitH) / 2;
+
+      const displayLeft = initialX + cropPos.x - (fitW * (cropZoom - 1)) / 2;
+      const displayTop = initialY + cropPos.y - (fitH * (cropZoom - 1)) / 2;
+      const displayWidth = fitW * cropZoom;
+      const displayHeight = fitH * cropZoom;
+
+      const scale = size / 240;
+      const canvasLeft = displayLeft * scale;
+      const canvasTop = displayTop * scale;
+      const canvasWidth = displayWidth * scale;
+      const canvasHeight = displayHeight * scale;
+
+      ctx.drawImage(img, canvasLeft, canvasTop, canvasWidth, canvasHeight);
+
+      let fileType = 'image/jpeg';
+      if (cropFileName.toLowerCase().endsWith('.png')) {
+        fileType = 'image/png';
       }
 
-      setUploading(true);
-      try {
-        const url = await uploadImage(file);
-        handleChange('logoIconImage', url);
-        setSuccess('Logo icon uploaded successfully!');
-        setTimeout(() => setSuccess(''), 3000);
-      } catch (err) {
-        setError(err.message || 'Logo upload failed.');
-      } finally {
-        setUploading(false);
-      }
-    };
+      const blob = await new Promise((resolve) => canvas.toBlob(resolve, fileType, 0.95));
+      if (!blob) throw new Error('Canvas conversion failed');
+
+      const croppedFile = new File([blob], cropFileName, { type: fileType });
+
+      const url = await uploadImage(croppedFile);
+      handleChange('logoIconImage', url);
+      setCropSrc(null);
+      setSuccess('Logo icon cropped and uploaded successfully!');
+      setTimeout(() => setSuccess(''), 3000);
+    } catch (err) {
+      setError(err.message || 'Crop/Upload failed');
+    } finally {
+      setUploading(false);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -591,6 +676,84 @@ export default function SettingsAdmin() {
           </div>
         </div>
       </div>
+
+      {/* Adjust Logo Crop Modal */}
+      {cropSrc && (
+        <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-navy/80 backdrop-blur-md">
+          <div className="bg-[#0D1527] border border-white/10 rounded-[2rem] w-full max-w-sm p-6 text-white space-y-6 shadow-luxury">
+            <div className="text-center">
+              <h3 className="font-display font-bold text-base text-white">Adjust Logo Crop</h3>
+              <p className="text-[11px] text-white/50 mt-1">Drag the logo inside the gold box, and use the slider to zoom.</p>
+            </div>
+
+            {/* Viewport Box */}
+            <div className="flex justify-center">
+              <div 
+                className="w-60 h-60 relative overflow-hidden rounded-3xl border-2 border-gold bg-black/40 flex items-center justify-center select-none cursor-move touch-none"
+                onPointerDown={handlePointerDown}
+                onPointerMove={handlePointerMove}
+                onPointerUp={handlePointerUp}
+                onPointerLeave={handlePointerUp}
+              >
+                <img
+                  ref={cropImgRef}
+                  src={cropSrc}
+                  alt="Crop preview"
+                  style={{
+                    transform: `translate(${cropPos.x}px, ${cropPos.y}px) scale(${cropZoom})`,
+                    transition: isDragging ? 'none' : 'transform 0.15s ease-out',
+                    maxWidth: '100%',
+                    maxHeight: '100%',
+                    pointerEvents: 'none'
+                  }}
+                />
+              </div>
+            </div>
+
+            {/* Zoom Control */}
+            <div className="space-y-2 px-1">
+              <div className="flex justify-between text-[10px] font-bold text-white/50 uppercase tracking-wider">
+                <span>Zoom Scale</span>
+                <span>{Math.round(cropZoom * 100)}%</span>
+              </div>
+              <input
+                type="range"
+                min="1"
+                max="3"
+                step="0.05"
+                value={cropZoom}
+                onChange={(e) => setCropZoom(parseFloat(e.target.value))}
+                className="w-full accent-gold bg-white/10 h-1.5 rounded-lg appearance-none cursor-pointer"
+              />
+            </div>
+
+            {/* Buttons */}
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={closeCropper}
+                className="flex-1 py-3 text-xs font-bold rounded-xl border border-white/10 hover:bg-white/5 transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={executeCrop}
+                disabled={uploading}
+                className="flex-1 py-3 text-xs font-bold rounded-xl bg-gradient-to-r from-gold to-gold-light text-navy font-extrabold hover:brightness-105 transition-all shadow-luxury flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-60"
+              >
+                {uploading ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" /> Uploading...
+                  </>
+                ) : (
+                  'Apply Crop'
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
