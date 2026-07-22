@@ -127,13 +127,14 @@ export default function ServiceShuffle() {
     <div className="w-full flex justify-center items-center">
       {/* ── DESKTOP/TABLET: 3D Single Card Slide/Fade Show ── */}
       <div
-        className="hidden md:flex flex-col items-center justify-center relative w-full h-[500px]"
+        className="hidden md:flex flex-col items-center justify-center relative w-full h-[500px] overflow-hidden"
         style={{ perspective: '1600px', transformStyle: 'preserve-3d' }}
       >
         <div
-          className="relative w-[420px] h-[500px] flex justify-center items-center"
-          style={{ transformStyle: 'preserve-3d', transform: 'translateX(90px)' }}
+          className="relative w-full max-w-[420px] h-[500px] flex justify-center items-center"
+          style={{ transformStyle: 'preserve-3d' }}
         >
+
           <AnimatePresence mode="wait">
             <div
               key={activeIdx}
@@ -272,8 +273,9 @@ export default function ServiceShuffle() {
       </div>
 
       {/* ── MOBILE: Single Card Slide/Fade Carousel (auto-shuffling) ── */}
-      <div className="md:hidden w-full flex flex-col items-center justify-center relative h-[495px]">
-        <div className="relative w-[360px] max-w-[92vw] h-[460px] flex justify-center items-center">
+      <div className="md:hidden w-full flex flex-col items-center justify-center relative h-[495px] overflow-hidden">
+        <div className="relative w-full max-w-[360px] h-[460px] flex justify-center items-center px-4">
+
           <AnimatePresence mode="wait">
             <motion.div
               key={activeIdx}

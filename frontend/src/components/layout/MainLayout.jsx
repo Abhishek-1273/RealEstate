@@ -106,12 +106,13 @@ const MainLayout = () => {
   }, [location.pathname]);
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col overflow-x-hidden w-full max-w-[100vw]">
       <GoldCursorTrail />
       <ScrollProgress />
       <Navbar />
 
-      <main className="flex-1">
+      <main className="flex-1 w-full overflow-x-hidden">
+
         {isMobile ? (
           <div>
             <Outlet />

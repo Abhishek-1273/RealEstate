@@ -82,7 +82,8 @@ function Categories({ counts = {} }) {
           className="mb-14"
         />
 
-        <div className="h-[380px] flex items-center justify-center relative select-none">
+        <div className="h-[380px] flex items-center justify-center relative select-none overflow-hidden w-full">
+
           <Smooth3DSlideshow
             slides={slides}
             cardWidth={cardSize.width}
