@@ -17,6 +17,15 @@ export default function AdminLogin() {
   const { settings } = useSiteSettings();
   const navigate   = useNavigate();
 
+  const [step, setStep]     = useState('email'); // 'email' | 'otp'
+  const [email, setEmail]   = useState('');
+  const [otp, setOtp]       = useState(['', '', '', '', '', '']);
+  const [loading, setLoading] = useState(false);
+  const [error, setError]   = useState('');
+  const [info, setInfo]     = useState('');
+
+  const otpRefs = [useRef(), useRef(), useRef(), useRef(), useRef(), useRef()];
+
   useEffect(() => {
     if (user && (user.role === 'admin' || user.role === 'management')) {
       navigate('/panel/dashboard', { replace: true });
@@ -26,15 +35,6 @@ export default function AdminLogin() {
   if (sessionLoading) {
     return <PageLoader />;
   }
-
-  const [step, setStep]     = useState('email'); // 'email' | 'otp'
-  const [email, setEmail]   = useState('');
-  const [otp, setOtp]       = useState(['', '', '', '', '', '']);
-  const [loading, setLoading] = useState(false);
-  const [error, setError]   = useState('');
-  const [info, setInfo]     = useState('');
-
-  const otpRefs = [useRef(), useRef(), useRef(), useRef(), useRef(), useRef()];
 
   // Step 1: Send OTP
   const handleSendOtp = async () => {
