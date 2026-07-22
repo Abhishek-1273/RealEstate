@@ -1,9 +1,44 @@
 import Testimonial from '../models/Testimonial.js';
 import FAQ from '../models/FAQ.js';
 import SiteSettings from '../models/SiteSettings.js';
+import User from '../models/User.js';
 
 export const seedDefaultData = async () => {
   try {
+    // 0. Ensure default admin & management users exist
+    const adminEmail = 'akayg@gmail.com';
+    const existingAdmin = await User.findOne({ email: adminEmail });
+    if (!existingAdmin) {
+      await User.create({
+        name: 'Abhishek Kayg',
+        phone: '9999999999',
+        email: adminEmail,
+        role: 'admin',
+        isActive: true,
+        department: 'Management'
+      });
+      console.info('🌱 Created default admin user: akayg@gmail.com');
+    } else if (existingAdmin.role !== 'admin') {
+      existingAdmin.role = 'admin';
+      await existingAdmin.save();
+    }
+
+    const managerEmail = 'admin@hyperrelestix.in';
+    const existingManager = await User.findOne({ email: managerEmail });
+    if (!existingManager) {
+      await User.create({
+        name: 'Office Manager',
+        phone: '8888888888',
+        email: managerEmail,
+        role: 'management',
+        isActive: true,
+        department: 'Management'
+      });
+      console.info('🌱 Created default manager user: admin@hyperrelestix.in');
+    } else if (existingManager.role !== 'management' && existingManager.role !== 'admin') {
+      existingManager.role = 'management';
+      await existingManager.save();
+    }
     // 1. Seed Testimonials if empty
     const testimonialCount = await Testimonial.countDocuments();
     if (testimonialCount === 0) {

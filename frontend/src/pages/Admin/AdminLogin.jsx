@@ -152,12 +152,15 @@ export default function AdminLogin() {
                   <input
                     value={email}
                     onChange={e => setEmail(e.target.value)}
-                    placeholder="staff@hyperrelestix.com"
+                    placeholder="admin@hyperrelestix.in or akayg@gmail.com"
                     type="email"
                     className="w-full px-4 py-3 rounded-xl text-white text-sm focus:outline-none transition-all focus:border-gold border border-white/10"
                     style={{ background: 'rgba(255,255,255,0.08)' }}
                     onKeyDown={e => e.key === 'Enter' && handleSendOtp()}
                   />
+                  <p className="text-white/40 text-[11px] mt-1.5 leading-relaxed">
+                    Default Manager: <span className="text-gold cursor-pointer underline" onClick={() => setEmail('admin@hyperrelestix.in')}>admin@hyperrelestix.in</span> | Admin: <span className="text-gold cursor-pointer underline" onClick={() => setEmail('akayg@gmail.com')}>akayg@gmail.com</span>
+                  </p>
                 </div>
 
                 {error && (

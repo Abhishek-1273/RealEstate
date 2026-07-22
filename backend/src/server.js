@@ -32,9 +32,7 @@ const isProd = process.env.NODE_ENV === 'production';
 
 // Connect to MongoDB
 connectDB().then(() => {
-  if (process.env.SEED === 'true') {
-    import('./utils/seeder.js').then(({ seedDefaultData }) => seedDefaultData());
-  }
+  import('./utils/seeder.js').then(({ seedDefaultData }) => seedDefaultData());
 });
 
 // ── Rate Limiting (in-memory — persists per process instance) ────────────────
