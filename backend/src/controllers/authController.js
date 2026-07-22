@@ -5,7 +5,7 @@ import Otp from '../models/Otp.js';
 import Enquiry from '../models/Enquiry.js';
 import Property from '../models/Property.js';
 import { sendEmail } from '../utils/mailer.js';
-import { otpSet, otpVerify, otpIncrementLimit, wishlistGet, wishlistSet, wishlistDel } from '../utils/cache.js';
+import { otpSet, otpVerify, wishlistGet, wishlistSet, wishlistDel } from '../utils/cache.js';
 
 // ── Helper: sign a JWT and set it as httpOnly cookie ──────────────────────────
 const setTokenCookie = (res, userId) => {
@@ -99,14 +99,12 @@ export const sendOtp = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Invalid email format. Only email is supported for verification codes.' });
     }
 
-    // Check OTP rate limit (max 3 sends per 15 minutes)
+    // OTP rate limit check (max 5 attempts per 15 minutes per email)
     const limitCheck = await otpIncrementLimit(target.toLowerCase());
     if (!limitCheck.ok) {
-      return res.status(429).json({
-        success: false,
-        message: `Too many OTP requests. Please wait ${Math.ceil(limitCheck.retryAfter / 60)} minutes before trying again.`
-      });
+      return res.status(429).json({ success: false, message: limitCheck.message });
     }
+
 
     // Check database by email only
     let user = await User.findOne({ email: target.toLowerCase() });
@@ -279,6 +277,8 @@ export const getMe = async (req, res) => {
     return res.status(500).json({ success: false, message: 'Something went wrong.' });
   }
 };
+
+
 
 // ─────────────────────────────────────────────────────────────────────────────
 // POST /api/auth/signout

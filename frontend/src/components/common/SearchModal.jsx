@@ -6,22 +6,40 @@ import { properties } from '../../data/properties';
 import { fetchProperties } from '../../utils/api';
 import { Link, useNavigate } from 'react-router-dom';
 
-const popularSearches = [
-  'Sea facing penthouse Mumbai',
-  'Villa Hyderabad under 5cr',
-  'Beach house Goa',
-  '3 BHK Bengaluru',
-  'Farm house Delhi',
+const DEFAULT_POPULAR_TAGS = [
+  'Penthouse Koregaon Park',
+  '4 BHK Villa Baner',
+  'Luxury Flat Kharadi',
+  'Duplex Viman Nagar',
+  'Balewadi Waterfront',
 ];
 
 export default function SearchModal() {
-  const { setShowSearch, searchQuery, setSearchQuery, recentSearches, addRecentSearch } = useSearch();
+  const { setShowSearch, searchQuery, setSearchQuery, recentSearches, addRecentSearch, clearRecentSearches } = useSearch();
   const [results, setResults] = useState([]);
+  const [popularTags, setPopularTags] = useState(DEFAULT_POPULAR_TAGS);
   const inputRef = useRef(null);
   const navigate = useNavigate();
 
   useEffect(() => {
     inputRef.current?.focus();
+
+    // Dynamically load active property titles for popular tags
+    const loadPopular = async () => {
+      try {
+        const res = await fetchProperties({ limit: 6 });
+        const list = res?.properties || res || [];
+        if (Array.isArray(list) && list.length > 0) {
+          const tags = list.map(p => p.title).filter(Boolean).slice(0, 5);
+          if (tags.length > 0) {
+            setPopularTags(tags);
+          }
+        }
+      } catch {
+        // Keep DEFAULT_POPULAR_TAGS
+      }
+    };
+    loadPopular();
   }, []);
 
   useEffect(() => {
@@ -160,21 +178,35 @@ export default function SearchModal() {
             <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6 bg-white dark:bg-navy transition-colors duration-300">
               {/* Recent searches */}
               <div>
-                <div className="flex items-center gap-2 mb-3">
-                  <Clock className="w-4 h-4 text-gray-400" />
-                  <p className="text-xs font-accent text-gray-400 dark:text-white/40 uppercase tracking-widest">Recent</p>
+                <div className="flex items-center justify-between gap-2 mb-3">
+                  <div className="flex items-center gap-2">
+                    <Clock className="w-4 h-4 text-gray-400" />
+                    <p className="text-xs font-accent text-gray-400 dark:text-white/40 uppercase tracking-widest">Recent</p>
+                  </div>
+                  {recentSearches.length > 0 && (
+                    <button
+                      onClick={clearRecentSearches}
+                      className="text-[10px] text-gray-400 hover:text-red-400 transition-colors uppercase font-bold tracking-wider"
+                    >
+                      Clear
+                    </button>
+                  )}
                 </div>
                 <div className="space-y-2">
-                  {recentSearches.map((s, i) => (
-                    <button
-                      key={i}
-                      onClick={() => handleSearch(s)}
-                      className="flex items-center gap-3 w-full text-left text-gray-600 dark:text-cream/80 hover:text-navy dark:hover:text-white text-sm py-2 hover:bg-gray-50 dark:hover:bg-white/5 rounded-lg px-2 transition-colors"
-                    >
-                      <Clock className="w-3.5 h-3.5 text-gray-300 dark:text-white/20 shrink-0" />
-                      {s}
-                    </button>
-                  ))}
+                  {recentSearches.length > 0 ? (
+                    recentSearches.map((s, i) => (
+                      <button
+                        key={i}
+                        onClick={() => handleSearch(s)}
+                        className="flex items-center gap-3 w-full text-left text-gray-600 dark:text-cream/80 hover:text-navy dark:hover:text-white text-sm py-2 hover:bg-gray-50 dark:hover:bg-white/5 rounded-lg px-2 transition-colors truncate"
+                      >
+                        <Clock className="w-3.5 h-3.5 text-gray-300 dark:text-white/20 shrink-0" />
+                        <span className="truncate">{s}</span>
+                      </button>
+                    ))
+                  ) : (
+                    <p className="text-xs text-gray-400 dark:text-white/30 italic py-2">No recent searches</p>
+                  )}
                 </div>
               </div>
               {/* Popular */}
@@ -184,11 +216,11 @@ export default function SearchModal() {
                   <p className="text-xs font-accent text-gray-400 dark:text-white/40 uppercase tracking-widest">Popular</p>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  {popularSearches.map((s, i) => (
+                  {popularTags.map((s, i) => (
                     <button
                       key={i}
                       onClick={() => submitSearch(s)}
-                      className="text-xs bg-gold/10 text-gold font-semibold px-3 py-1.5 rounded-full hover:bg-gold hover:text-navy transition-colors"
+                      className="text-xs bg-gold/10 text-gold font-semibold px-3 py-1.5 rounded-full hover:bg-gold hover:text-navy transition-colors truncate max-w-[240px]"
                     >
                       {s}
                     </button>
@@ -198,6 +230,7 @@ export default function SearchModal() {
             </div>
           )}
         </motion.div>
+
       </div>
     </motion.div>
   );

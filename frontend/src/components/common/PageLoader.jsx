@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { useSiteSettings } from '../../contexts';
+import { useSiteSettings, getLogoInitials } from '../../contexts';
 
 export default function PageLoader() {
   const { settings } = useSiteSettings();
@@ -28,10 +28,11 @@ export default function PageLoader() {
             <img src={settings.logoIconImage} alt="Logo" className="w-full h-full object-contain" />
           ) : (
             <span className="text-navy font-display font-black text-3xl leading-none tracking-tight">
-              {settings?.logoIconText || 'HR'}
+              {getLogoInitials(settings)}
             </span>
           )}
         </div>
+
 
         <div className="text-center">
           <p className="font-display font-bold text-white text-xl tracking-tight">

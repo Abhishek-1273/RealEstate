@@ -5,7 +5,9 @@ import {
   FileText, LogOut, Menu, ChevronRight, Globe, Database, Settings, Award, HelpCircle
 } from 'lucide-react';
 import { useAdmin } from './AdminContext';
-import { useSiteSettings } from '../../contexts';
+import { useSiteSettings, getLogoInitials, getBrandName } from '../../contexts';
+
+
 
 const ROLE_COLOR = {
   admin:        '#D4AF37',
@@ -79,14 +81,16 @@ export default function AdminLayout() {
               <img src={settings.logoIconImage} alt="Logo" className="w-full h-full object-contain" />
             ) : (
               <span className="font-black text-navy text-sm" style={{ fontFamily: 'Manrope,sans-serif' }}>
-                {settings?.logoIconText || 'HR'}
+                {getLogoInitials(settings)}
               </span>
+
             )}
           </div>
           <div className="min-w-0">
             <p className="text-white font-bold text-sm leading-none">
-              {settings?.logoTextPrimary || 'Hyper'}{settings?.logoTextSecondary || 'Relestix'}
+              {getBrandName(settings)}
             </p>
+
             <p className="text-white/40 text-[10px] mt-0.5">Internal Panel</p>
           </div>
         </div>
@@ -97,14 +101,17 @@ export default function AdminLayout() {
         <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl" style={{ background: 'rgba(255,255,255,0.05)' }}>
           <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 font-bold text-xs"
             style={{ background: `${roleColor}33`, color: roleColor }}>
-            {user?.name?.charAt(0).toUpperCase()}
+            {(user?.name && user.name !== 'Admin' ? user.name : (user?.role === 'management' ? 'Manager' : (user?.name || 'A')))?.charAt(0).toUpperCase()}
           </div>
           <div className="min-w-0">
-            <p className="text-white text-xs font-semibold truncate">{user?.name}</p>
+            <p className="text-white text-xs font-semibold truncate">
+              {user?.name && user.name !== 'Admin' ? user.name : (user?.role === 'management' ? 'Manager' : (user?.name || 'Admin'))}
+            </p>
             <span className="text-[10px] font-bold px-1.5 py-0.5 rounded" style={{ background: `${roleColor}22`, color: roleColor }}>
               {ROLE_LABEL[user?.role]}
             </span>
           </div>
+
         </div>
       </div>
 

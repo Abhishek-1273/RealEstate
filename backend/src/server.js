@@ -39,14 +39,16 @@ connectDB().then(() => {
 // Note: Using in-memory store which resets on server restart.
 // The per-email OTP limiter uses Redis (Upstash) for persistence.
 
-// Auth routes: 10 requests per minute per IP
+// Auth routes: 15 requests per minute per IP
 const authLimiter = rateLimit({
   windowMs: 60 * 1000,
-  max: 10,
-  message: { success: false, message: 'Too many requests, please try again after a minute.' },
+  max: 15,
+  message: { success: false, message: 'Too many authentication attempts, please try again after a minute.' },
   standardHeaders: true,
   legacyHeaders: false,
 });
+
+
 
 // General API: 100 requests per minute per IP
 const apiLimiter = rateLimit({

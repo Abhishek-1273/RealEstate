@@ -9,15 +9,27 @@ import ImageUploader from '../../components/common/ImageUploader';
 import { SkeletonTable } from '../../components/common/Skeleton';
 import TestimonialsAdmin from './TestimonialsAdmin';
 
-const CATEGORIES = ['Market Updates', 'NRI Guides', 'Luxury Design', 'Investment Tips', 'Pune Trends'];
+const CATEGORIES = [
+  'NRI Guide',
+  'Market Insights',
+  'NRI Services',
+  'Market Updates',
+  'Luxury Design',
+  'Investment Tips',
+  'Pune Trends',
+];
 
 const CATEGORY_STYLE = {
-  'Market Updates':    { color: '#D4AF37', bg: '#FFFDF5', darkBg: 'rgba(212,175,55,0.08)', border: 'rgba(212,175,55,0.15)' },
-  'NRI Guides':        { color: '#8B5CF6', bg: '#F5F3FF', darkBg: 'rgba(139,92,246,0.12)', border: 'rgba(139,92,246,0.15)' },
-  'Luxury Design':     { color: '#EC4899', bg: '#FDF2F8', darkBg: 'rgba(236,72,153,0.12)', border: 'rgba(236,72,153,0.15)' },
-  'Investment Tips':   { color: '#10B981', bg: '#ECFDF5', darkBg: 'rgba(16,185,129,0.12)', border: 'rgba(16,185,129,0.15)' },
-  'Pune Trends':       { color: '#3B82F6', bg: '#EFF6FF', darkBg: 'rgba(59,130,246,0.12)', border: 'rgba(59,130,246,0.15)' }
+  'NRI Guide':        { color: '#8B5CF6', bg: '#F5F3FF', darkBg: 'rgba(139,92,246,0.12)', border: 'rgba(139,92,246,0.15)' },
+  'NRI Guides':       { color: '#8B5CF6', bg: '#F5F3FF', darkBg: 'rgba(139,92,246,0.12)', border: 'rgba(139,92,246,0.15)' },
+  'Market Insights':  { color: '#D4AF37', bg: '#FFFDF5', darkBg: 'rgba(212,175,55,0.08)', border: 'rgba(212,175,55,0.15)' },
+  'Market Updates':   { color: '#D4AF37', bg: '#FFFDF5', darkBg: 'rgba(212,175,55,0.08)', border: 'rgba(212,175,55,0.15)' },
+  'NRI Services':     { color: '#10B981', bg: '#ECFDF5', darkBg: 'rgba(16,185,129,0.12)', border: 'rgba(16,185,129,0.15)' },
+  'Luxury Design':    { color: '#EC4899', bg: '#FDF2F8', darkBg: 'rgba(236,72,153,0.12)', border: 'rgba(236,72,153,0.15)' },
+  'Investment Tips':  { color: '#10B981', bg: '#ECFDF5', darkBg: 'rgba(16,185,129,0.12)', border: 'rgba(16,185,129,0.15)' },
+  'Pune Trends':      { color: '#3B82F6', bg: '#EFF6FF', darkBg: 'rgba(59,130,246,0.12)', border: 'rgba(59,130,246,0.15)' },
 };
+
 
 const inputCls = "w-full px-4 py-3 rounded-2xl text-sm border border-gray-150 dark:border-white/10 bg-white dark:bg-white/5 text-navy dark:text-white placeholder-gray-400 dark:placeholder-white/20 focus:outline-none focus:border-gold/50 transition-colors";
 const labelCls = "block text-[10px] font-extrabold text-gray-400 dark:text-white/30 uppercase tracking-widest mb-1.5";
@@ -302,13 +314,19 @@ export default function BlogsAdmin() {
     }
   };
 
+  // Derive all available categories dynamically from existing blogs
+  const availableCategories = Array.from(
+    new Set([...CATEGORIES, ...blogs.map(b => b.category).filter(Boolean)])
+  );
+
   // Local Search & Filter logic
   const filtered = blogs.filter(b => {
     const matchesSearch = !search || 
       b.title.toLowerCase().includes(search.toLowerCase()) || 
       (b.subtitle && b.subtitle.toLowerCase().includes(search.toLowerCase())) ||
       (b.author?.name && b.author.name.toLowerCase().includes(search.toLowerCase()));
-    const matchesCat = catFilter === 'all' || b.category === catFilter;
+    const matchesCat = catFilter === 'all' || 
+      (b.category && b.category.toLowerCase().trim() === catFilter.toLowerCase().trim());
     return matchesSearch && matchesCat;
   });
 
@@ -375,10 +393,11 @@ export default function BlogsAdmin() {
             value={catFilter}
             onChange={setCatFilter}
             placeholder="All Categories"
-            options={[{ value: 'all', label: 'All Categories' }, ...CATEGORIES.map(c => ({ value: c, label: c }))] }
+            options={[{ value: 'all', label: 'All Categories' }, ...availableCategories.map(c => ({ value: c, label: c }))] }
           />
         </div>
       </div>
+
 
       {/* Blogs list Table */}
       <div className="bg-white dark:bg-[#0E1A2B] rounded-3xl border border-gray-100 dark:border-white/10 shadow-sm overflow-hidden transition-colors duration-300">

@@ -4,8 +4,9 @@ import { Inbox, Building2, Users, ArrowRight, Calendar, FileText, Globe } from '
 import { getProperties, getUsers, getPartnersAdmin, getEnquiries } from '../../utils/adminApi';
 import { fetchBlogs } from '../../utils/api';
 import { useAdmin } from './AdminContext';
-import { useSiteSettings } from '../../contexts';
+import { useSiteSettings, getBrandName } from '../../contexts';
 import { SkeletonDashboard } from '../../components/common/Skeleton';
+
 
 function StatCard({ icon: Icon, label, value, sub, color, trend }) {
   return (
@@ -126,11 +127,13 @@ export default function Dashboard() {
             </div>
             
             <h1 className="text-2xl md:text-3xl font-black text-white leading-tight mb-2 tracking-tight" style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
-              Welcome back, <span style={{ color: '#D4AF37' }}>{user?.name || 'Administrator'}</span>
+              Welcome back, <span style={{ color: '#D4AF37' }}>{user?.name && user.name !== 'Admin' ? user.name : (user?.role === 'management' ? 'Manager' : (user?.name || 'Administrator'))}</span>
             </h1>
+
             <p className="text-white/60 text-xs md:text-sm max-w-xl leading-relaxed font-medium">
-              Here is the live activity overview for the {settings?.logoTextPrimary || 'Hyper'}{settings?.logoTextSecondary || 'Relestix'} luxury portfolio. Optimize listings, manage active customer leads, and oversee operations.
+              Here is the live activity overview for the {getBrandName(settings)} luxury portfolio. Optimize listings, manage active customer leads, and oversee operations.
             </p>
+
           </div>
 
           {isAgent ? (
@@ -317,7 +320,8 @@ export default function Dashboard() {
                         <p className="text-xs md:text-sm font-semibold text-navy dark:text-white truncate group-hover:text-gold transition-colors">
                           {b.title}
                         </p>
-                        <p className="text-[10px] text-gray-450 dark:text-white/35 mt-0.5 truncate">{b.subtitle || `${settings?.logoTextPrimary || 'Hyper'}${settings?.logoTextSecondary || 'Relestix'} Editorial`}</p>
+                        <p className="text-[10px] text-gray-450 dark:text-white/35 mt-0.5 truncate">{b.subtitle || `${getBrandName(settings)} Editorial`}</p>
+
                         <div className="flex items-center gap-2.5 mt-2">
                           <span className="text-[9px] text-gray-400 dark:text-white/20 font-bold whitespace-nowrap">
                             {new Date(b.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}

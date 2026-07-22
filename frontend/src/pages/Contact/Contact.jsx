@@ -6,7 +6,8 @@ import { fadeUp, fadeLeft, fadeRight, staggerContainer, viewportOnce } from '../
 import { faqs as staticFaqs } from '../../data/index';
 import SectionHeader from '../../components/common/SectionHeader';
 import PremiumIcon from '../../components/common/PremiumIcon';
-import { useAuth, useSiteSettings } from '../../contexts';
+import { useAuth, useSiteSettings, getBrandName } from '../../contexts';
+
 import { submitEnquiry, fetchFaqs } from '../../utils/api';
 import SEO from '../../components/common/SEO';
 
@@ -335,7 +336,8 @@ export default function Contact() {
               <div className="absolute inset-0 flex items-center justify-center flex-col gap-4">
                 <PremiumIcon icon={MapPin} variant="gold" size="xl" />
                 <div className="text-center">
-                  <p className="text-white font-display font-bold text-sm">{(settings?.logoTextPrimary || 'Hyper') + (settings?.logoTextSecondary || 'Relestix')} Pune HQ</p>
+                  <p className="text-white font-display font-bold text-sm">{getBrandName(settings)} Pune HQ</p>
+
                   <p className="text-white/55 text-xs mt-1">{settings?.contactAddress || 'Level 12, Panchshil Tech Park, Yerwada'}</p>
                 </div>
                 <a

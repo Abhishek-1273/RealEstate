@@ -207,29 +207,61 @@ export const AuthProvider = ({ children }) => {
 // ─────────────────────────────────────────────────────────────────────────────
 // Search Provider
 // ─────────────────────────────────────────────────────────────────────────────
+const DEFAULT_PUNE_RECENT = [
+  'Penthouse Koregaon Park',
+  '4 BHK Villa Baner',
+  'Luxury Flat Kharadi',
+  'Villa Balewadi',
+];
+
 export const SearchProvider = ({ children }) => {
   const [showSearch, setShowSearch]   = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [recentSearches, setRecentSearches] = useState([
-    'Penthouse KP',
-    'Villa Balewadi',
-    'Luxury flat Kharadi',
-  ]);
+  const [recentSearches, setRecentSearches] = useState(() => {
+    try {
+      const saved = localStorage.getItem('hr_recent_searches');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch {
+      // Ignore storage errors
+    }
+    return DEFAULT_PUNE_RECENT;
+  });
 
   const addRecentSearch = useCallback((query) => {
-    setRecentSearches(prev =>
-      [query, ...prev.filter(s => s !== query)].slice(0, 5)
-    );
+    const q = query?.trim();
+    if (!q) return;
+    setRecentSearches(prev => {
+      const updated = [q, ...prev.filter(s => s.toLowerCase() !== q.toLowerCase())].slice(0, 6);
+      try {
+        localStorage.setItem('hr_recent_searches', JSON.stringify(updated));
+      } catch {
+        // Ignore storage errors
+      }
+      return updated;
+    });
+  }, []);
+
+  const clearRecentSearches = useCallback(() => {
+    setRecentSearches([]);
+    try {
+      localStorage.removeItem('hr_recent_searches');
+    } catch {
+      // Ignore storage errors
+    }
   }, []);
 
   return (
     <SearchContext.Provider
-      value={{ showSearch, setShowSearch, searchQuery, setSearchQuery, recentSearches, addRecentSearch }}
+      value={{ showSearch, setShowSearch, searchQuery, setSearchQuery, recentSearches, addRecentSearch, clearRecentSearches }}
     >
       {children}
     </SearchContext.Provider>
   );
 };
+
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Hooks
@@ -252,5 +284,6 @@ export const useSearch = () => {
   return ctx;
 };
 
-export { SettingsProvider, useSiteSettings } from './SettingsContext';
+export { SettingsProvider, useSiteSettings, getLogoInitials, getBrandName, renderBrandLogo } from './SettingsContext';
+
 

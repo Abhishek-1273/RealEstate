@@ -6,7 +6,8 @@ import {
   Home, Building2, Key, Settings, Calendar, LogOut,
   Sun, Moon, Search
 } from 'lucide-react';
-import { useAuth, useWishlist, useSearch, useSiteSettings } from '../../contexts';
+import { useAuth, useWishlist, useSearch, useSiteSettings, getLogoInitials, renderBrandLogo } from '../../contexts';
+
 import Magnetic from '../common/Magnetic';
 import PremiumIcon from '../common/PremiumIcon';
 
@@ -191,14 +192,16 @@ export default function Navbar() {
                   <img src={settings.logoIconImage} alt="Logo" className="w-full h-full object-contain" />
                 ) : (
                   <span className="text-navy font-display font-black text-sm leading-none tracking-tight">
-                    {settings?.logoIconText || 'HR'}
+                    {getLogoInitials(settings)}
                   </span>
+
                 )}
               </div>
               <div className="leading-none">
                 <p className={`font-display font-bold text-[17px] tracking-tight transition-colors duration-300 ${isSolid ? 'text-navy dark:text-white' : 'text-white'}`}>
-                  {settings?.logoTextPrimary || 'Hyper'}<span style={{ color: '#E5C17D' }}>{settings?.logoTextSecondary || 'Relestix'}</span>
+                  {renderBrandLogo(settings, '#E5C17D')}
                 </p>
+
                 <p className={`text-[8px] font-accent tracking-[0.25em] uppercase mt-1 transition-colors duration-300 ${isSolid ? 'text-ink-soft dark:text-white/50' : 'text-white/70'}`}>
                   {settings?.logoSubtitle || 'Luxury Real Estate · Pune'}
                 </p>
@@ -442,12 +445,14 @@ export default function Navbar() {
                     {settings?.logoIconImage ? (
                       <img src={settings.logoIconImage} alt="Logo" className="w-full h-full object-contain" />
                     ) : (
-                      <span className="text-navy font-black text-xs">{settings?.logoIconText || 'HR'}</span>
+                      <span className="text-navy font-black text-xs">{getLogoInitials(settings)}</span>
+
                     )}
                   </div>
                   <span className="text-white font-display font-bold text-sm">
-                    {settings?.logoTextPrimary || 'Hyper'}{settings?.logoTextSecondary || 'Relestix'}
+                    {renderBrandLogo(settings, '#E5C17D')}
                   </span>
+
                 </div>
                 <button onClick={() => setMobileOpen(false)}
                   className="p-2 rounded-xl text-white/70 hover:text-white hover:bg-white/10 transition-colors">

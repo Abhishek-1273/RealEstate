@@ -3,7 +3,8 @@ import { motion } from 'framer-motion';
 import { ArrowRight, Home, Building2, Key, Settings, CheckCircle2 } from 'lucide-react';
 import { fadeUp, staggerContainer, viewportOnce } from '../../animations/variants';
 import PremiumIcon from '../../components/common/PremiumIcon';
-import { useAuth, useSiteSettings } from '../../contexts';
+import { useAuth, useSiteSettings, getBrandName } from '../../contexts';
+
 import KineticGrid from '../../components/common/KineticGrid';
 
 const services = [
@@ -58,9 +59,11 @@ const services = [
 ];
 
 export default function Services() {
+
   const { user, openAuth } = useAuth();
   const { settings } = useSiteSettings();
-  const brandName = settings ? `${settings.logoTextPrimary || 'Hyper'}${settings.logoTextSecondary || 'Relestix'}` : 'HyperRelestix';
+  const brandName = getBrandName(settings);
+
 
   const handleServiceClick = (e, link) => {
     if (!user) {

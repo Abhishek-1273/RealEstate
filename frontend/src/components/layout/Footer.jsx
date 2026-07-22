@@ -1,7 +1,8 @@
 import { Link } from 'react-router-dom';
 import { Mail, Phone, MapPin, ArrowRight } from 'lucide-react';
 import { FaInstagram, FaXTwitter, FaLinkedinIn, FaYoutube } from 'react-icons/fa6';
-import { useAuth, useSiteSettings } from '../../contexts';
+import { useAuth, useSiteSettings, getLogoInitials, getBrandName, renderBrandLogo } from '../../contexts';
+
 import KineticGrid from '../common/KineticGrid';
 
 const gatedPaths = ['/services/buy', '/services/sell', '/services/lease', '/services/management'];
@@ -62,16 +63,16 @@ export default function Footer() {
   };
 
   return (
-    <footer className="bg-mesh-dark relative overflow-hidden">
-      <KineticGrid background="transparent" lineColor="rgba(212,175,55,0.05)" dotColor="rgba(212,175,55,0.12)" spacing={50} radius={180} />
-      {/* Ambient glow spots */}
-      <div className="absolute top-0 left-1/4 w-[500px] h-[500px] rounded-full pointer-events-none"
-        style={{ background: 'radial-gradient(ellipse, rgba(212,175,55,0.06) 0%, transparent 70%)' }} />
+    <footer className="relative bg-[#051324] border-t border-white/10 text-white overflow-hidden">
+      {/* Background Kinetic Canvas */}
+      <div className="absolute inset-0 pointer-events-none opacity-20">
+        <KineticGrid density="low" speed="slow" />
+      </div>
 
-      <div className="container-luxury pt-20 pb-12 relative">
-        <div className="grid grid-cols-2 lg:grid-cols-12 gap-x-6 gap-y-10 xl:gap-16">
-          {/* Brand Column */}
-          <div className="col-span-2 lg:col-span-4">
+      <div className="container-luxury pt-16 pb-12 relative z-10">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-10 lg:gap-8 pb-12">
+          {/* Brand info column */}
+          <div className="col-span-1 lg:col-span-4">
             <Link to="/" className="inline-flex items-center gap-3 mb-7 group">
               <div
                 className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:scale-105 overflow-hidden"
@@ -80,12 +81,12 @@ export default function Footer() {
                 {settings?.logoIconImage ? (
                   <img src={settings.logoIconImage} alt="Logo" className="w-full h-full object-contain" />
                 ) : (
-                  <span className="text-navy font-display font-black text-sm leading-none">{settings?.logoIconText || 'HR'}</span>
+                  <span className="text-navy font-display font-black text-sm leading-none">{getLogoInitials(settings)}</span>
                 )}
               </div>
               <div>
                 <p className="font-display font-bold text-xl text-white leading-none">
-                  {settings?.logoTextPrimary || 'Hyper'}<span style={{ color: '#D4AF37' }}>{settings?.logoTextSecondary || 'Relestix'}</span>
+                  {renderBrandLogo(settings, '#D4AF37')}
                 </p>
                 <p className="text-white/40 text-[8px] font-accent tracking-[0.25em] uppercase mt-0.5">
                   {settings?.logoSubtitle || 'Luxury Real Estate · Pune'}
@@ -93,27 +94,30 @@ export default function Footer() {
               </div>
             </Link>
 
-            <p className="text-white/55 text-sm leading-[1.9] mb-7 max-w-[280px]">
-              Pune's most trusted luxury real estate platform. We help discerning buyers and sellers navigate premium property markets with expertise and elegance.
+            <p className="text-white/60 text-sm leading-relaxed mb-6 max-w-sm">
+              Pune's premier luxury real estate agency, specializing in helping NRI clients find elite properties and handle secure investments entirely remotely.
             </p>
 
-            <div className="space-y-3.5 mb-7">
-              {[
-                { icon: <MapPin className="w-3.5 h-3.5 shrink-0" />, text: settings?.contactAddress || 'Level 12, Panchshil Tech Park, Yerwada, Pune 411006' },
-                { icon: <Phone className="w-3.5 h-3.5 shrink-0" />, text: settings?.contactPhone1 || '+91 98765 43210' },
-                { icon: <Mail className="w-3.5 h-3.5 shrink-0" />, text: settings?.contactEmail1 || 'hello@hyperrelestix.in' },
-              ].map((item, i) => (
-                <div key={i} className="flex items-start gap-3 text-white/55 text-xs leading-relaxed">
-                  <span className="mt-0.5" style={{ color: '#D4AF37' }}>{item.icon}</span>
-                  <span>{item.text}</span>
-                </div>
-              ))}
+            <div className="space-y-3.5 text-xs text-white/70 mb-7">
+              <p className="flex items-center gap-2.5">
+                <MapPin className="w-4 h-4 text-gold shrink-0" />
+                {settings?.contactAddress || 'Level 12, Panchshil Tech Park, Yerwada, Pune 411006'}
+              </p>
+              <p className="flex items-center gap-2.5">
+                <Phone className="w-4 h-4 text-gold shrink-0" />
+                <a href={`tel:${settings?.contactPhone1}`} className="hover:text-gold transition-colors">{settings?.contactPhone1 || '+91 98765 43210'}</a>
+              </p>
+              <p className="flex items-center gap-2.5">
+                <Mail className="w-4 h-4 text-gold shrink-0" />
+                <a href={`mailto:${settings?.contactEmail1}`} className="hover:text-gold transition-colors">{settings?.contactEmail1 || 'hello@hyperrelestix.in'}</a>
+              </p>
             </div>
 
-            <div className="flex items-center gap-2">
-              {dynamicSocials.map((s, i) => (
+            {/* Social Links */}
+            <div className="flex items-center gap-2.5">
+              {dynamicSocials.map((s, idx) => (
                 <a
-                  key={i}
+                  key={idx}
                   href={s.href}
                   aria-label={s.label}
                   target="_blank"
@@ -164,7 +168,7 @@ export default function Footer() {
       <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
         <div className="container-luxury py-5 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-white/35 text-xs">
-            © {new Date().getFullYear()} {settings?.logoTextPrimary || 'Hyper'}{settings?.logoTextSecondary || 'Relestix'} Realty Pvt. Ltd. All rights reserved.
+            © {new Date().getFullYear()} {getBrandName(settings)} Realty Pvt. Ltd. All rights reserved.
           </p>
           <div className="flex items-center gap-5">
             <Link to="/privacy" className="text-white/35 hover:text-gold text-xs transition-colors duration-200">

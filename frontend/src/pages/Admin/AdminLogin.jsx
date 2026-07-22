@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAdmin } from './AdminContext';
-import { useAuth, useSiteSettings } from '../../contexts';
+import { useAuth, useSiteSettings, getLogoInitials, getBrandName } from '../../contexts';
+
 import PageLoader from '../../components/common/PageLoader';
 
 import { API_URL } from '../../config/api';
@@ -129,16 +130,18 @@ export default function AdminLogin() {
               <img src={settings.logoIconImage} alt="Logo" className="w-full h-full object-contain" />
             ) : (
               <span className="font-black text-navy text-xl" style={{ fontFamily: 'Manrope, sans-serif' }}>
-                {settings?.logoIconText || 'HR'}
+                {getLogoInitials(settings)}
               </span>
+
             )}
           </div>
           <h1 className="text-white font-black text-2xl mb-1" style={{ fontFamily: 'Manrope, sans-serif' }}>
             Staff Portal
           </h1>
           <p className="text-white/40 text-sm">
-            {settings?.logoTextPrimary || 'Hyper'}{settings?.logoTextSecondary || 'Relestix'} Internal Panel
+            {getBrandName(settings)} Internal Panel
           </p>
+
         </div>
 
         {/* Card */}
@@ -159,8 +162,9 @@ export default function AdminLogin() {
                     onKeyDown={e => e.key === 'Enter' && handleSendOtp()}
                   />
                   <p className="text-white/40 text-[11px] mt-1.5 leading-relaxed">
-                    Default Manager: <span className="text-gold cursor-pointer underline" onClick={() => setEmail('admin@hyperrelestix.in')}>admin@hyperrelestix.in</span> | Admin: <span className="text-gold cursor-pointer underline" onClick={() => setEmail('akayg@gmail.com')}>akayg@gmail.com</span>
+                    Admin: <span className="text-gold cursor-pointer underline" onClick={() => setEmail('akaygill64@gmail.com')}>akaygill64@gmail.com</span> | Manager: <span className="text-gold cursor-pointer underline" onClick={() => setEmail('admin@hyperrelestix.in')}>admin@hyperrelestix.in</span>
                   </p>
+
                 </div>
 
                 {error && (

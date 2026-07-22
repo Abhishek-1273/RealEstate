@@ -115,33 +115,54 @@ export const otpDel = async (target) => {
   }
 };
 
+const memoryOtpLimits = new Map();
+
 /**
  * Increment the OTP request count for a target email.
- * Limits to 3 sends per 15 minutes.
+ * Limits to 5 sends per 15 minutes.
  */
 export const otpIncrementLimit = async (target) => {
-  if (!redis) return { ok: true };
-  const key = `otp_limit:${target}`;
-  try {
-    const current = await redis.get(key);
-    const count = current ? parseInt(current, 10) : 0;
-    if (count >= 3) {
-      const ttl = await redis.ttl(key);
-      return { ok: false, retryAfter: ttl > 0 ? ttl : 900 };
+  const limitKey = `ratelimit:otp:${target}`;
+  const windowMs = 15 * 60 * 1000;
+  const maxAttempts = 5;
+
+  if (redis) {
+    try {
+      const current = await redis.incr(limitKey);
+      if (current === 1) {
+        await redis.expire(limitKey, 900);
+      }
+      if (current > maxAttempts) {
+        const ttl = await redis.ttl(limitKey);
+        const minsLeft = Math.ceil((ttl > 0 ? ttl : 900) / 60);
+        return { ok: false, message: `Too many OTP requests. Please wait ${minsLeft} minute(s) before trying again.` };
+      }
+      return { ok: true };
+    } catch (err) {
+      console.error(`[OTP Limit] Redis error:`, err.message);
     }
-    
-    if (count === 0) {
-      // Set to 1 with 15 minutes expiry (900 seconds)
-      await redis.set(key, '1', { ex: 900 });
-    } else {
-      await redis.incr(key);
-    }
-    return { ok: true, remaining: 3 - (count + 1) };
-  } catch (err) {
-    console.error(`[OTP Limit] error:`, err.message);
-    return { ok: true }; // Fallback to allow OTP request on redis exception
   }
+
+  const now = Date.now();
+  const userRecord = memoryOtpLimits.get(target) || { count: 0, resetTime: now + windowMs };
+
+  if (now > userRecord.resetTime) {
+    userRecord.count = 0;
+    userRecord.resetTime = now + windowMs;
+  }
+
+  userRecord.count += 1;
+  memoryOtpLimits.set(target, userRecord);
+
+  if (userRecord.count > maxAttempts) {
+    const minsLeft = Math.ceil((userRecord.resetTime - now) / 60000);
+    return { ok: false, message: `Too many OTP requests. Please wait ${minsLeft} minute(s) before trying again.` };
+  }
+
+  return { ok: true };
 };
+
+
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Wishlist cache helpers (per-user, short TTL)

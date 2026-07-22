@@ -4,7 +4,8 @@ import { Link } from 'react-router-dom';
 import { ArrowRight, Award, Target, Heart, Shield, TrendingUp, Star } from 'lucide-react';
 import { fadeUp, fadeLeft, fadeRight, scaleIn, staggerContainer, staggerFast, viewportOnce } from '../../animations/variants';
 import SectionHeader from '../../components/common/SectionHeader';
-import { useSiteSettings } from '../../contexts';
+import { useSiteSettings, getBrandName } from '../../contexts';
+
 import CountUpNumber from '../../components/common/CountUpNumber';
 import PremiumIcon from '../../components/common/PremiumIcon';
 import SEO from '../../components/common/SEO';
@@ -27,7 +28,7 @@ const values = [
 
 export default function About() {
   const { settings } = useSiteSettings();
-  const brandName = settings ? `${settings.logoTextPrimary || 'Hyper'}${settings.logoTextSecondary || 'Relestix'}` : 'HyperRelestix';
+  const brandName = getBrandName(settings);
   const [isFlipped, setIsFlipped] = useState(false);
   const [showArrows, setShowArrows] = useState(true);
   const [team, setTeam] = useState(agents);
@@ -287,12 +288,9 @@ export default function About() {
               arrowPosition={96}
             />
           </div>
-
-          <p className="text-center text-[10px] text-ink-soft dark:text-white/40 font-semibold tracking-wider uppercase mt-6">
-            ← Click Cards or Keyboard Arrow Keys to Browse our team →
-          </p>
         </div>
       </div>
+
 
       {/* ── CTA ── */}
       <div className="bg-mesh-dark py-20 relative overflow-hidden">

@@ -1,10 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowRight, Clock, Loader } from 'lucide-react';
+import { ArrowRight, Clock } from 'lucide-react';
 import { fetchBlogs } from '../../utils/api';
 import { fadeUp, staggerContainer } from '../../animations/variants';
-import blogBg from '../../assets/image/blog-bg.webp';
 import SEO from '../../components/common/SEO';
 import { blogs as staticBlogs } from '../../data/index';
 
@@ -35,8 +34,8 @@ export default function Blog() {
   }, []);
 
   const filtered = cat === 'All' ? blogsList : blogsList.filter(b => b.category === cat);
-  const featured = blogsList.find(b => b.featured) || blogsList[0]; // fallback to first if no featured
-  const rest = blogsList.filter(b => b !== featured);
+
+
 
   return (
     <div className="min-h-screen bg-surface dark:bg-navy-dark pt-20 transition-colors duration-300">
@@ -46,42 +45,22 @@ export default function Blog() {
         url="/blog" 
       />
 
-      {/* ── Featured Hero ── */}
-      {loading ? (
-        <div className="h-[520px] w-full bg-navy/10 dark:bg-navy/35 flex items-center justify-center animate-pulse">
-          <Loader className="w-8 h-8 text-gold animate-spin" style={{ color: '#D4AF37' }} />
+      {/* ── Page Hero ── */}
+      <div className="relative py-16 md:py-20 bg-[#071A2F] border-b border-white/10 overflow-hidden"
+        style={{ background: 'linear-gradient(135deg, #071A2F 0%, #0c2543 50%, #051324 100%)' }}>
+        <div className="container-luxury relative z-10 text-center">
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
+            <span className="badge-gold mb-3 inline-block">INSIGHTS & TRENDS</span>
+            <h1 className="font-display font-black text-white text-3xl md:text-5xl leading-tight mb-3 tracking-tight">
+              Real Estate <span style={{ color: '#D4AF37' }}>Journal & Insights</span>
+            </h1>
+            <p className="text-white/60 text-xs md:text-sm max-w-xl mx-auto leading-relaxed">
+              Exclusive insights, NRI property guides, market analysis, and legal updates in Pune's premium real estate sectors.
+            </p>
+          </motion.div>
         </div>
-      ) : (
-        featured && (
-          <Link to={`/blog/${featured.slug}`} state={{ category: cat }} className="group block relative overflow-hidden" style={{ height: '520px' }}>
-            <img src={featured.image || blogBg} alt={featured.title}
-              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
-            <div className="absolute inset-0"
-              style={{ background: 'linear-gradient(to top, rgba(7,26,47,0.95) 0%, rgba(7,26,47,0.4) 55%, transparent 100%)' }} />
-            <div className="absolute bottom-0 inset-x-0 p-8 md:p-16">
-              <div className="container-luxury">
-                <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }}>
-                  <span className="badge-gold mb-5 inline-block">{featured.category}</span>
-                  <h1 className="font-display font-black text-white leading-[1.1] mb-4 max-w-3xl"
-                    style={{ fontSize: 'clamp(1.75rem, 3.5vw, 3rem)' }}>
-                    {featured.title}
-                  </h1>
-                  <p className="text-white/65 text-sm max-w-xl leading-relaxed mb-5">{featured.excerpt}</p>
-                  <div className="flex items-center gap-4 text-white/60 text-xs">
-                    {featured.author?.image && (
-                      <img src={featured.author.image} alt="" className="w-7 h-7 rounded-full object-cover" />
-                    )}
-                    <span className="font-semibold">{featured.author?.name}</span>
-                    <span>·</span><span>{featured.date}</span>
-                    <span>·</span>
-                    <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{featured.readTime}</span>
-                  </div>
-                </motion.div>
-              </div>
-            </div>
-          </Link>
-        )
-      )}
+      </div>
+
 
       {/* ── Filter Tabs ── */}
       <div className="bg-white dark:bg-navy sticky top-[74px] z-20 border-b border-gray-100 dark:border-white/10 transition-colors">
@@ -130,7 +109,8 @@ export default function Blog() {
             animate="visible"
             className="grid grid-cols-1 md:grid-cols-3 gap-7"
           >
-            {(cat === 'All' ? rest : filtered).map(b => (
+            {filtered.map(b => (
+
               <motion.div key={b._id || b.id} variants={fadeUp}>
                 <Link to={`/blog/${b.slug}`} state={{ category: cat }}
                   className="group block bg-white dark:bg-navy-light rounded-3xl overflow-hidden border border-gray-100 dark:border-white/10 transition-all duration-400 hover:-translate-y-2 shadow-card"

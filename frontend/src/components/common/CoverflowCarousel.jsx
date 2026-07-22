@@ -120,7 +120,6 @@ function Card({
 
     return (
         <motion.div
-            onClick={onSelect ? () => onSelect(index) : undefined}
             style={{
                 position: "absolute",
                 left: "50%",
@@ -128,10 +127,11 @@ function Card({
                 x,
                 zIndex,
                 opacity,
-                cursor: onSelect ? "pointer" : "default",
+                pointerEvents: "none",
             }}
         >
             <motion.div
+                onClick={onSelect ? (e) => { e.stopPropagation(); onSelect(index); } : undefined}
                 style={{
                     x: "-50%",
                     y: "-50%",
@@ -141,8 +141,11 @@ function Card({
                     overflow: "hidden",
                     background: gradient,
                     boxShadow,
+                    pointerEvents: "auto",
+                    cursor: onSelect ? "pointer" : "default",
                 }}
             >
+
                 {src ? (
                     <img
                         src={src}
@@ -376,15 +379,15 @@ export default function CoverflowCarousel(props) {
 
     const goTo = useCallback(
         (index) => {
-            const cur = targetRef.current;
-            let d = index - cur;
-            d = ((d % count) + count) % count;
-            if (d > count / 2) d -= count;
-            targetRef.current = cur + d;
+            const curPos = pos.get();
+            const rel = relOf(index, curPos, count);
+            if (Math.abs(rel) < 0.1) return;
+            targetRef.current = Math.round(curPos) + Math.round(rel);
             ensureRunning();
         },
-        [ensureRunning, count]
+        [pos, count, ensureRunning]
     );
+
 
     useEffect(() => {
         return () => {

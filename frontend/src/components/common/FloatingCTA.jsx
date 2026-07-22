@@ -2,11 +2,12 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MessageCircle, Calendar, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { useSiteSettings } from '../../contexts';
+import { useSiteSettings, getBrandName } from '../../contexts';
 
 export default function FloatingCTA() {
   const { settings } = useSiteSettings();
-  const brandName = settings ? `${settings.logoTextPrimary || 'Hyper'}${settings.logoTextSecondary || 'Relestix'}` : 'HyperRelestix';
+  const brandName = getBrandName(settings);
+
   const rawPhone = settings?.contactWhatsApp ? settings.contactWhatsApp.replace(/\D/g, '') : (settings?.contactPhone1 ? settings.contactPhone1.replace(/\D/g, '') : '919876543210');
   const whatsappUrl = `https://wa.me/${rawPhone}?text=${encodeURIComponent(`Hi, I am interested in ${brandName} luxury properties in Pune.`)}`;
   const [expanded, setExpanded] = useState(false);

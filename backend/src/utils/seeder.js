@@ -6,22 +6,23 @@ import User from '../models/User.js';
 export const seedDefaultData = async () => {
   try {
     // 0. Ensure default admin & management users exist
-    const adminEmail = 'akayg@gmail.com';
-    const existingAdmin = await User.findOne({ email: adminEmail });
-    if (!existingAdmin) {
-      await User.create({
-        name: 'Abhishek Kayg',
-        phone: '9999999999',
-        email: adminEmail,
-        role: 'admin',
-        isActive: true,
-        department: 'Management'
-      });
-      console.info('🌱 Created default admin user: akayg@gmail.com');
-    } else if (existingAdmin.role !== 'admin') {
-      existingAdmin.role = 'admin';
-      await existingAdmin.save();
+    const adminEmails = ['akayg@gmail.com'];
+    for (const email of adminEmails) {
+      const existingAdmin = await User.findOne({ email });
+      if (!existingAdmin) {
+        await User.create({
+          name: 'Abhishek Kayg',
+          phone: '9999999999',
+          email,
+          role: 'admin',
+          isActive: true,
+          department: 'Management'
+        });
+        console.info(`🌱 Created default admin user: ${email}`);
+      }
     }
+
+
 
     const managerEmail = 'admin@hyperrelestix.in';
     const existingManager = await User.findOne({ email: managerEmail });

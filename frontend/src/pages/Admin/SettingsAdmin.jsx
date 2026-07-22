@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
-import { useSiteSettings } from '../../contexts/SettingsContext';
+import { useSiteSettings, getLogoInitials, renderBrandLogo } from '../../contexts/SettingsContext';
+
 import { updateSettingsAdmin, uploadImage } from '../../utils/adminApi';
 import { Loader2, Save, Globe, Eye, Image, PhoneCall, Share2, TrendingUp } from 'lucide-react';
 
@@ -631,13 +632,14 @@ export default function SettingsAdmin() {
                 {form.logoIconImage ? (
                   <img src={form.logoIconImage} alt="Logo" className="w-full h-full object-contain" />
                 ) : (
-                  <span className="text-navy font-display font-black text-sm">{form.logoIconText || 'HR'}</span>
+                  <span className="text-navy font-display font-black text-sm">{getLogoInitials(form)}</span>
                 )}
               </div>
               <div className="min-w-0">
                 <p className="font-display font-bold text-sm tracking-tight text-white">
-                  {form.logoTextPrimary || ''}<span style={{ color: '#E5C17D' }}>{form.logoTextSecondary || ''}</span>
+                  {renderBrandLogo(form, '#E5C17D')}
                 </p>
+
                 <p className="text-[8px] font-accent tracking-[0.2em] text-white/50 uppercase mt-0.5 truncate">
                   {form.logoSubtitle || ''}
                 </p>

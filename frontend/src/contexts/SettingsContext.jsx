@@ -85,3 +85,50 @@ export const useSiteSettings = () => {
   }
   return ctx;
 };
+
+export function getLogoInitials(settings) {
+  if (settings?.logoIconText?.trim()) return settings.logoIconText.trim();
+  const p = (settings?.logoTextPrimary || 'Hyper').trim();
+  const s = (settings?.logoTextSecondary || 'Relestix').trim();
+  const pChar = p ? p[0].toUpperCase() : '';
+  const sChar = s ? s[0].toUpperCase() : '';
+  return `${pChar}${sChar}` || 'HR';
+}
+
+export function getBrandName(settings) {
+  if (!settings) return 'HyperRelestix';
+  const p = settings.logoTextPrimary ?? 'Hyper';
+  const s = settings.logoTextSecondary ?? 'Relestix';
+  if (!p && !s) return 'HyperRelestix';
+  if (!p) return s;
+  if (!s) return p;
+  if (p === 'Hyper' && s === 'Relestix') return 'HyperRelestix';
+  const needsSpace = !p.endsWith(' ') && !s.startsWith(' ');
+  return `${p}${needsSpace ? ' ' : ''}${s}`;
+}
+
+export function renderBrandLogo(settings, secondaryColor = '#D4AF37') {
+  const p = settings?.logoTextPrimary ?? 'Hyper';
+  const s = settings?.logoTextSecondary ?? 'Relestix';
+  if (p === 'Hyper' && s === 'Relestix') {
+    return (
+      <>
+        <span>Hyper</span>
+        <span style={{ color: secondaryColor }}>Relestix</span>
+      </>
+    );
+  }
+  const needsSpace = p && s && !p.endsWith(' ') && !s.startsWith(' ');
+  return (
+    <>
+      <span className="whitespace-pre">{p}</span>
+      {s && (
+        <span style={{ color: secondaryColor }} className="whitespace-pre">
+          {needsSpace ? ' ' : ''}{s}
+        </span>
+      )}
+    </>
+  );
+}
+
+

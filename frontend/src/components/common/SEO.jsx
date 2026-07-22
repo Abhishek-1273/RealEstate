@@ -1,5 +1,5 @@
 import { Helmet } from 'react-helmet-async';
-import { useSiteSettings } from '../../contexts';
+import { useSiteSettings, getBrandName } from '../../contexts';
 
 const DEFAULT_IMAGE = 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=1200&q=80';
 const SITE_URL = 'https://www.hyperrelestix.in';
@@ -24,9 +24,8 @@ export default function SEO({
 }) {
   const { settings } = useSiteSettings();
 
-  const brandName = settings
-    ? `${settings.logoTextPrimary || 'Hyper'}${settings.logoTextSecondary || 'Relestix'}`
-    : 'HyperRelestix';
+  const brandName = getBrandName(settings);
+
 
   const defaultDesc = settings
     ? `${brandName} is Pune's most trusted luxury real estate platform. Discover premium villas, penthouses and apartments in Koregaon Park, Baner, Kharadi, Kalyani Nagar, Wakad and Balewadi. RERA verified listings.`
