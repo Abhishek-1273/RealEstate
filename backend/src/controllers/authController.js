@@ -5,7 +5,8 @@ import Otp from '../models/Otp.js';
 import Enquiry from '../models/Enquiry.js';
 import Property from '../models/Property.js';
 import { sendEmail } from '../utils/mailer.js';
-import { otpSet, otpVerify, wishlistGet, wishlistSet, wishlistDel } from '../utils/cache.js';
+import { otpSet, otpVerify, otpIncrementLimit, wishlistGet, wishlistSet, wishlistDel } from '../utils/cache.js';
+
 
 // ── Helper: sign a JWT and set it as httpOnly cookie ──────────────────────────
 const setTokenCookie = (res, userId) => {
