@@ -187,7 +187,8 @@ export default function AdminLayout() {
           </button>
         </div>
 
-        <main data-lenis-prevent className="flex-1 overflow-y-auto overscroll-contain p-4 md:p-7 [scroll-behavior:smooth] [-webkit-overflow-scrolling:touch]">
+        <main data-lenis-prevent className="flex-1 overflow-y-auto overscroll-contain p-3.5 sm:p-5 md:p-7 [scroll-behavior:smooth] [-webkit-overflow-scrolling:touch]">
+
           <Outlet />
         </main>
       </div>

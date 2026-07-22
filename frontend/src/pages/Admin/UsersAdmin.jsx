@@ -7,11 +7,12 @@ import { useAdmin } from './AdminContext';
 import { SkeletonTable } from '../../components/common/Skeleton';
 
 const ROLE_META = {
-  admin: { label: 'Admin', color: '#8B5CF6', bg: '#F5F3FF', darkBg: 'rgba(139,92,246,0.12)', border: 'rgba(139,92,246,0.15)', icon: Crown },
-  management: { label: 'Management', color: '#D4AF37', bg: '#FFFDF5', darkBg: 'rgba(212,175,55,0.08)', border: 'rgba(212,175,55,0.15)', icon: Briefcase },
-  agent: { label: 'Agent', color: '#0EA5E9', bg: '#F0F9FF', darkBg: 'rgba(14,165,233,0.12)', border: 'rgba(14,165,233,0.15)', icon: Users },
-  client: { label: 'Client', color: '#6B7280', bg: '#F3F4F6', darkBg: 'rgba(107,114,128,0.12)', border: 'rgba(107,114,128,0.15)', icon: Users }
+  admin: { label: 'Admin', color: '#D4AF37', bg: 'rgba(212,175,55,0.12)', darkBg: 'rgba(212,175,55,0.18)', border: 'rgba(212,175,55,0.35)', boxBorder: 'rgba(212,175,55,0.3)', icon: Crown },
+  management: { label: 'Management', color: '#8B5CF6', bg: 'rgba(139,92,246,0.12)', darkBg: 'rgba(139,92,246,0.18)', border: 'rgba(139,92,246,0.35)', boxBorder: 'rgba(139,92,246,0.3)', icon: Briefcase },
+  agent: { label: 'Agent', color: '#0EA5E9', bg: 'rgba(14,165,233,0.12)', darkBg: 'rgba(14,165,233,0.18)', border: 'rgba(14,165,233,0.35)', boxBorder: 'rgba(14,165,233,0.25)', icon: Users },
+  client: { label: 'Client', color: '#6B7280', bg: 'rgba(107,114,128,0.12)', darkBg: 'rgba(107,114,128,0.18)', border: 'rgba(107,114,128,0.35)', boxBorder: 'rgba(107,114,128,0.2)', icon: Users }
 };
+
 
 const STAFF_ROLES = ['agent', 'management', 'admin'];
 
@@ -406,7 +407,7 @@ export default function UsersAdmin() {
     return matchesRole && matchesSearch;
   });
 
-  const visibleRoles = user?.role === 'management' ? ['agent'] : ['agent', 'management', 'admin'];
+  const visibleRoles = user?.role === 'management' ? ['agent'] : ['agent', 'management'];
 
   const roleCounts = visibleRoles.reduce((acc, r) => {
     acc[r] = visibleStaff.filter(u => u.role === r).length;
@@ -435,7 +436,8 @@ export default function UsersAdmin() {
         )}
       </div>
 
-      <div className={`grid grid-cols-1 ${visibleRoles.length === 3 ? 'sm:grid-cols-3' : 'sm:grid-cols-1 max-w-sm'} gap-4 mb-6`}>
+      <div className={`grid grid-cols-1 ${visibleRoles.length === 2 ? 'sm:grid-cols-2' : 'sm:grid-cols-1 max-w-sm'} gap-4 mb-6`}>
+
         {visibleRoles.map(r => {
           const m = ROLE_META[r];
           const isActive = roleFilter === r;
@@ -590,61 +592,63 @@ export default function UsersAdmin() {
                 const dateStr = new Date(u.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
 
                 return (
-                  <div key={u.id} className={`p-4 rounded-2xl bg-white dark:bg-navy-light border transition-all flex flex-col gap-3 relative shadow-card ${!u.isActive ? 'opacity-55' : ''}`}
-                    style={u.role === 'admin' ? { background: 'rgba(139,92,246,0.02)', borderLeft: '4px solid rgba(139,92,246,0.45)', borderColor: 'rgba(139,92,246,0.08)' } : u.role === 'management' ? { background: 'rgba(212,175,55,0.02)', borderLeft: '4px solid rgba(212,175,55,0.45)', borderColor: 'rgba(212,175,55,0.08)' } : { borderLeft: '4px solid transparent', borderColor: 'rgba(255,255,255,0.05)' }}>
+                  <div key={u.id} className={`p-4 rounded-2xl bg-white dark:bg-[#0E1A2B] space-y-3 relative shadow-card transition-all ${!u.isActive ? 'opacity-55' : ''}`}
+                    style={{ border: `1.5px solid ${roleMeta.boxBorder}` }}>
 
-                    {/* Header Row: Name & Role Badge */}
+
+                    {/* Header Row: Avatar, Name, Email & Role Badge */}
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex items-center gap-3 min-w-0">
-                        <div className="w-9 h-9 rounded-xl flex items-center justify-center text-xs font-black shrink-0"
+                        <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xs font-black shrink-0 shadow-sm"
                           style={{ background: roleMeta.darkBg, color: roleMeta.color, border: `1.5px solid ${roleMeta.border}` }}>
                           {u.name.charAt(0).toUpperCase()}
                         </div>
                         <div className="min-w-0">
                           <p className="font-bold text-navy dark:text-white text-sm truncate">{u.name}</p>
-                          {u.email && <p className="text-[10px] text-gray-400 dark:text-white/30 truncate flex items-center gap-1.5 mt-0.5"><Mail className="w-3.5 h-3.5 text-gray-400" />{u.email}</p>}
+                          <p className="text-[11px] text-gray-500 dark:text-white/40 truncate flex items-center gap-1 mt-0.5">
+                            <Mail className="w-3 h-3 text-gray-400 shrink-0" />
+                            <span>{u.email || u.phone}</span>
+                          </p>
                         </div>
                       </div>
 
-                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold shrink-0"
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-extrabold shrink-0 shadow-sm"
                         style={{ background: roleMeta.bg, color: roleMeta.color, border: `1.5px solid ${roleMeta.border}` }}>
                         <RoleIcon className="w-3 h-3" />
                         {roleMeta.label}
                       </span>
                     </div>
 
-                    {/* Info Block (Expertise, Qualities, Phone) */}
-                    <div className="grid grid-cols-2 gap-3 text-xs border-t border-b border-gray-100 dark:border-white/5 py-2.5">
-                      <div className="space-y-0.5">
-                        <span className="text-[9px] font-extrabold uppercase text-gray-400 dark:text-white/20 tracking-wider">Contact Info</span>
-                        <p className="font-semibold text-navy dark:text-white/75 truncate flex items-center gap-1"><Phone className="w-3 h-3 text-gray-400" />{u.phone}</p>
-                      </div>
-                      <div className="space-y-0.5">
-                        <span className="text-[9px] font-extrabold uppercase text-gray-400 dark:text-white/20 tracking-wider">Localities</span>
-                        <p className="font-semibold text-navy dark:text-white/75 truncate">{u.expertise || 'None'}</p>
-                      </div>
-                      <div className="space-y-0.5">
-                        <span className="text-[9px] font-extrabold uppercase text-gray-400 dark:text-white/20 tracking-wider">Qualities</span>
-                        <p className="font-semibold text-navy dark:text-white/75 truncate">{u.qualities || 'None'}</p>
-                      </div>
-                      <div className="space-y-0.5">
-                        <span className="text-[9px] font-extrabold uppercase text-gray-400 dark:text-white/20 tracking-wider">Joined</span>
-                        <p className="font-medium text-gray-500 dark:text-white/40">{dateStr}</p>
-                      </div>
+                    {/* Compact Details Chips (Phone, Localities, Joined) */}
+                    <div className="flex flex-wrap items-center gap-2 text-xs pt-1">
+                      {u.phone && (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-gray-100 dark:bg-white/5 text-navy dark:text-white/80 font-medium text-[11px]">
+                          <Phone className="w-3 h-3 text-gray-400" />
+                          {u.phone}
+                        </span>
+                      )}
+                      {u.expertise && u.expertise !== 'None' && (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-gold/10 text-gold-dark dark:text-gold font-bold text-[10px] truncate max-w-[180px]">
+                          📍 {u.expertise}
+                        </span>
+                      )}
+                      <span className="text-[10px] text-gray-400 dark:text-white/30 ml-auto font-medium">
+                        Joined {dateStr}
+                      </span>
                     </div>
 
-                    {/* Bottom Row: Active Toggle, Stats & Actions */}
-                    <div className="flex items-center justify-between gap-4 pt-1">
-                      <div className="flex items-center gap-3.5">
+                    {/* Footer Control Bar: Active Switch, Props & Action Buttons */}
+                    <div className="flex items-center justify-between gap-3 pt-2.5 border-t border-gray-100 dark:border-white/5">
+                      <div className="flex items-center gap-3">
                         {/* Properties count */}
-                        <span className="inline-flex items-center justify-center px-2 py-0.5 text-[9px] font-bold rounded-full bg-blue-500/10 text-blue-500">
+                        <span className="inline-flex items-center justify-center px-2.5 py-1 text-[10px] font-extrabold rounded-full bg-blue-500/10 text-blue-500 border border-blue-500/15">
                           {u.propertiesCount || 0} Prop
                         </span>
 
                         {/* Toggle active */}
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1.5">
                           <button onClick={() => handleToggleActive(u)} disabled={isUpdating}
-                            className={`w-9 h-5 rounded-full transition-all duration-200 relative disabled:opacity-50 cursor-pointer ${u.isActive ? 'bg-green-500 shadow-sm' : 'bg-gray-200 dark:bg-white/10'}`}>
+                            className={`w-9 h-5 rounded-full transition-all duration-200 relative disabled:opacity-50 cursor-pointer ${u.isActive ? 'bg-emerald-500 shadow-sm' : 'bg-gray-200 dark:bg-white/10'}`}>
                             <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-all duration-200 ${u.isActive ? 'left-[18px]' : 'left-0.5'}`} />
                           </button>
                           {isUpdating && <Loader2 className="w-3.5 h-3.5 animate-spin text-yellow-500 shrink-0" />}
@@ -669,7 +673,7 @@ export default function UsersAdmin() {
                             </button>
                           </>
                         ) : (
-                          <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded bg-gold/10 text-gold-dark dark:text-gold border border-gold/15">
+                          <span className="text-[9px] font-black uppercase px-2.5 py-0.5 rounded-full bg-gold/10 text-gold-dark dark:text-gold border border-gold/15">
                             Self
                           </span>
                         )}
@@ -677,6 +681,7 @@ export default function UsersAdmin() {
                     </div>
                   </div>
                 );
+
               })}
             </div>
 
@@ -700,8 +705,9 @@ export default function UsersAdmin() {
                   {filtered.map(u => {
                     const isUpdating = updating === u.id;
                     return (
-                      <tr key={u.id} className={`transition-colors ${!u.isActive ? 'opacity-50' : ''}`}
-                        style={u.role === 'admin' ? { background: 'rgba(139,92,246,0.045)', borderLeft: '3px solid rgba(139,92,246,0.45)' } : u.role === 'management' ? { background: 'rgba(212,175,55,0.045)', borderLeft: '3px solid rgba(212,175,55,0.45)' } : { borderLeft: '3px solid transparent' }}>
+                      <tr key={u.id} className={`transition-colors hover:bg-gray-50/50 dark:hover:bg-white/[0.02] ${!u.isActive ? 'opacity-50' : ''}`}
+                        style={u.role === 'admin' ? { background: 'rgba(212,175,55,0.035)' } : u.role === 'management' ? { background: 'rgba(139,92,246,0.035)' } : { background: 'transparent' }}>
+
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-3">
                             {(() => {

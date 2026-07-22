@@ -133,7 +133,8 @@ export default function FaqsAdmin() {
   };
 
   return (
-    <div className="space-y-8 p-4 md:p-6">
+    <div className="space-y-6">
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -178,20 +179,23 @@ export default function FaqsAdmin() {
               className={`p-5 rounded-3xl bg-white dark:bg-[#0E1A2B] border border-gray-100 dark:border-white/5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 transition-all hover:shadow-md ${!f.isActive ? 'opacity-60' : ''}`}
             >
               {/* Question / Answer Info */}
-              <div className="space-y-1.5 flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-black text-gold">Q{i + 1}.</span>
-                  <h4 className="font-extrabold text-sm text-navy dark:text-white truncate">{f.question}</h4>
-                  <span className={`px-1.5 py-0.5 rounded text-[7px] font-black uppercase tracking-wider ${
-                    f.isActive ? 'bg-green-500/10 text-green-500 border border-green-500/10' : 'bg-gray-400/10 text-gray-400 border border-gray-400/10'
+              <div className="space-y-2 flex-1 min-w-0 w-full">
+                <div className="flex items-start justify-between gap-2.5 min-w-0 w-full">
+                  <div className="flex items-start gap-2 min-w-0 flex-1">
+                    <span className="text-xs font-black text-gold shrink-0 mt-0.5">Q{i + 1}.</span>
+                    <h4 className="font-extrabold text-xs sm:text-sm text-navy dark:text-white leading-snug break-words">{f.question}</h4>
+                  </div>
+                  <span className={`shrink-0 px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wider ${
+                    f.isActive ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20' : 'bg-gray-400/10 text-gray-400 border border-gray-400/20'
                   }`}>
                     {f.isActive ? 'Active' : 'Disabled'}
                   </span>
                 </div>
-                <p className="text-xs text-ink-muted dark:text-cream/70 leading-relaxed font-medium pl-6">
+                <p className="text-xs text-ink-muted dark:text-cream/70 leading-relaxed font-medium pl-5">
                   {f.answer}
                 </p>
               </div>
+
 
               {/* Order & Actions Controls */}
               <div className="flex items-center gap-4 shrink-0 w-full sm:w-auto justify-between sm:justify-start pt-3 sm:pt-0 border-t sm:border-t-0 border-gray-100 dark:border-white/5">

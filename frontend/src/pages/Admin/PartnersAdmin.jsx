@@ -88,7 +88,8 @@ export default function PartnersAdmin() {
   };
 
   return (
-    <div className="space-y-8 p-4 md:p-6">
+    <div className="space-y-6">
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -202,8 +203,8 @@ export default function PartnersAdmin() {
                               type="button"
                               onClick={() => handleToggleVisibility(partner._id, partner.visible)}
                               className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-bold cursor-pointer transition-all ${partner.visible
-                                  ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20'
-                                  : 'bg-white/5 text-ink-soft dark:text-white/30 hover:bg-white/10'
+                                ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20'
+                                : 'bg-white/5 text-ink-soft dark:text-white/30 hover:bg-white/10'
                                 }`}
                             >
                               {partner.visible ? (

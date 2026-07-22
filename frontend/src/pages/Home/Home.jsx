@@ -92,18 +92,18 @@ function Categories({ counts = {} }) {
             sideTilt={6}
             gap={9}
             opacity={50}
+            autoplay={true}
+            transition={{ type: "tween", duration: 0.6, delay: 3.5 }}
             titleFont={{ fontSize: cardSize.width < 300 ? 16 : 22, fontWeight: 800 }}
             onActiveClick={handleActiveClick}
           />
         </div>
-
-        <p className="text-center text-[10px] text-ink-soft dark:text-white/40 font-semibold tracking-wider uppercase mt-4">
-          ← Arrow Keys or Click to Swivel · Click Center Card to Explore →
-        </p>
       </div>
     </section>
   );
 }
+
+
 
 function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
   const words = text.split(' ');
@@ -286,8 +286,8 @@ function WhyUs() {
   return (
     <section className="section-pad bg-white dark:bg-navy-dark transition-colors duration-300">
       <div className="container-luxury">
-        <div className="grid lg:grid-cols-2 gap-16 items-center">
-          <div>
+        <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+          <div className="w-full max-w-xl mx-auto lg:max-w-none">
             <SectionHeader
               label={`Why ${brandName}`}
               title={<>Setting the Standard in <span style={{ color: '#D4AF37' }}>Advisory</span></>}
@@ -295,16 +295,17 @@ function WhyUs() {
               className="mb-10"
             />
 
-            <div className="space-y-4">
+            <div className="space-y-4 w-full">
               {items.map((item, i) => (
                 <div
                   key={i}
                   onClick={() => setActiveTab(i)}
-                  className={`p-6 rounded-3xl border transition-all duration-300 cursor-pointer ${activeTab === i
+                  className={`w-full box-border p-6 rounded-3xl border transition-all duration-300 cursor-pointer ${activeTab === i
                     ? 'bg-gold/5 border-gold/30 dark:bg-gold/[0.03]'
                     : 'bg-transparent border-gray-100 dark:border-white/5 hover:border-gray-200 dark:hover:border-white/10'
                     }`}
                 >
+
                   <div className="flex gap-4">
                     <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${activeTab === i ? 'bg-gold/25 text-gold-dark dark:text-gold' : 'bg-black/5 dark:bg-white/5 text-ink-muted'}`}>
                       {item.icon}

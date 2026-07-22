@@ -2,7 +2,9 @@ import { useState, useEffect, useRef } from 'react';
 import { useSiteSettings, getLogoInitials, renderBrandLogo } from '../../contexts/SettingsContext';
 
 import { updateSettingsAdmin, uploadImage } from '../../utils/adminApi';
-import { Loader2, Save, Globe, Eye, Image, PhoneCall, Share2, TrendingUp } from 'lucide-react';
+import { Loader2, Save, Globe, Eye, Image, PhoneCall, Share2, TrendingUp, Upload, Trash2, Video } from 'lucide-react';
+
+
 
 const inputCls = "w-full px-4 py-3 rounded-xl text-sm border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 text-navy dark:text-white placeholder-gray-400 dark:placeholder-white/25 focus:outline-none focus:border-yellow-400 dark:focus:border-yellow-500/50 transition-colors";
 const labelCls = "block text-[11px] font-bold text-gray-400 dark:text-white/35 uppercase tracking-wider mb-1.5";
@@ -62,6 +64,24 @@ export default function SettingsAdmin() {
       setUploading(false);
     }
   };
+
+  const handleVideoUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    setError('');
+    try {
+      const url = await uploadImage(file);
+      handleChange('heroVideoUrl', url);
+      setSuccess('Hero video uploaded successfully!');
+      setTimeout(() => setSuccess(''), 3000);
+    } catch (err) {
+      setError(err.message || 'Video upload failed.');
+    } finally {
+      setUploading(false);
+    }
+  };
+
 
   const handleLogoUpload = (e) => {
     const file = e.target.files?.[0];
@@ -194,7 +214,8 @@ export default function SettingsAdmin() {
   ];
 
   return (
-    <div className="space-y-8 p-4 md:p-6">
+    <div className="space-y-6">
+
       {/* Page Header */}
       <div>
         <h1 className="text-2xl font-display font-black text-navy dark:text-white">Website Settings</h1>
@@ -214,17 +235,18 @@ export default function SettingsAdmin() {
       )}
 
       {/* Tabs Menu */}
-      <div className="flex gap-2 border-b border-gray-200 dark:border-white/10 pb-px">
+      <div className="flex gap-1 sm:gap-2 border-b border-gray-200 dark:border-white/10 pb-px overflow-x-auto no-scrollbar whitespace-nowrap w-full">
         {tabs.map(t => {
           const ActiveIcon = t.Icon;
           const isActive = activeTab === t.id;
           return (
             <button
               key={t.id}
+              type="button"
               onClick={() => setActiveTab(t.id)}
-              className={`flex items-center gap-2 px-4 py-3 text-sm font-semibold transition-all border-b-2 -mb-px ${
+              className={`flex items-center gap-2 px-3.5 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm font-semibold transition-all border-b-2 -mb-px shrink-0 cursor-pointer ${
                 isActive
-                  ? 'border-gold text-gold dark:text-gold'
+                  ? 'border-gold text-gold dark:text-gold font-extrabold'
                   : 'border-transparent text-gray-400 dark:text-white/40 hover:text-navy dark:hover:text-white'
               }`}
             >
@@ -235,10 +257,79 @@ export default function SettingsAdmin() {
         })}
       </div>
 
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Live Preview Panel — placed at top on mobile, right column on desktop */}
+        <div className="order-first lg:order-last lg:col-span-1 space-y-6">
+          <div className="p-5 md:p-6 rounded-3xl bg-white dark:bg-[#071A2F] text-navy dark:text-white border border-gray-150 dark:border-white/10 shadow-card transition-colors duration-300 space-y-5">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-xs font-bold tracking-widest text-gold uppercase">
+                <Eye className="w-3.5 h-3.5" /> Brand Preview
+              </div>
+              <span className="text-[10px] font-bold text-gray-400 dark:text-white/40 uppercase tracking-wider">
+                Live Theme Mode
+              </span>
+            </div>
+            
+            {/* Logo Preview */}
+            <div className="p-4 rounded-2xl bg-gray-50 dark:bg-white/5 border border-gray-150 dark:border-white/10 flex items-center gap-3 transition-colors">
+              <div
+                className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 overflow-hidden"
+                style={{ background: 'linear-gradient(135deg, #E5C17D 0%, #ECD7AA 50%, #C69D59 100%)' }}
+              >
+                {form.logoIconImage ? (
+                  <img src={form.logoIconImage} alt="Logo" className="w-full h-full object-contain" />
+                ) : (
+                  <span className="text-navy font-display font-black text-sm">{getLogoInitials(form)}</span>
+                )}
+              </div>
+              <div className="min-w-0">
+                <p className="font-display font-bold text-sm tracking-tight leading-snug text-navy dark:text-white">
+                  {renderBrandLogo(form, '#D4AF37')}
+                </p>
+                <p className="text-[8px] font-accent tracking-[0.2em] text-gray-400 dark:text-white/50 uppercase mt-1 truncate">
+                  {form.logoSubtitle || ''}
+                </p>
+              </div>
+
+            </div>
+
+            {/* Banner Preview */}
+            <div className="relative rounded-2xl overflow-hidden border border-gray-200 dark:border-white/10 aspect-[4/3] flex items-end p-4">
+              <img
+                src={form.heroMobileImageUrl || 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80'}
+                alt="Banner preview"
+                className="absolute inset-0 w-full h-full object-cover z-0 filter brightness-[0.45]"
+              />
+              <div className="relative z-10 space-y-1.5">
+                <span className="text-[8px] px-2 py-0.5 rounded-full bg-white/20 backdrop-blur-sm border border-white/30 text-white font-accent uppercase tracking-widest font-bold">
+                  {form.heroTagline || "PREMIER PLATFORM"}
+                </span>
+                <h4 className="font-display font-black text-base sm:text-lg leading-tight text-white drop-shadow-md">
+                  {form.heroTitleLine1 || 'Pune\'s Finest'}{' '}
+                  <span className="text-gold block">{form.heroTitleLine2Highlight || 'Luxury Homes'}</span>
+                  {form.heroTitleLine3 || 'For NRIs'}
+                </h4>
+                <p className="text-[10px] text-white/80 leading-normal line-clamp-2 drop-shadow-sm">
+                  {form.heroDescription || 'Description...'}
+                </p>
+              </div>
+            </div>
+
+            {/* Contact info Preview */}
+            <div className="p-4 rounded-2xl bg-gray-50 dark:bg-white/5 border border-gray-150 dark:border-white/10 space-y-2 text-xs transition-colors">
+              <p className="text-[10px] font-bold text-gold uppercase tracking-wider mb-2">Footer Details</p>
+              <p className="text-navy/70 dark:text-white/60 truncate"><strong>Phone:</strong> {form.contactPhone1}</p>
+              <p className="text-navy/70 dark:text-white/60 truncate"><strong>Email:</strong> {form.contactEmail1}</p>
+              <p className="text-navy/70 dark:text-white/60 text-wrap leading-relaxed"><strong>Address:</strong> {form.contactAddress}</p>
+            </div>
+          </div>
+        </div>
+
         {/* Form panel */}
-        <div className="lg:col-span-2">
+        <div className="order-last lg:order-first lg:col-span-2">
           <form onSubmit={handleSubmit} className="p-6 md:p-8 rounded-3xl bg-white dark:bg-navy border border-gray-100 dark:border-white/10 shadow-card space-y-6">
+
             
             {activeTab === 'branding' && (
               <div className="space-y-6">
@@ -246,24 +337,52 @@ export default function SettingsAdmin() {
                 
                 <div>
                   <label className={labelCls}>Logo Icon Image (Optional - Overrides Abbreviation Text)</label>
-                  <div className="flex gap-3">
-                    <input
-                      type="url"
-                      value={form.logoIconImage || ''}
-                      onChange={(e) => handleChange('logoIconImage', e.target.value)}
-                      placeholder="Upload custom icon image or enter image URL"
-                      className={`${inputCls} flex-1`}
-                    />
-                    <label className="shrink-0 flex items-center justify-center p-3 rounded-xl bg-gray-150 hover:bg-gray-200 dark:bg-white/5 dark:hover:bg-white/10 cursor-pointer transition-colors border border-dashed border-gray-300 dark:border-white/20">
-                      <input type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} />
+                  {form.logoIconImage ? (
+                    <div className="p-4 rounded-2xl bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-12 h-12 rounded-xl bg-white dark:bg-navy border border-gray-200 dark:border-white/10 p-1 flex items-center justify-center shrink-0 overflow-hidden shadow-sm">
+                          <img src={form.logoIconImage} alt="Uploaded logo" className="w-full h-full object-contain" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-xs font-bold text-navy dark:text-white leading-tight">Custom Logo Active</p>
+                          <p className="text-[10px] text-emerald-500 font-semibold mt-0.5">Will display in header & footer</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0 pt-2.5 sm:pt-0 border-t sm:border-t-0 border-gray-200/60 dark:border-white/10">
+                        <label className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-gold/10 hover:bg-gold/20 text-gold text-xs font-bold transition-all cursor-pointer border border-gold/20">
+                          <Upload className="w-3.5 h-3.5" /> Change Image
+                          <input type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} disabled={uploading} />
+                        </label>
+                        <button
+                          type="button"
+                          onClick={() => handleChange('logoIconImage', '')}
+                          className="p-2 rounded-xl text-gray-400 hover:text-red-500 hover:bg-red-500/10 transition-colors cursor-pointer"
+                          title="Remove logo image"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <label className="group flex flex-col items-center justify-center p-6 rounded-2xl bg-gray-50 hover:bg-gray-100 dark:bg-white/5 dark:hover:bg-white/10 border-2 border-dashed border-gray-200 dark:border-white/15 hover:border-gold dark:hover:border-gold transition-all cursor-pointer text-center">
+                      <input type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} disabled={uploading} />
                       {uploading ? (
-                        <Loader2 className="w-4 h-4 animate-spin text-gold" />
+                        <div className="flex items-center gap-2 text-gold font-bold text-xs">
+                          <Loader2 className="w-5 h-5 animate-spin" /> Uploading Logo Image...
+                        </div>
                       ) : (
-                        <Image className="w-4 h-4 text-gray-500 dark:text-white/60" />
+                        <>
+                          <div className="w-10 h-10 rounded-full bg-gold/10 text-gold flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
+                            <Upload className="w-5 h-5" />
+                          </div>
+                          <p className="text-xs font-bold text-navy dark:text-white">Click to Upload Logo Image</p>
+                          <p className="text-[10px] text-gray-400 dark:text-white/40 mt-0.5">PNG, JPG, SVG, WebP up to 5MB</p>
+                        </>
                       )}
                     </label>
-                  </div>
+                  )}
                 </div>
+
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                   <div>
@@ -375,35 +494,102 @@ export default function SettingsAdmin() {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                   <div>
-                    <label className={labelCls}>Background Video MP4/WebM URL</label>
-                    <input
-                      type="url"
-                      value={form.heroVideoUrl || ''}
-                      onChange={(e) => handleChange('heroVideoUrl', e.target.value)}
-                      placeholder="Direct link to CDN MP4 video"
-                      className={inputCls}
-                    />
-                  </div>
-                  <div>
-                    <label className={labelCls}>Mobile/Fallback Banner Image</label>
-                    <div className="flex gap-3">
-                      <input
-                        type="url"
-                        value={form.heroMobileImageUrl || ''}
-                        onChange={(e) => handleChange('heroMobileImageUrl', e.target.value)}
-                        placeholder="Image URL"
-                        className={`${inputCls} flex-1`}
-                      />
-                      <label className="shrink-0 flex items-center justify-center p-3 rounded-xl bg-gray-100 hover:bg-gray-200 dark:bg-white/5 dark:hover:bg-white/10 cursor-pointer transition-colors border border-dashed border-gray-300 dark:border-white/20">
-                        <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
+                    <label className={labelCls}>Background Hero Video (MP4 / WebM)</label>
+                    {form.heroVideoUrl ? (
+                      <div className="p-4 rounded-2xl bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="w-16 h-12 rounded-xl bg-black border border-gray-200 dark:border-white/10 overflow-hidden shrink-0 shadow-sm relative flex items-center justify-center">
+                            <video src={form.heroVideoUrl} className="w-full h-full object-cover" muted loop autoPlay />
+                            <Video className="w-4 h-4 text-white absolute inset-0 m-auto pointer-events-none drop-shadow" />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-xs font-bold text-navy dark:text-white leading-tight">Hero Video Active</p>
+                            <p className="text-[10px] text-emerald-500 font-semibold mt-0.5">Playing on desktop hero background</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0 pt-2.5 sm:pt-0 border-t sm:border-t-0 border-gray-200/60 dark:border-white/10">
+                          <label className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-gold/10 hover:bg-gold/20 text-gold text-xs font-bold transition-all cursor-pointer border border-gold/20">
+                            <Upload className="w-3.5 h-3.5" /> Change Video
+                            <input type="file" accept="video/mp4,video/webm,video/quicktime" className="hidden" onChange={handleVideoUpload} disabled={uploading} />
+                          </label>
+                          <button
+                            type="button"
+                            onClick={() => handleChange('heroVideoUrl', '')}
+                            className="p-2 rounded-xl text-gray-400 hover:text-red-500 hover:bg-red-500/10 transition-colors cursor-pointer"
+                            title="Remove video"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <label className="group flex flex-col items-center justify-center p-6 rounded-2xl bg-gray-50 hover:bg-gray-100 dark:bg-white/5 dark:hover:bg-white/10 border-2 border-dashed border-gray-200 dark:border-white/15 hover:border-gold dark:hover:border-gold transition-all cursor-pointer text-center">
+                        <input type="file" accept="video/mp4,video/webm,video/quicktime" className="hidden" onChange={handleVideoUpload} disabled={uploading} />
                         {uploading ? (
-                          <Loader2 className="w-4 h-4 animate-spin text-gold" />
+                          <div className="flex items-center gap-2 text-gold font-bold text-xs">
+                            <Loader2 className="w-5 h-5 animate-spin" /> Uploading Video (up to 50MB)...
+                          </div>
                         ) : (
-                          <Image className="w-4 h-4 text-gray-500 dark:text-white/60" />
+                          <>
+                            <div className="w-10 h-10 rounded-full bg-gold/10 text-gold flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
+                              <Video className="w-5 h-5" />
+                            </div>
+                            <p className="text-xs font-bold text-navy dark:text-white">Click to Upload Hero Video</p>
+                            <p className="text-[10px] text-gray-400 dark:text-white/40 mt-0.5">MP4, WebM, MOV up to 50MB</p>
+                          </>
                         )}
                       </label>
-                    </div>
+                    )}
                   </div>
+
+                  <div>
+                    <label className={labelCls}>Mobile / Fallback Banner Image</label>
+                    {form.heroMobileImageUrl ? (
+                      <div className="p-4 rounded-2xl bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="w-16 h-12 rounded-xl bg-white dark:bg-navy border border-gray-200 dark:border-white/10 overflow-hidden shrink-0 shadow-sm">
+                            <img src={form.heroMobileImageUrl} alt="Uploaded banner" className="w-full h-full object-cover" />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-xs font-bold text-navy dark:text-white leading-tight">Hero Banner Active</p>
+                            <p className="text-[10px] text-emerald-500 font-semibold mt-0.5">Will display on mobile & hero</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0 pt-2.5 sm:pt-0 border-t sm:border-t-0 border-gray-200/60 dark:border-white/10">
+                          <label className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-gold/10 hover:bg-gold/20 text-gold text-xs font-bold transition-all cursor-pointer border border-gold/20">
+                            <Upload className="w-3.5 h-3.5" /> Change
+                            <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} disabled={uploading} />
+                          </label>
+                          <button
+                            type="button"
+                            onClick={() => handleChange('heroMobileImageUrl', '')}
+                            className="p-2 rounded-xl text-gray-400 hover:text-red-500 hover:bg-red-500/10 transition-colors cursor-pointer"
+                            title="Remove banner image"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <label className="group flex flex-col items-center justify-center p-6 rounded-2xl bg-gray-50 hover:bg-gray-100 dark:bg-white/5 dark:hover:bg-white/10 border-2 border-dashed border-gray-200 dark:border-white/15 hover:border-gold dark:hover:border-gold transition-all cursor-pointer text-center">
+                        <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} disabled={uploading} />
+                        {uploading ? (
+                          <div className="flex items-center gap-2 text-gold font-bold text-xs">
+                            <Loader2 className="w-5 h-5 animate-spin" /> Uploading Hero Image...
+                          </div>
+                        ) : (
+                          <>
+                            <div className="w-10 h-10 rounded-full bg-gold/10 text-gold flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
+                              <Upload className="w-5 h-5" />
+                            </div>
+                            <p className="text-xs font-bold text-navy dark:text-white">Click to Upload Hero Image</p>
+                            <p className="text-[10px] text-gray-400 dark:text-white/40 mt-0.5">PNG, JPG, WebP up to 10MB</p>
+                          </>
+                        )}
+                      </label>
+                    )}
+                  </div>
+
                 </div>
               </div>
             )}
@@ -551,19 +737,10 @@ export default function SettingsAdmin() {
             {activeTab === 'socials' && (
               <div className="space-y-6">
                 <h3 className="font-display font-bold text-navy dark:text-white text-lg">Social Media Links</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className={labelCls}>LinkedIn URL</label>
-                    <input
-                      type="text"
-                      value={form.socials?.linkedin || ''}
-                      onChange={(e) => handleNestedChange('socials', 'linkedin', e.target.value)}
-                      placeholder="https://linkedin.com/in/..."
-                      className={inputCls}
-                    />
-                  </div>
-                  <div>
-                    <label className={labelCls}>Instagram URL</label>
+                    <label className={labelCls}>Instagram Profile URL</label>
                     <input
                       type="text"
                       value={form.socials?.instagram || ''}
@@ -573,7 +750,20 @@ export default function SettingsAdmin() {
                     />
                   </div>
                   <div>
-                    <label className={labelCls}>Facebook URL</label>
+                    <label className={labelCls}>LinkedIn Page URL</label>
+                    <input
+                      type="text"
+                      value={form.socials?.linkedin || ''}
+                      onChange={(e) => handleNestedChange('socials', 'linkedin', e.target.value)}
+                      placeholder="https://linkedin.com/..."
+                      className={inputCls}
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className={labelCls}>Facebook Page URL</label>
                     <input
                       type="text"
                       value={form.socials?.facebook || ''}
@@ -596,6 +786,7 @@ export default function SettingsAdmin() {
               </div>
             )}
 
+
             <div className="flex justify-end pt-4 border-t border-gray-150 dark:border-white/10">
               <button
                 type="submit"
@@ -614,68 +805,6 @@ export default function SettingsAdmin() {
               </button>
             </div>
           </form>
-        </div>
-
-        {/* Live Preview Panel */}
-        <div className="lg:col-span-1 space-y-6">
-          <div className="p-6 rounded-3xl bg-[#071A2F] text-white border border-white/10 shadow-luxury space-y-6">
-            <div className="flex items-center gap-2 text-xs font-bold tracking-widest text-gold uppercase">
-              <Eye className="w-3.5 h-3.5" /> Brand Preview
-            </div>
-            
-            {/* Logo Preview */}
-            <div className="p-4 rounded-2xl bg-white/5 border border-white/10 flex items-center gap-3">
-              <div
-                className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 overflow-hidden"
-                style={{ background: 'linear-gradient(135deg, #E5C17D 0%, #ECD7AA 50%, #C69D59 100%)' }}
-              >
-                {form.logoIconImage ? (
-                  <img src={form.logoIconImage} alt="Logo" className="w-full h-full object-contain" />
-                ) : (
-                  <span className="text-navy font-display font-black text-sm">{getLogoInitials(form)}</span>
-                )}
-              </div>
-              <div className="min-w-0">
-                <p className="font-display font-bold text-sm tracking-tight text-white">
-                  {renderBrandLogo(form, '#E5C17D')}
-                </p>
-
-                <p className="text-[8px] font-accent tracking-[0.2em] text-white/50 uppercase mt-0.5 truncate">
-                  {form.logoSubtitle || ''}
-                </p>
-              </div>
-            </div>
-
-            {/* Banner Preview */}
-            <div className="relative rounded-2xl overflow-hidden border border-white/10 aspect-[4/3] flex items-end p-4">
-              <img
-                src={form.heroMobileImageUrl || 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80'}
-                alt="Banner preview"
-                className="absolute inset-0 w-full h-full object-cover z-0 filter brightness-[0.4]"
-              />
-              <div className="relative z-10 space-y-2">
-                <span className="text-[8px] px-2 py-0.5 rounded-full bg-white/10 border border-white/20 text-white/80 font-accent uppercase tracking-widest">
-                  {form.heroTagline || "PREMIER PLATFORM"}
-                </span>
-                <h4 className="font-display font-black text-lg leading-tight text-white">
-                  {form.heroTitleLine1 || 'Pune\'s Finest'}{' '}
-                  <span className="text-gold block">{form.heroTitleLine2Highlight || 'Luxury Homes'}</span>
-                  {form.heroTitleLine3 || 'For NRIs'}
-                </h4>
-                <p className="text-[10px] text-white/60 leading-normal line-clamp-2">
-                  {form.heroDescription || 'Description...'}
-                </p>
-              </div>
-            </div>
-
-            {/* Contact info Preview */}
-            <div className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-2 text-xs">
-              <p className="text-[10px] font-bold text-gold uppercase tracking-wider mb-2">Footer Details</p>
-              <p className="text-white/60 truncate"><strong>Phone:</strong> {form.contactPhone1}</p>
-              <p className="text-white/60 truncate"><strong>Email:</strong> {form.contactEmail1}</p>
-              <p className="text-white/60 text-wrap leading-relaxed"><strong>Address:</strong> {form.contactAddress}</p>
-            </div>
-          </div>
         </div>
       </div>
 

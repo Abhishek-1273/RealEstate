@@ -85,13 +85,16 @@ export default function Footer() {
                 )}
               </div>
               <div>
-                <p className="font-display font-bold text-xl text-white leading-none">
+                <p className="font-display font-bold text-xl text-white leading-tight">
                   {renderBrandLogo(settings, '#D4AF37')}
                 </p>
-                <p className="text-white/40 text-[8px] font-accent tracking-[0.25em] uppercase mt-0.5">
+                <p className="text-white/40 text-[8px] font-accent tracking-[0.25em] uppercase mt-[1.5px]">
                   {settings?.logoSubtitle || 'Luxury Real Estate · Pune'}
                 </p>
               </div>
+
+
+
             </Link>
 
             <p className="text-white/60 text-sm leading-relaxed mb-6 max-w-sm">
@@ -140,29 +143,32 @@ export default function Footer() {
           </div>
 
           {/* Link Columns */}
-          {columns.map((col) => (
-            <div key={col.title} className="col-span-1 lg:col-span-2">
-              <h4 className="font-display font-bold text-white text-[10px] uppercase tracking-[0.22em] mb-5">
-                {col.title}
-              </h4>
-              <ul className="space-y-3">
-                {col.items.map((link) => (
-                  <li key={link.label}>
-                    <Link
-                      to={link.to}
-                      onClick={(e) => handleLinkClick(e, link.to)}
-                      className="text-white/50 hover:text-gold text-sm transition-all duration-300 flex items-center relative pl-0 hover:pl-5 group"
-                    >
-                      <ArrowRight className="w-3 h-3 absolute left-0 opacity-0 group-hover:opacity-100 transition-all duration-300 text-gold" />
-                      {link.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
+          <div className="col-span-1 lg:col-span-8 grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+            {columns.map((col) => (
+              <div key={col.title}>
+                <h4 className="font-display font-bold text-white text-[10px] uppercase tracking-[0.22em] mb-5">
+                  {col.title}
+                </h4>
+                <ul className="space-y-3">
+                  {col.items.map((link) => (
+                    <li key={link.label}>
+                      <Link
+                        to={link.to}
+                        onClick={(e) => handleLinkClick(e, link.to)}
+                        className="text-white/50 hover:text-gold text-sm transition-all duration-300 flex items-center relative pl-0 hover:pl-5 group"
+                      >
+                        <ArrowRight className="w-3 h-3 absolute left-0 opacity-0 group-hover:opacity-100 transition-all duration-300 text-gold" />
+                        {link.label}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
+
 
       {/* Divider */}
       <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>

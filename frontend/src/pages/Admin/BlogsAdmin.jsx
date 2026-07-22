@@ -334,10 +334,10 @@ export default function BlogsAdmin() {
   return (
     <div className="pb-8">
       {/* Tab Switcher */}
-      <div className="flex gap-2 border-b border-gray-200 dark:border-white/10 pb-px mb-6">
+      <div className="flex gap-2 border-b border-gray-200 dark:border-white/10 pb-px mb-6 overflow-x-auto no-scrollbar whitespace-nowrap w-full">
         <button
           onClick={() => setActiveTab('blogs')}
-          className={`flex items-center gap-2 px-4 py-3 text-sm font-semibold transition-all border-b-2 -mb-px ${
+          className={`flex items-center gap-2 px-3.5 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm font-semibold transition-all border-b-2 -mb-px shrink-0 cursor-pointer ${
             activeTab === 'blogs'
               ? 'border-gold text-gold font-extrabold'
               : 'border-transparent text-gray-500 hover:text-navy dark:text-white/50 dark:hover:text-white'
@@ -347,7 +347,7 @@ export default function BlogsAdmin() {
         </button>
         <button
           onClick={() => setActiveTab('testimonials')}
-          className={`flex items-center gap-2 px-4 py-3 text-sm font-semibold transition-all border-b-2 -mb-px ${
+          className={`flex items-center gap-2 px-3.5 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm font-semibold transition-all border-b-2 -mb-px shrink-0 cursor-pointer ${
             activeTab === 'testimonials'
               ? 'border-gold text-gold font-extrabold'
               : 'border-transparent text-gray-550 hover:text-navy dark:text-white/50 dark:hover:text-white'
@@ -356,6 +356,7 @@ export default function BlogsAdmin() {
           Client Testimonials
         </button>
       </div>
+
 
       {activeTab === 'testimonials' ? (
         <TestimonialsAdmin />

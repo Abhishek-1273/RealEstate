@@ -197,15 +197,17 @@ export default function Navbar() {
 
                 )}
               </div>
-              <div className="leading-none">
-                <p className={`font-display font-bold text-[17px] tracking-tight transition-colors duration-300 ${isSolid ? 'text-navy dark:text-white' : 'text-white'}`}>
+              <div className="flex flex-col justify-center">
+                <p className={`font-display font-bold text-[17px] leading-tight tracking-tight transition-colors duration-300 ${isSolid ? 'text-navy dark:text-white' : 'text-white'}`}>
                   {renderBrandLogo(settings, '#E5C17D')}
                 </p>
-
-                <p className={`text-[8px] font-accent tracking-[0.25em] uppercase mt-1 transition-colors duration-300 ${isSolid ? 'text-ink-soft dark:text-white/50' : 'text-white/70'}`}>
+                <p className={`text-[8px] font-accent tracking-[0.25em] uppercase mt-[1.5px] transition-colors duration-300 ${isSolid ? 'text-ink-soft dark:text-white/50' : 'text-white/70'}`}>
                   {settings?.logoSubtitle || 'Luxury Real Estate · Pune'}
                 </p>
               </div>
+
+
+
             </Link>
 
             {/* Desktop Nav */}

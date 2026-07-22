@@ -272,8 +272,8 @@ export default function ServiceShuffle() {
       </div>
 
       {/* ── MOBILE: Single Card Slide/Fade Carousel (auto-shuffling) ── */}
-      <div className="md:hidden w-full flex flex-col items-center justify-center relative h-[450px]">
-        <div className="relative w-[300px] h-[400px] flex justify-center items-center">
+      <div className="md:hidden w-full flex flex-col items-center justify-center relative h-[495px]">
+        <div className="relative w-[360px] max-w-[92vw] h-[460px] flex justify-center items-center">
           <AnimatePresence mode="wait">
             <motion.div
               key={activeIdx}
@@ -282,30 +282,32 @@ export default function ServiceShuffle() {
               exit={{ opacity: 0, x: -40, scale: 0.95 }}
               transition={{ duration: 0.4, ease: 'easeOut' }}
               onClick={() => handleServiceClick(SERVICES[activeIdx].link)}
-              className="absolute w-[280px] h-[390px] rounded-[30px] flex flex-col justify-end select-none cursor-pointer overflow-hidden shadow-xl border border-white/10"
+              className="absolute w-[340px] max-w-[90vw] h-[445px] rounded-[34px] flex flex-col justify-end select-none cursor-pointer overflow-hidden shadow-2xl border border-white/10"
               style={{
                 background: 'linear-gradient(145deg, rgba(10, 25, 47, 0.96) 0%, rgba(5, 12, 24, 0.99) 100%)',
                 backdropFilter: 'blur(20px)',
               }}
             >
               {/* Pulsing EXCLUSIVE tag over image */}
-              <div className="absolute top-3 left-3 z-10 flex items-center gap-1 px-2.5 py-1.5 rounded-full border border-gold/30 bg-navy/85 backdrop-blur-md">
+              <div className="absolute top-3.5 left-3.5 z-10 flex items-center gap-1 px-2.5 py-1.5 rounded-full border border-gold/30 bg-navy/85 backdrop-blur-md">
                 <span className="w-1 h-1 rounded-full bg-gold animate-ping" />
                 <span className="text-[8px] font-accent font-black tracking-widest text-gold uppercase">EXCLUSIVE SERVICE</span>
               </div>
 
               {/* Image background with gradient overlay */}
-              <div className="absolute top-0 left-0 right-0 h-[210px] overflow-hidden z-0">
+              <div className="absolute top-0 left-0 right-0 h-[240px] overflow-hidden z-0">
                 <img src={SERVICES[activeIdx].image} alt={SERVICES[activeIdx].title} className="w-full h-full object-cover" />
                 <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#09121f]/50 to-[#09121f]" />
               </div>
+
+
 
               {/* Card Info Area */}
               <div className="p-5 w-full flex flex-col justify-end z-20 relative">
                 <h4 className="font-display font-bold text-base text-white text-left tracking-wide leading-tight mt-1">
                   {SERVICES[activeIdx].title}
                 </h4>
-                <p className="text-white/60 text-[10px] leading-relaxed font-body text-left mt-1.5 h-[32px] overflow-hidden">
+                <p className="text-white/65 text-[11px] leading-normal font-body text-left mt-1.5 line-clamp-2">
                   {SERVICES[activeIdx].tagline}
                 </p>
                 <div className="flex gap-1.5 mt-3 text-white/70">
@@ -316,7 +318,7 @@ export default function ServiceShuffle() {
                     {SERVICES[activeIdx].badge2}
                   </span>
                 </div>
-                <div className="mt-4">
+                <div className="mt-3.5">
                   <button
                     onClick={(e) => { e.stopPropagation(); handleServiceClick(SERVICES[activeIdx].link); }}
                     className="w-full py-2.5 rounded-full font-display font-black text-xs text-navy tracking-wider transition-all duration-300 active:scale-[0.98] shadow-md cursor-pointer"
@@ -328,6 +330,7 @@ export default function ServiceShuffle() {
                   </button>
                 </div>
               </div>
+
             </motion.div>
           </AnimatePresence>
         </div>
@@ -353,3 +356,4 @@ export default function ServiceShuffle() {
     </div>
   );
 }
+

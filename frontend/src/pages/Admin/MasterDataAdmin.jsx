@@ -159,7 +159,7 @@ export default function MasterDataAdmin() {
       </div>
 
       {/* Tabs Menu */}
-      <div className="flex flex-wrap gap-1 border-b border-gray-250 dark:border-white/10 pb-px">
+      <div className="flex gap-1 border-b border-gray-250 dark:border-white/10 pb-px overflow-x-auto no-scrollbar whitespace-nowrap w-full">
         {CATEGORIES.map(cat => (
           <button
             key={cat.key}
@@ -167,9 +167,9 @@ export default function MasterDataAdmin() {
               setActiveTab(cat.key);
               setSearch('');
             }}
-            className={`px-4 py-3 text-xs font-semibold border-b-2 transition-all duration-200 ${
+            className={`px-3.5 sm:px-4 py-2.5 sm:py-3 text-xs font-semibold border-b-2 transition-all duration-200 shrink-0 cursor-pointer ${
               activeTab === cat.key
-                ? 'border-gold text-gold-dark dark:text-gold'
+                ? 'border-gold text-gold-dark dark:text-gold font-extrabold'
                 : 'border-transparent text-gray-400 dark:text-white/40 hover:text-navy dark:hover:text-white'
             }`}
           >
@@ -179,7 +179,7 @@ export default function MasterDataAdmin() {
       </div>
 
       {/* Control Bar */}
-      <div className="flex flex-col sm:flex-row gap-4 items-stretch sm:items-center justify-between">
+      <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-stretch sm:items-center justify-between">
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-white/30" />
           <input
@@ -187,7 +187,7 @@ export default function MasterDataAdmin() {
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder={`Search ${activeTab === 'propertyType' ? 'property types' : activeTab + 's'}...`}
-            className="w-full pl-9 pr-4 py-2 rounded-xl text-xs border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 text-navy dark:text-white placeholder-gray-400 dark:placeholder-white/25 focus:outline-none focus:border-gold transition-colors"
+            className="w-full pl-9 pr-4 py-2.5 rounded-xl text-xs border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 text-navy dark:text-white placeholder-gray-400 dark:placeholder-white/25 focus:outline-none focus:border-gold transition-colors"
           />
         </div>
         <div className="text-[10px] font-bold text-gray-400 dark:text-white/30 uppercase tracking-widest text-right">
@@ -214,27 +214,27 @@ export default function MasterDataAdmin() {
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
 
           {filteredItems.map(item => (
             <div
               key={item._id}
-              className="p-4 bg-white dark:bg-[#0E1A2B] border border-gray-150 dark:border-white/10 rounded-3xl shadow-sm hover:border-gold/30 hover:shadow-lg dark:hover:shadow-[#e5c17d]/5 hover:-translate-y-0.5 transition-all duration-300 flex items-center justify-between group"
+              className="p-3 sm:p-4 bg-white dark:bg-[#0E1A2B] border border-gray-150 dark:border-white/10 rounded-2xl sm:rounded-3xl shadow-sm hover:border-gold/30 transition-all duration-200 flex items-center justify-between gap-2 group"
             >
-              <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-2xl bg-gray-50 dark:bg-white/5 transition-colors group-hover:bg-gold/10 flex items-center justify-center">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="p-2 rounded-xl bg-gray-50 dark:bg-white/5 transition-colors group-hover:bg-gold/10 flex items-center justify-center shrink-0">
                   {getCategoryIcon(item.category)}
                 </div>
-                <div>
-                  <span className="font-bold text-navy dark:text-white text-sm block leading-tight mb-1">
+                <div className="min-w-0 flex-1">
+                  <span className="font-bold text-navy dark:text-white text-xs sm:text-sm block leading-tight truncate" title={item.value}>
                     {item.value}
                   </span>
                   <button
                     onClick={() => handleToggleStatus(item)}
-                    className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[9px] font-bold border transition-all duration-250 cursor-pointer ${
+                    className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[8px] sm:text-[9px] font-bold border transition-all cursor-pointer ${
                       item.isActive !== false
-                        ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20 hover:bg-emerald-500/20'
-                        : 'bg-gray-155 text-gray-500 dark:bg-white/5 dark:text-white/40 border-gray-200 dark:border-white/10 hover:bg-gray-200 dark:hover:bg-white/10'
+                        ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20'
+                        : 'bg-gray-150 text-gray-500 dark:bg-white/5 dark:text-white/40 border-gray-200 dark:border-white/10'
                     }`}
                     title={item.isActive !== false ? "Click to Deactivate" : "Click to Activate"}
                   >
@@ -244,17 +244,17 @@ export default function MasterDataAdmin() {
                 </div>
               </div>
 
-              <div className="flex items-center gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
+              <div className="flex items-center gap-0.5 shrink-0 opacity-80 sm:opacity-60 group-hover:opacity-100">
                 <button
                   onClick={() => handleOpenEdit(item)}
-                  className="p-2 rounded-xl text-gray-500 hover:text-gold dark:text-white/50 dark:hover:text-gold hover:bg-gray-50 dark:hover:bg-white/5 transition-all cursor-pointer inline-flex items-center"
+                  className="p-1.5 rounded-lg text-gray-400 hover:text-gold dark:hover:text-gold transition-colors cursor-pointer"
                   title="Edit Value"
                 >
                   <Pencil className="w-3.5 h-3.5" />
                 </button>
                 <button
                   onClick={() => handleDeleteClick(item)}
-                  className="p-2 rounded-xl text-gray-500 hover:text-red-500 dark:text-white/50 dark:hover:text-red-400 hover:bg-gray-55 dark:hover:bg-white/5 transition-all cursor-pointer inline-flex items-center"
+                  className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition-colors cursor-pointer"
                   title="Delete Item"
                 >
                   <Trash2 className="w-3.5 h-3.5" />
@@ -264,6 +264,7 @@ export default function MasterDataAdmin() {
           ))}
         </div>
       )}
+
 
       {/* CRUD Overlay Dialog Form */}
       {createPortal(

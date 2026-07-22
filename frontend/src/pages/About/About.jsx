@@ -101,10 +101,10 @@ export default function About() {
 
   return (
     <div className="min-h-screen bg-surface dark:bg-navy-dark pt-20 transition-colors duration-300">
-      <SEO 
-        title={`About Us - Pune's Premium NRI Real Estate Agency`} 
-        description={`Learn more about ${brandName}, Pune's premier luxury real estate agency. Our mission, values, and expert team of real estate advisors.`} 
-        url="/about" 
+      <SEO
+        title={`About Us - Pune's Premium NRI Real Estate Agency`}
+        description={`Learn more about ${brandName}, Pune's premier luxury real estate agency. Our mission, values, and expert team of real estate advisors.`}
+        url="/about"
       />
 
       {/* ── Hero ── */}
@@ -270,9 +270,9 @@ export default function About() {
           <SectionHeader label="Meet the Team" title={<>Our <span style={{ color: '#D4AF37' }}>Luxury Advisors</span></>}
             description="India's most accomplished luxury real estate specialists — with decades of combined experience."
             align="center" className="mb-16" />
-          
+
           <div className="flex items-center justify-center relative select-none overflow-hidden w-full"
-               style={{ height: carouselSizing.activeHeight + 50 }}>
+            style={{ height: carouselSizing.activeHeight + 50 }}>
             <CoverflowCarousel
               images={carouselImages}
               activeWidth={carouselSizing.activeWidth}

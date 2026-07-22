@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { getTestimonialsAdmin, createTestimonialAdmin, updateTestimonialAdmin, deleteTestimonialAdmin, uploadImage } from '../../utils/adminApi';
-import { Plus, Pencil, Trash2, Loader2, Star, Eye, EyeOff, X, Image, Quote } from 'lucide-react';
+import { Plus, Pencil, Trash2, Loader2, Star, Eye, EyeOff, X, Quote, Upload } from 'lucide-react';
+
+
 import { motion, AnimatePresence } from 'framer-motion';
 
 const inputCls = "w-full px-4 py-3 rounded-xl text-sm border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 text-navy dark:text-white placeholder-gray-400 dark:placeholder-white/25 focus:outline-none focus:border-yellow-400 dark:focus:border-yellow-500/50 transition-colors";
@@ -123,7 +125,8 @@ export default function TestimonialsAdmin() {
   };
 
   return (
-    <div className="space-y-8 p-4 md:p-6">
+    <div className="space-y-6">
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -278,30 +281,26 @@ export default function TestimonialsAdmin() {
                 <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-6">
                   {/* Photo Upload */}
                   <div className="flex items-center gap-4">
-                    <div className="w-16 h-16 rounded-xl overflow-hidden bg-gray-100 shrink-0 border border-gray-150 dark:border-white/10">
+                    <div className="w-16 h-16 rounded-xl overflow-hidden bg-gray-100 dark:bg-white/5 shrink-0 border border-gray-150 dark:border-white/10">
                       <img src={currentTestimonial.image || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&q=80'} alt="Preview" className="w-full h-full object-cover" />
                     </div>
-                    <div className="space-y-1.5">
-                      <label className="text-[10px] font-bold text-gold uppercase tracking-wider">Client Photo</label>
-                      <div className="flex gap-2">
-                        <input
-                          type="url"
-                          value={currentTestimonial.image || ''}
-                          onChange={(e) => setCurrentTestimonial(prev => ({ ...prev, image: e.target.value }))}
-                          placeholder="Or paste direct image URL"
-                          className={`${inputCls} py-2 text-xs`}
-                        />
-                        <label className="shrink-0 flex items-center justify-center p-2.5 rounded-xl bg-gray-50 hover:bg-gray-100 dark:bg-white/5 dark:hover:bg-white/10 border border-gray-200 dark:border-white/10 cursor-pointer transition-colors">
-                          <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
-                          {uploading ? (
-                            <Loader2 className="w-3.5 h-3.5 animate-spin text-gold" />
-                          ) : (
-                            <Image className="w-3.5 h-3.5 text-gray-500" />
-                          )}
-                        </label>
-                      </div>
+                    <div className="space-y-1.5 min-w-0">
+                      <label className="text-[10px] font-bold text-gold uppercase tracking-wider block">Client Photo</label>
+                      <label className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gold/10 hover:bg-gold/20 text-gold text-xs font-bold transition-all cursor-pointer border border-gold/20">
+                        <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} disabled={uploading} />
+                        {uploading ? (
+                          <>
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" /> Uploading Photo...
+                          </>
+                        ) : (
+                          <>
+                            <Upload className="w-3.5 h-3.5" /> Upload Photo
+                          </>
+                        )}
+                      </label>
                     </div>
                   </div>
+
 
                   {/* Fields */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
