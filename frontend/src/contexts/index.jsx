@@ -100,21 +100,20 @@ export const WishlistProvider = ({ children }) => {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Auth Provider  (JWT httpOnly cookie — persists across refreshes)
+// Auth Provider (Dual-Token JWT httpOnly cookies — automatic session restoration & rotation)
 // ─────────────────────────────────────────────────────────────────────────────
 export const AuthProvider = ({ children }) => {
   const [user, setUser]                   = useState(null);
-  const [authLoading, setAuthLoading]     = useState(true); // true until /me check completes
+  const [authLoading, setAuthLoading]     = useState(true);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [pendingRedirect, setPendingRedirect] = useState(null);
 
-  // ── Restore session on every app mount / page refresh ──────────────────────
+  // ── Session Restoration & Refresh Token Rotation ──────────────────────
   useEffect(() => {
     const controller = new AbortController();
     const restoreSession = async () => {
       try {
         const localToken = localStorage.getItem('hr_token');
-        console.log('[restoreSession] Starting session restore. Token present in localStorage:', !!localToken);
         const headers = {};
         if (localToken) {
           headers['Authorization'] = `Bearer ${localToken}`;
@@ -122,31 +121,45 @@ export const AuthProvider = ({ children }) => {
 
         const res = await fetch(`${API_URL}/api/auth/me`, {
           headers,
-          credentials: 'include', // send the httpOnly cookie
+          credentials: 'include',
           signal: controller.signal,
         });
+
         const data = await res.json();
-        console.log('[restoreSession] Response status:', res.status, 'success:', data?.success);
         if (res.ok && data.success) {
-          console.log('[restoreSession] Session restored successfully for user:', data.user.email);
           setUser(data.user);
+        } else if (data?.expired || res.status === 401) {
+          // Attempt silent access token refresh using refresh token cookie
+          const refreshRes = await fetch(`${API_URL}/api/auth/refresh`, {
+            method: 'POST',
+            credentials: 'include',
+            signal: controller.signal,
+          });
+
+          const refreshData = await refreshRes.json();
+          if (refreshRes.ok && refreshData.success) {
+            setUser(refreshData.user);
+            if (refreshData.token) localStorage.setItem('hr_token', refreshData.token);
+          } else {
+            setUser(null);
+            localStorage.removeItem('hr_token');
+          }
         } else {
-          console.warn('[restoreSession] Authentication failed. Clearing token from localStorage. Message:', data?.message);
-          if (localToken) localStorage.removeItem('hr_token');
+          setUser(null);
+          localStorage.removeItem('hr_token');
         }
       } catch (err) {
         if (err.name === 'AbortError') return;
-        console.error('[restoreSession] Error during restore:', err);
-        // No session or server unreachable — stay logged out silently
+        console.error('[restoreSession] Session check error:', err);
       } finally {
         setAuthLoading(false);
       }
     };
+
     restoreSession();
     return () => controller.abort();
   }, []);
 
-  // ── Auth modal helpers ──────────────────────────────────────────────────────
   const openAuth = useCallback((redirectPath = null) => {
     setPendingRedirect(redirectPath);
     setShowAuthModal(true);
@@ -154,7 +167,6 @@ export const AuthProvider = ({ children }) => {
 
   const closeAuth = useCallback(() => setShowAuthModal(false), []);
 
-  // Called after a successful /signin response — user object comes from backend
   const signIn = useCallback((userData, token = null) => {
     setUser(userData);
     if (token) {
@@ -163,7 +175,52 @@ export const AuthProvider = ({ children }) => {
     setShowAuthModal(false);
   }, []);
 
-  // Sign out — calls backend to clear the httpOnly cookie, then clears local state
+  // Step 1: Password Verification
+  const loginStep1 = useCallback(async (target, password) => {
+    const res = await fetch(`${API_URL}/api/auth/login-step1`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ target, password }),
+    });
+    const data = await res.json();
+    if (!res.ok || !data.success) {
+      throw new Error(data.message || 'Login failed');
+    }
+    return data;
+  }, []);
+
+  // Step 2: OTP Verification
+  const loginStep2 = useCallback(async (preAuthToken, code, target) => {
+    const res = await fetch(`${API_URL}/api/auth/otp/verify`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ preAuthToken, code, target }),
+    });
+    const data = await res.json();
+    if (!res.ok || !data.success) {
+      throw new Error(data.message || 'Verification failed');
+    }
+    signIn(data.user, data.token);
+    return data;
+  }, [signIn]);
+
+  // Register New Account
+  const registerUser = useCallback(async (name, phone, email, password) => {
+    const res = await fetch(`${API_URL}/api/auth/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ name, phone, email, password }),
+    });
+    const data = await res.json();
+    if (!res.ok || !data.success) {
+      throw new Error(data.message || 'Registration failed');
+    }
+    return data;
+  }, []);
+
   const signOut = useCallback(async () => {
     try {
       const localToken = localStorage.getItem('hr_token');
@@ -178,11 +235,10 @@ export const AuthProvider = ({ children }) => {
         credentials: 'include',
       });
     } catch {
-      // Ignore network errors — clear local state regardless
+      // Ignore network errors
     }
     setUser(null);
     localStorage.removeItem('hr_token');
-    // Notify other providers (WishlistProvider) to clear their state
     window.dispatchEvent(new Event('auth:signout'));
   }, []);
 
@@ -196,6 +252,9 @@ export const AuthProvider = ({ children }) => {
         openAuth,
         closeAuth,
         signIn,
+        loginStep1,
+        loginStep2,
+        registerUser,
         signOut,
       }}
     >

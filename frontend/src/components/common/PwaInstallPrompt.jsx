@@ -1,10 +1,13 @@
 import { useState, useEffect } from 'react';
 import { Download, X, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useSiteSettings, getBrandName } from '../../contexts';
 
 export default function PwaInstallPrompt() {
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [showPrompt, setShowPrompt] = useState(false);
+  const { settings } = useSiteSettings();
+  const brandName = getBrandName(settings);
 
   useEffect(() => {
     const handleBeforeInstallPrompt = (e) => {
@@ -88,7 +91,7 @@ export default function PwaInstallPrompt() {
                 </span>
               </div>
               <h4 className="text-sm font-display font-black text-white mb-1.5 leading-snug">
-                Install HyperRelestix Mobile
+                Install {brandName} Mobile
               </h4>
               <p className="text-white/60 text-[11px] leading-relaxed mb-4">
                 Access verified luxury Pune properties instantly from your home screen. Uses zero storage, works offline.

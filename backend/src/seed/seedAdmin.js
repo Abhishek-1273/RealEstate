@@ -12,6 +12,7 @@ const seedAdmin = async () => {
     const existingAdmin = await User.findOne({ email: adminEmail });
     if (existingAdmin) {
       existingAdmin.role = 'admin';
+      if (!existingAdmin.password) existingAdmin.password = 'Admin@123456';
       await existingAdmin.save();
       console.log('ℹ️ Admin user verified:', existingAdmin.email);
     } else {
@@ -19,6 +20,7 @@ const seedAdmin = async () => {
         name: 'Abhishek Kayg',
         phone: '9999999999',
         email: adminEmail,
+        password: 'Admin@123456',
         role: 'admin',
         isActive: true,
         department: 'Management'
@@ -31,6 +33,7 @@ const seedAdmin = async () => {
     const existingManager = await User.findOne({ email: managerEmail });
     if (existingManager) {
       existingManager.role = 'management';
+      if (!existingManager.password) existingManager.password = 'Manager@123456';
       await existingManager.save();
       console.log('ℹ️ Manager user verified:', existingManager.email);
     } else {
@@ -38,6 +41,7 @@ const seedAdmin = async () => {
         name: 'Office Manager',
         phone: '8888888888',
         email: managerEmail,
+        password: 'Manager@123456',
         role: 'management',
         isActive: true,
         department: 'Management'
@@ -49,12 +53,15 @@ const seedAdmin = async () => {
     const agentEmail = 'agent@hyperrelestix.in';
     const existingAgent = await User.findOne({ email: agentEmail });
     if (existingAgent) {
+      if (!existingAgent.password) existingAgent.password = 'Agent@123456';
+      await existingAgent.save();
       console.log('ℹ️ Demo agent already exists:', existingAgent.email);
     } else {
       const agent = await User.create({
         name: 'Arjun Kapoor',
         phone: '9876543210',
         email: agentEmail,
+        password: 'Agent@123456',
         role: 'agent',
         isActive: true,
         department: 'Sales',

@@ -14,6 +14,7 @@ export const seedDefaultData = async () => {
           name: 'Abhishek Kayg',
           phone: '9999999999',
           email,
+          password: 'Admin@123456',
           role: 'admin',
           isActive: true,
           department: 'Management'
@@ -31,6 +32,7 @@ export const seedDefaultData = async () => {
         name: 'Office Manager',
         phone: '8888888888',
         email: managerEmail,
+        password: 'Manager@123456',
         role: 'management',
         isActive: true,
         department: 'Management'

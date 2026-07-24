@@ -26,43 +26,20 @@ const navLinks = [
   { label: 'Contact', path: '/contact' },
 ];
 
-const Path = (props) => (
-  <motion.path
-    fill="transparent"
-    strokeWidth="2.5"
-    stroke="currentColor"
-    strokeLinecap="round"
-    {...props}
-  />
-);
-
 function MenuToggle({ isOpen }) {
   return (
-    <svg width="20" height="20" viewBox="0 0 23 23" className="flex items-center justify-center">
-      <Path
-        variants={{
-          closed: { d: "M 2 2.5 L 20 2.5" },
-          open: { d: "M 3 16.5 L 17 2.5" }
-        }}
-        animate={isOpen ? "open" : "closed"}
-        transition={{ duration: 0.3 }}
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" className="flex items-center justify-center">
+      <line
+        x1="3" y1="6" x2="21" y2="6"
+        className={`transition-all duration-300 origin-center ${isOpen ? 'rotate-45 translate-y-[6px]' : ''}`}
       />
-      <Path
-        d="M 2 9.423 L 20 9.423"
-        variants={{
-          closed: { opacity: 1 },
-          open: { opacity: 0 }
-        }}
-        animate={isOpen ? "open" : "closed"}
-        transition={{ duration: 0.2 }}
+      <line
+        x1="3" y1="12" x2="21" y2="12"
+        className={`transition-all duration-200 ${isOpen ? 'opacity-0' : 'opacity-100'}`}
       />
-      <Path
-        variants={{
-          closed: { d: "M 2 16.346 L 20 16.346" },
-          open: { d: "M 3 2.5 L 17 16.346" }
-        }}
-        animate={isOpen ? "open" : "closed"}
-        transition={{ duration: 0.3 }}
+      <line
+        x1="3" y1="18" x2="21" y2="18"
+        className={`transition-all duration-300 origin-center ${isOpen ? '-rotate-45 -translate-y-[6px]' : ''}`}
       />
     </svg>
   );

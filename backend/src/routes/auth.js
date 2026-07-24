@@ -1,7 +1,8 @@
 import express from 'express';
 import rateLimit from 'express-rate-limit';
 import {
-  signIn, getMe, signOut,
+  register, loginStep1, refreshToken,
+  getMe, signOut,
   getUserByPhone, getAllUsers,
   createStaff, updateUserRole, deleteUser,
   getWishlist, toggleWishlist,
@@ -19,10 +20,12 @@ const authLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-// Public
-router.post('/signin',           authLimiter, signIn);
+// Public Auth Endpoints
+router.post('/register',         authLimiter, register);
+router.post('/login-step1',      authLimiter, loginStep1);
 router.post('/otp/send',         authLimiter, sendOtp);
 router.post('/otp/verify',       authLimiter, verifyOtp);
+router.post('/refresh',          refreshToken);
 router.post('/social',           authLimiter, socialSignIn);
 router.post('/google/callback',  authLimiter, googleCallback);
 router.get('/me',                protect, getMe);

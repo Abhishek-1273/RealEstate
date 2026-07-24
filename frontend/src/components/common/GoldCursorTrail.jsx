@@ -448,6 +448,9 @@ export default function GoldCursorTrail({
                             const control1Y =
                                 midY - waveOffset * Math.sin(rad + Math.PI / 2);
                             const wavyPath = `M ${startX} ${startY} Q ${control1X} ${control1Y} ${midX} ${midY} T ${endX} ${endY}`;
+                            if (!effectSize || isNaN(startX) || isNaN(startY) || wavyPath.includes('NaN') || wavyPath.includes('undefined')) {
+                                return null;
+                            }
                             return (
                                 <path
                                     key={index}

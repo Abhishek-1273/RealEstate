@@ -15,7 +15,7 @@ import 'swiper/css/navigation';
 import 'swiper/css/pagination';
 import 'swiper/css/thumbs';
 import 'swiper/css/free-mode';
-import { useWishlist, useAuth, useSiteSettings } from '../../contexts';
+import { useWishlist, useAuth, useSiteSettings, getBrandName } from '../../contexts';
 import PropertyCard from '../../components/common/PropertyCard';
 import { fetchPropertyById, fetchProperties } from '../../utils/api';
 import { getDynamicOgImage } from '../../utils/ogImage';
@@ -89,7 +89,7 @@ export default function PropertyDetails() {
   const { toggleWishlist, isWishlisted } = useWishlist();
   const { user, openAuth } = useAuth();
   const { settings } = useSiteSettings();
-  const brandName = settings ? `${settings.logoTextPrimary || 'Hyper'}${settings.logoTextSecondary || 'Relestix'}` : 'HyperRelestix';
+  const brandName = getBrandName(settings);
 
   const [amenityCategory, setAmenityCategory] = useState('education');
   const [mapCenter, setMapCenter] = useState(null);

@@ -1,10 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { createPortal } from 'react-dom';
 import { useSiteSettings, getLogoInitials, renderBrandLogo } from '../../contexts/SettingsContext';
 
 import { updateSettingsAdmin, uploadImage } from '../../utils/adminApi';
 import { Loader2, Save, Globe, Eye, Image, PhoneCall, Share2, TrendingUp, Upload, Trash2, Video } from 'lucide-react';
-
-
 
 const inputCls = "w-full px-4 py-3 rounded-xl text-sm border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 text-navy dark:text-white placeholder-gray-400 dark:placeholder-white/25 focus:outline-none focus:border-yellow-400 dark:focus:border-yellow-500/50 transition-colors";
 const labelCls = "block text-[11px] font-bold text-gray-400 dark:text-white/35 uppercase tracking-wider mb-1.5";
@@ -17,6 +17,7 @@ export default function SettingsAdmin() {
   const [success, setSuccess] = useState('');
   const [uploading, setUploading] = useState(false);
   const [activeTab, setActiveTab] = useState('branding');
+  const [deleteMediaConfirm, setDeleteMediaConfirm] = useState(null);
 
   // Cropper states
   const [cropSrc, setCropSrc] = useState(null);
@@ -355,7 +356,7 @@ export default function SettingsAdmin() {
                         </label>
                         <button
                           type="button"
-                          onClick={() => handleChange('logoIconImage', '')}
+                          onClick={() => setDeleteMediaConfirm({ key: 'logoIconImage', title: 'Logo Icon Image' })}
                           className="p-2 rounded-xl text-gray-400 hover:text-red-500 hover:bg-red-500/10 transition-colors cursor-pointer"
                           title="Remove logo image"
                         >
@@ -429,6 +430,41 @@ export default function SettingsAdmin() {
                       className={inputCls}
                     />
                   </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-2">
+                  <div>
+                    <label className={labelCls}>Custom Favicon Image URL</label>
+                    <input
+                      type="text"
+                      value={form.logoFaviconUrl || ''}
+                      onChange={(e) => handleChange('logoFaviconUrl', e.target.value)}
+                      placeholder="https://.../favicon.ico"
+                      className={inputCls}
+                    />
+                    <p className="text-gray-400 text-[10px] mt-1">If blank, defaults to cropped logo icon.</p>
+                  </div>
+                  <div>
+                    <label className={labelCls}>Meta Title Suffix (Browser Tab Title)</label>
+                    <input
+                      type="text"
+                      value={form.metaTitleSuffix || ''}
+                      onChange={(e) => handleChange('metaTitleSuffix', e.target.value)}
+                      placeholder="Luxury Real Estate Pune | Premium Villas & Penthouses"
+                      className={inputCls}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className={labelCls}>Global Meta Description</label>
+                  <textarea
+                    rows={3}
+                    value={form.metaDescription || ''}
+                    onChange={(e) => handleChange('metaDescription', e.target.value)}
+                    placeholder="Describe your agency for SEO and Google search result snippets..."
+                    className={inputCls}
+                  />
                 </div>
               </div>
             )}
@@ -514,7 +550,7 @@ export default function SettingsAdmin() {
                           </label>
                           <button
                             type="button"
-                            onClick={() => handleChange('heroVideoUrl', '')}
+                            onClick={() => setDeleteMediaConfirm({ key: 'heroVideoUrl', title: 'Hero Background Video' })}
                             className="p-2 rounded-xl text-gray-400 hover:text-red-500 hover:bg-red-500/10 transition-colors cursor-pointer"
                             title="Remove video"
                           >
@@ -562,7 +598,7 @@ export default function SettingsAdmin() {
                           </label>
                           <button
                             type="button"
-                            onClick={() => handleChange('heroMobileImageUrl', '')}
+                            onClick={() => setDeleteMediaConfirm({ key: 'heroMobileImageUrl', title: 'Hero Banner Image' })}
                             className="p-2 rounded-xl text-gray-400 hover:text-red-500 hover:bg-red-500/10 transition-colors cursor-pointer"
                             title="Remove banner image"
                           >
@@ -884,6 +920,62 @@ export default function SettingsAdmin() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Delete Media Confirmation Modal */}
+      {createPortal(
+        <AnimatePresence>
+          {deleteMediaConfirm && (
+            <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setDeleteMediaConfirm(null)}
+                className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+              />
+              <motion.div
+                initial={{ scale: 0.95, opacity: 0, y: 15 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                exit={{ scale: 0.95, opacity: 0, y: 15 }}
+                className="relative w-full max-w-md bg-white dark:bg-[#0E1A2B] rounded-3xl shadow-luxury p-6 border border-gray-100 dark:border-white/10"
+              >
+                <div className="w-12 h-12 rounded-2xl bg-red-500/10 text-red-500 flex items-center justify-center mb-4">
+                  <Trash2 className="w-6 h-6" />
+                </div>
+                <h3 className="font-display font-black text-navy dark:text-white text-lg mb-2">
+                  Remove {deleteMediaConfirm.title}?
+                </h3>
+                <p className="text-sm text-ink-muted dark:text-white/60 leading-relaxed">
+                  Are you sure you want to remove the <strong>{deleteMediaConfirm.title}</strong>? Once saved, the site will revert to default text/fallback branding.
+                </p>
+
+                <div className="flex justify-end gap-3 mt-6">
+                  <button
+                    type="button"
+                    onClick={() => setDeleteMediaConfirm(null)}
+                    className="px-4 py-2.5 rounded-xl border border-gray-200 dark:border-white/10 text-gray-700 dark:text-white/60 hover:bg-gray-50 dark:hover:bg-white/5 text-xs font-bold transition-all cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      handleChange(deleteMediaConfirm.key, '');
+                      setDeleteMediaConfirm(null);
+                      setSuccess(`${deleteMediaConfirm.title} removed.`);
+                      setTimeout(() => setSuccess(''), 3000);
+                    }}
+                    className="px-5 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 active:scale-95 text-white text-xs font-extrabold transition-all shadow-lg shadow-red-600/30 flex items-center gap-2 cursor-pointer"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" /> Confirm Remove
+                  </button>
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>,
+        document.body
       )}
     </div>
   );

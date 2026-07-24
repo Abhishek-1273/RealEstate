@@ -1,11 +1,11 @@
 import { motion } from 'framer-motion';
 import { Shield, Eye, Lock, FileText } from 'lucide-react';
 import { fadeUp } from '../../animations/variants';
-import { useSiteSettings } from '../../contexts';
+import { useSiteSettings, getBrandName } from '../../contexts';
 
 export default function PrivacyPolicy() {
   const { settings } = useSiteSettings();
-  const brandName = settings ? `${settings.logoTextPrimary || 'Hyper'}${settings.logoTextSecondary || 'Relestix'}` : 'HyperRelestix';
+  const brandName = getBrandName(settings);
   const privacyEmail = settings?.contactEmail1 || 'hello@hyperrelestix.in';
   return (
     <div className="min-h-screen bg-surface dark:bg-navy-dark pt-32 pb-20 transition-colors duration-300">

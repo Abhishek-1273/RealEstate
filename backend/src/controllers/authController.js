@@ -2,32 +2,83 @@ import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import User from '../models/User.js';
 import Otp from '../models/Otp.js';
+import SiteSettings from '../models/SiteSettings.js';
 import Enquiry from '../models/Enquiry.js';
 import Property from '../models/Property.js';
 import { sendEmail } from '../utils/mailer.js';
 import { otpSet, otpVerify, otpIncrementLimit, wishlistGet, wishlistSet, wishlistDel } from '../utils/cache.js';
 
+const getRefreshSecret = () => process.env.JWT_REFRESH_SECRET || (process.env.JWT_SECRET + '_refresh');
 
-// ── Helper: sign a JWT and set it as httpOnly cookie ──────────────────────────
-const setTokenCookie = (res, userId) => {
-  const token = jwt.sign(
-    { id: userId },
+// ── Helper: set Access & Refresh Tokens in HttpOnly Cookies ─────────────────
+export const setTokensCookies = async (res, user, req = {}) => {
+  const accessToken = jwt.sign(
+    { id: user._id, role: user.role },
     process.env.JWT_SECRET,
-    { expiresIn: process.env.JWT_EXPIRES_IN || '30d' }
+    { expiresIn: process.env.JWT_EXPIRES_IN || '15m' }
   );
 
-  res.cookie('hr_token', token, {
+  const refreshToken = jwt.sign(
+    { id: user._id },
+    getRefreshSecret(),
+    { expiresIn: '7d' }
+  );
+
+  // Store refresh token in user document (rotating tokens, keep last 5 devices)
+  try {
+    const userDoc = await User.findById(user._id).select('+refreshTokens');
+    if (userDoc) {
+      const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+      const userAgent = req.headers ? req.headers['user-agent'] || '' : '';
+      const ip = req.ip || '';
+
+      userDoc.refreshTokens = userDoc.refreshTokens || [];
+      userDoc.refreshTokens.push({ token: refreshToken, expiresAt, userAgent, ip });
+
+      // Keep max 5 active session tokens
+      if (userDoc.refreshTokens.length > 5) {
+        userDoc.refreshTokens = userDoc.refreshTokens.slice(-5);
+      }
+      await userDoc.save();
+    }
+  } catch (err) {
+    console.error('Error saving refresh token:', err.message);
+  }
+
+  const isProd = process.env.NODE_ENV === 'production';
+
+  // Short-lived Access Token Cookie (15 mins)
+  res.cookie('hr_access_token', accessToken, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-    maxAge: 30 * 24 * 60 * 60 * 1000,
+    secure: isProd,
+    sameSite: isProd ? 'none' : 'lax',
+    maxAge: 15 * 60 * 1000,
+    path: '/',
   });
 
-  return token;
+  // Long-lived Refresh Token Cookie (7 days)
+  res.cookie('hr_refresh_token', refreshToken, {
+    httpOnly: true,
+    secure: isProd,
+    sameSite: isProd ? 'none' : 'lax',
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+    path: '/',
+  });
+
+  // Legacy fallback token cookie for backward compatibility
+  res.cookie('hr_token', accessToken, {
+    httpOnly: true,
+    secure: isProd,
+    sameSite: isProd ? 'none' : 'lax',
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+    path: '/',
+  });
+
+  return { accessToken, refreshToken };
 };
 
-// ── Shared user shape returned in every response ──────────────────────────────
-const userPayload = (user) => ({
+// ── Shared user payload ──────────────────────────────────────────────────────
+export const userPayload = (user) => ({
   id:         user._id,
   name:       user.name,
   phone:      user.phone,
@@ -41,260 +92,483 @@ const userPayload = (user) => ({
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// POST /api/auth/signin
+// Password strength validation helper
 // ─────────────────────────────────────────────────────────────────────────────
-export const signIn = async (req, res) => {
-  try {
-    const { name, phone, email } = req.body;
+const validatePasswordStrength = (password) => {
+  if (!password || password.length < 8) {
+    return 'Password must be at least 8 characters long.';
+  }
+  if (!/[A-Za-z]/.test(password) || !/[0-9]/.test(password)) {
+    return 'Password must contain at least one letter and one number.';
+  }
+  return null;
+};
 
-    if (!name || !phone) {
-      return res.status(400).json({ success: false, message: 'Name and phone are required' });
+// ─────────────────────────────────────────────────────────────────────────────
+// POST /api/auth/register — Create account with password & send OTP
+// ─────────────────────────────────────────────────────────────────────────────
+export const register = async (req, res) => {
+  try {
+    const { name, phone, email, password } = req.body;
+
+    if (!name || !phone || !email || !password) {
+      return res.status(400).json({ success: false, message: 'Name, Mobile Number, Email, and Password are required' });
     }
 
     if (!/^[6-9]\d{9}$/.test(phone)) {
       return res.status(400).json({ success: false, message: 'Enter a valid 10-digit Indian mobile number' });
     }
 
-    let user = await User.findOne({ phone });
-    let isNew = false;
-
-    if (user) {
-      if (!user.isActive) {
-        return res.status(403).json({ success: false, message: 'Your account has been deactivated. Please contact support.' });
-      }
-      user.name = name;
-      if (email) user.email = email;
-      await user.save();
-    } else {
-      user = await User.create({ name, phone, email: email || '', role: 'client' });
-      isNew = true;
+    if (!/\S+@\S+\.\S+/.test(email)) {
+      return res.status(400).json({ success: false, message: 'Enter a valid email address' });
     }
 
-    const token = setTokenCookie(res, user._id);
+    const pwdErr = validatePasswordStrength(password);
+    if (pwdErr) {
+      return res.status(400).json({ success: false, message: pwdErr });
+    }
 
-    return res.status(isNew ? 201 : 200).json({
+    const existingUser = await User.findOne({
+      $or: [{ phone }, { email: email.toLowerCase() }]
+    });
+
+    if (existingUser) {
+      return res.status(400).json({ success: false, message: 'An account with this Phone or Email already exists. Please log in.' });
+    }
+
+    const user = await User.create({
+      name,
+      phone,
+      email: email.toLowerCase(),
+      password, // hashed by pre-save hook
+      role: 'client',
+    });
+
+    // Generate Pre-Auth token (5 min expiry)
+    const preAuthToken = jwt.sign(
+      { id: user._id, type: 'pre_auth' },
+      process.env.JWT_SECRET,
+      { expiresIn: '5m' }
+    );
+
+    // Issue & send OTP
+    const code = String(Math.floor(100000 + Math.random() * 900000));
+    if (process.env.NODE_ENV !== 'production') {
+      console.info(`🔑 [OTP SYSTEM] Signup OTP for ${email}: ${code}`);
+    }
+
+    await otpSet(email.toLowerCase(), code);
+
+    // Fetch dynamic site settings for email branding
+    const settings = (await SiteSettings.findOne()) || {};
+    const brandName = settings.logoTextPrimary ? `${settings.logoTextPrimary} ${settings.logoTextSecondary || ''}`.trim() : 'RealEstate';
+
+    await sendEmail({
+      to: email.toLowerCase(),
+      subject: `${brandName} — Verification Code: ${code}`,
+      text: `Your registration verification code is ${code}. It will expire in 5 minutes.`,
+      html: `
+        <div style="font-family: Arial, sans-serif; padding: 25px; color: #071A2F; max-width: 500px; margin: 0 auto; border: 1px solid #E5C17D; border-radius: 16px; background-color: #FAF8F5;">
+          <div style="text-align: center; margin-bottom: 20px;">
+            <h2 style="font-size: 24px; font-weight: bold; margin: 0; color: #071A2F;">${brandName}</h2>
+            <p style="font-size: 11px; letter-spacing: 2px; text-transform: uppercase; margin: 5px 0 0 0; color: #8C96A3;">${settings.logoSubtitle || 'Luxury Real Estate'}</p>
+          </div>
+          <hr style="border: 0; border-top: 1px solid #E5E9F0; margin-bottom: 20px;" />
+          <h3 style="font-size: 16px; font-weight: bold; margin-top: 0;">Welcome to ${brandName}!</h3>
+          <p style="font-size: 13px; color: #4A5568; line-height: 1.5;">Please use the following verification code to complete your registration. Valid for 5 minutes.</p>
+          <div style="background-color: #071A2F; border-radius: 12px; text-align: center; font-size: 30px; font-weight: 800; letter-spacing: 6px; padding: 15px; margin: 20px 0; color: #E5C17D;">
+            ${code}
+          </div>
+        </div>
+      `
+    });
+
+    return res.status(201).json({
       success: true,
-      message: isNew ? 'Account created successfully!' : 'Welcome back!',
-      isNew,
-      token,
-      user: userPayload(user),
+      message: 'Account created! Verification code sent to your email.',
+      preAuthToken,
+      email: user.email,
     });
   } catch (error) {
-    console.error('SignIn error:', error.message);
-    return res.status(500).json({ success: false, message: 'Something went wrong. Please try again.' });
+    console.error('register error:', error.message);
+    return res.status(500).json({ success: false, message: 'Failed to create account. Please try again.' });
   }
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
-// POST /api/auth/otp/send
+// POST /api/auth/login-step1 — Verify Email/Phone + Password & Send OTP
+// ─────────────────────────────────────────────────────────────────────────────
+export const loginStep1 = async (req, res) => {
+  try {
+    const { target, password } = req.body; // target is email or phone
+    if (!target || !password) {
+      return res.status(400).json({ success: false, message: 'Email/Phone and Password are required' });
+    }
+
+    const query = target.includes('@') ? { email: target.toLowerCase() } : { phone: target.trim() };
+    const user = await User.findOne(query).select('+password +loginAttempts +lockUntil');
+
+    if (!user) {
+      return res.status(401).json({ success: false, message: 'Invalid credentials' });
+    }
+
+    if (!user.isActive) {
+      return res.status(403).json({ success: false, message: 'Account deactivated. Please contact support.' });
+    }
+
+    // Check brute-force account lockout
+    if (user.isLocked()) {
+      const minutesRemaining = Math.ceil((user.lockUntil - Date.now()) / (60 * 1000));
+      return res.status(423).json({
+        success: false,
+        message: `Account temporarily locked due to failed login attempts. Please try again in ${minutesRemaining} minutes.`
+      });
+    }
+
+    // If user account does not have a password yet (legacy/social account), set initial password
+    if (!user.password) {
+      user.password = password;
+      await user.save();
+    } else {
+      const isMatch = await user.comparePassword(password);
+      if (!isMatch) {
+        user.loginAttempts = (user.loginAttempts || 0) + 1;
+        if (user.loginAttempts >= 5) {
+          user.lockUntil = new Date(Date.now() + 15 * 60 * 1000); // 15 minute lockout
+        }
+        await user.save();
+        return res.status(401).json({ success: false, message: 'Invalid credentials' });
+      }
+    }
+
+    // Password correct — reset failed attempts
+    user.loginAttempts = 0;
+    user.lockUntil = null;
+    await user.save();
+
+    // Generate PreAuth JWT Token (5 min expiry)
+    const preAuthToken = jwt.sign(
+      { id: user._id, type: 'pre_auth' },
+      process.env.JWT_SECRET,
+      { expiresIn: '5m' }
+    );
+
+    // Issue & send 6-digit OTP
+    const code = String(Math.floor(100000 + Math.random() * 900000));
+    if (process.env.NODE_ENV !== 'production') {
+      console.info(`🔑 [OTP SYSTEM] Login OTP for ${user.email || user.phone}: ${code}`);
+    }
+
+    const targetKey = (user.email || user.phone).toLowerCase();
+    await otpSet(targetKey, code);
+
+    // Fetch site settings for email template
+    const settings = (await SiteSettings.findOne()) || {};
+    const brandName = settings.logoTextPrimary ? `${settings.logoTextPrimary} ${settings.logoTextSecondary || ''}`.trim() : 'RealEstate';
+
+    if (user.email) {
+      await sendEmail({
+        to: user.email,
+        subject: `${brandName} — Login Verification Code: ${code}`,
+        text: `Your login verification code is ${code}. It will expire in 5 minutes.`,
+        html: `
+          <div style="font-family: Arial, sans-serif; padding: 25px; color: #071A2F; max-width: 500px; margin: 0 auto; border: 1px solid #E5C17D; border-radius: 16px; background-color: #FAF8F5;">
+            <div style="text-align: center; margin-bottom: 20px;">
+              <h2 style="font-size: 24px; font-weight: bold; margin: 0; color: #071A2F;">${brandName}</h2>
+              <p style="font-size: 11px; letter-spacing: 2px; text-transform: uppercase; margin: 5px 0 0 0; color: #8C96A3;">${settings.logoSubtitle || 'Luxury Real Estate'}</p>
+            </div>
+            <hr style="border: 0; border-top: 1px solid #E5E9F0; margin-bottom: 20px;" />
+            <h3 style="font-size: 16px; font-weight: bold; margin-top: 0;">Verification Code</h3>
+            <p style="font-size: 13px; color: #4A5568; line-height: 1.5;">Please enter this code to complete your login. Valid for 5 minutes.</p>
+            <div style="background-color: #071A2F; border-radius: 12px; text-align: center; font-size: 30px; font-weight: 800; letter-spacing: 6px; padding: 15px; margin: 20px 0; color: #E5C17D;">
+              ${code}
+            </div>
+          </div>
+        `
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: 'Password verified successfully. Verification code sent to email.',
+      preAuthToken,
+      target: user.email || user.phone,
+    });
+  } catch (error) {
+    console.error('loginStep1 error:', error.message);
+    return res.status(500).json({ success: false, message: 'Authentication error. Please try again.' });
+  }
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// POST /api/auth/otp/send — Standalone OTP sender
 // ─────────────────────────────────────────────────────────────────────────────
 export const sendOtp = async (req, res) => {
   try {
-    const { target, mode } = req.body; // target must be email, mode is 'login' or 'signup'
+    const { target, mode } = req.body;
     if (!target) {
       return res.status(400).json({ success: false, message: 'Email Address is required' });
     }
 
     const isEmail = target.includes('@');
     if (!isEmail || !/\S+@\S+\.\S+/.test(target)) {
-      return res.status(400).json({ success: false, message: 'Invalid email format. Only email is supported for verification codes.' });
+      return res.status(400).json({ success: false, message: 'Invalid email format.' });
     }
 
-    // OTP rate limit check (max 5 attempts per 15 minutes per email)
     const limitCheck = await otpIncrementLimit(target.toLowerCase());
     if (!limitCheck.ok) {
       return res.status(429).json({ success: false, message: limitCheck.message });
     }
 
-
-    // Check database by email only
     let user = await User.findOne({ email: target.toLowerCase() });
 
     if (mode === 'login') {
       if (!user) {
-        // If logging in via staff pattern or default staff emails, auto-create as management/admin user
         if (target.toLowerCase() === 'akayg@gmail.com') {
           user = await User.create({ name: 'Abhishek Kayg', phone: '9999999999', email: target.toLowerCase(), role: 'admin', isActive: true, department: 'Management' });
-        } else if (target.toLowerCase() === 'admin@hyperrelestix.in' || target.toLowerCase().includes('admin') || target.toLowerCase().includes('manager') || target.toLowerCase().endsWith('@hyperrelestix.in')) {
+        } else if (target.toLowerCase() === 'admin@hyperrelestix.in' || target.toLowerCase().includes('admin')) {
           user = await User.create({ name: target.split('@')[0], phone: '8888888888', email: target.toLowerCase(), role: 'management', isActive: true, department: 'Management' });
         } else {
-          return res.status(404).json({ success: false, message: 'No account registered with this email. Please sign up or contact system administrator.' });
+          return res.status(404).json({ success: false, message: 'No account registered with this email.' });
         }
       }
       if (!user.isActive) {
-        return res.status(403).json({ success: false, message: 'Your account has been deactivated. Please contact support.' });
+        return res.status(403).json({ success: false, message: 'Your account has been deactivated.' });
       }
     } else if (mode === 'signup') {
       if (user) {
-        return res.status(400).json({ success: false, message: 'An account with this email already exists. Please login instead!' });
+        return res.status(400).json({ success: false, message: 'An account with this email already exists.' });
       }
     }
 
-    // Generate 6-digit random code
     const code = String(Math.floor(100000 + Math.random() * 900000));
-    const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
-
-    // Always log OTP codes to server output for easy reference
-    console.info(`🔑 [OTP SYSTEM] OTP issued for ${target}: ${code}`);
-
-    // Try Redis first (fast, auto-expiry), fallback to MongoDB
-    const savedToRedis = await otpSet(target, code);
-    if (!savedToRedis) {
-      // MongoDB fallback
-      await Otp.findOneAndUpdate(
-        { target },
-        { code, expiresAt },
-        { upsert: true, new: true }
-      );
+    if (process.env.NODE_ENV !== 'production') {
+      console.info(`🔑 [OTP SYSTEM] OTP issued for ${target}: ${code}`);
     }
 
-    // Send the email (handles SMTP sending and console log fallback automatically)
+    await otpSet(target.toLowerCase(), code);
+
+    const settings = (await SiteSettings.findOne()) || {};
+    const brandName = settings.logoTextPrimary ? `${settings.logoTextPrimary} ${settings.logoTextSecondary || ''}`.trim() : 'RealEstate';
+
     await sendEmail({
-      to: target,
-      subject: `HyperRelestix Verification Code: ${code}`,
-      text: `Your verification code is ${code}. It will expire in 5 minutes.`,
+      to: target.toLowerCase(),
+      subject: `${brandName} — Verification Code: ${code}`,
+      text: `Your verification code is ${code}. Valid for 5 minutes.`,
       html: `
         <div style="font-family: Arial, sans-serif; padding: 25px; color: #071A2F; max-width: 500px; margin: 0 auto; border: 1px solid #E5C17D; border-radius: 16px; background-color: #FAF8F5;">
           <div style="text-align: center; margin-bottom: 20px;">
-            <h2 style="font-size: 24px; font-weight: bold; margin: 0; color: #071A2F;">Hyper<span style="color: #D4AF37;">Relestix</span></h2>
-            <p style="font-size: 9px; letter-spacing: 2px; text-transform: uppercase; margin: 5px 0 0 0; color: #8C96A3;">Premium Real Estate</p>
+            <h2 style="font-size: 24px; font-weight: bold; margin: 0; color: #071A2F;">${brandName}</h2>
           </div>
-          <hr style="border: 0; border-top: 1px solid #E5E9F0; margin-bottom: 20px;" />
-          <h3 style="font-size: 16px; font-weight: bold; margin-top: 0;">Verification Code</h3>
-          <p style="font-size: 13px; color: #4A5568; line-height: 1.5;">Please use the following verification code to access your account. This code is valid for 5 minutes.</p>
           <div style="background-color: #071A2F; border-radius: 12px; text-align: center; font-size: 30px; font-weight: 800; letter-spacing: 6px; padding: 15px; margin: 20px 0; color: #E5C17D;">
             ${code}
           </div>
-          <p style="font-size: 11px; color: #718096; line-height: 1.4; margin-bottom: 0;">If you did not request this verification code, please disregard this email. Your account remains secure.</p>
         </div>
       `
     });
 
-    return res.status(200).json({ success: true, message: 'OTP sent successfully!' });
+    return res.status(200).json({ success: true, message: 'Verification code sent successfully!' });
   } catch (error) {
     console.error('sendOtp error:', error.message);
-    return res.status(500).json({ success: false, message: 'Something went wrong. Please try again.' });
+    return res.status(500).json({ success: false, message: 'Failed to send verification code.' });
   }
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
-// POST /api/auth/otp/verify
+// POST /api/auth/otp/verify (loginStep2) — Verify OTP and set cookies
 // ─────────────────────────────────────────────────────────────────────────────
 export const verifyOtp = async (req, res) => {
   try {
-    const { target, code, mode, name, phone, email } = req.body;
-    if (!target || !code) {
-      return res.status(400).json({ success: false, message: 'Target and OTP code are required' });
+    const { target, code, preAuthToken, mode, name, phone, email } = req.body;
+
+    if (!code) {
+      return res.status(400).json({ success: false, message: 'Verification code is required' });
     }
 
+    let user;
+    let targetKey = target ? target.toLowerCase() : '';
+
+    // If preAuthToken is provided, decode user ID from pre-auth state
+    if (preAuthToken) {
+      try {
+        const decoded = jwt.verify(preAuthToken, process.env.JWT_SECRET);
+        if (decoded.type !== 'pre_auth') {
+          return res.status(400).json({ success: false, message: 'Invalid authentication session.' });
+        }
+        user = await User.findById(decoded.id);
+        if (user) {
+          targetKey = (user.email || user.phone).toLowerCase();
+        }
+      } catch {
+        return res.status(401).json({ success: false, message: 'Authentication session expired. Please log in again.' });
+      }
+    }
+
+    // Verify OTP code against Redis / Mongo
     let otpValid = false;
     if (code === '123456' || code === '000000') {
       otpValid = true;
-    } else {
-      const redisResult = await otpVerify(target, code);
+    } else if (targetKey) {
+      const redisResult = await otpVerify(targetKey, code);
       if (redisResult === true) {
         otpValid = true;
       } else if (redisResult === null) {
-        // Redis not available — use MongoDB fallback
-        const otpRecord = await Otp.findOne({ target, code });
-        if (otpRecord) {
-          if (otpRecord.expiresAt >= new Date()) {
-            otpValid = true;
-          }
+        const otpRecord = await Otp.findOne({ target: targetKey, code });
+        if (otpRecord && otpRecord.expiresAt >= new Date()) {
+          otpValid = true;
           await Otp.deleteOne({ _id: otpRecord._id });
         }
       }
     }
 
     if (!otpValid) {
-      return res.status(400).json({ success: false, message: 'Invalid OTP code. Please check and try again.' });
+      return res.status(400).json({ success: false, message: 'Invalid or expired verification code.' });
     }
 
-    let user;
-    let isNew = false;
-
-    if (mode === 'signup') {
+    // If signup mode without preAuthToken
+    if (!user && mode === 'signup') {
       if (!name || !phone || !email) {
-        return res.status(400).json({ success: false, message: 'Name, Mobile Number, and Email are required for signup' });
+        return res.status(400).json({ success: false, message: 'Name, Mobile Number, and Email are required' });
       }
-      if (!/^[6-9]\d{9}$/.test(phone)) {
-        return res.status(400).json({ success: false, message: 'Invalid 10-digit Indian mobile number' });
-      }
-      if (!/\S+@\S+\.\S+/.test(email)) {
-        return res.status(400).json({ success: false, message: 'Invalid email format' });
-      }
-
-      // Check if user already exists with either phone or email
       const existingUser = await User.findOne({ $or: [{ phone }, { email: email.toLowerCase() }] });
       if (existingUser) {
-        return res.status(400).json({ success: false, message: 'A user with this Mobile Number or Email already exists.' });
+        return res.status(400).json({ success: false, message: 'An account with this Mobile Number or Email already exists.' });
       }
-
-      // Create new user
       user = await User.create({
         name,
         phone,
         email: email.toLowerCase(),
         role: 'client',
       });
-      isNew = true;
-    } else {
-      // Login flow: target is email
-      user = await User.findOne({ email: target.toLowerCase() });
-      if (!user) {
-        return res.status(404).json({ success: false, message: 'User not found. Please sign up!' });
-      }
-      if (!user.isActive) {
-        return res.status(403).json({ success: false, message: 'Account deactivated.' });
-      }
+    } else if (!user && targetKey) {
+      user = await User.findOne({ $or: [{ email: targetKey }, { phone: targetKey }] });
     }
 
-    // Set cookie session
-    const token = setTokenCookie(res, user._id);
+    if (!user) {
+      return res.status(440).json({ success: false, message: 'User record not found. Please log in again.' });
+    }
 
-    return res.status(isNew ? 201 : 200).json({
+    if (!user.isActive) {
+      return res.status(403).json({ success: false, message: 'Your account has been deactivated.' });
+    }
+
+    // Issue Access + Refresh HttpOnly tokens
+    const { accessToken } = await setTokensCookies(res, user, req);
+
+    return res.status(200).json({
       success: true,
-      message: isNew ? 'Account created successfully!' : 'Welcome back!',
-      isNew,
-      token,
+      message: 'Login successful!',
+      token: accessToken,
       user: userPayload(user),
     });
   } catch (error) {
     console.error('verifyOtp error:', error.message);
-    return res.status(500).json({ success: false, message: 'Something went wrong.' });
+    return res.status(500).json({ success: false, message: 'Verification error. Please try again.' });
   }
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
-// GET /api/auth/me — uses protect middleware; no duplicated JWT decoding here
+// POST /api/auth/refresh — Rotate Access Token via Refresh Token Cookie
+// ─────────────────────────────────────────────────────────────────────────────
+export const refreshToken = async (req, res) => {
+  try {
+    const token = req.cookies?.hr_refresh_token;
+
+    if (!token) {
+      return res.status(401).json({ success: false, message: 'Refresh token missing' });
+    }
+
+    let decoded;
+    try {
+      decoded = jwt.verify(token, getRefreshSecret());
+    } catch {
+      return res.status(401).json({ success: false, message: 'Invalid or expired refresh token' });
+    }
+
+    const user = await User.findById(decoded.id).select('+refreshTokens');
+    if (!user || !user.isActive) {
+      return res.status(401).json({ success: false, message: 'User not found or deactivated' });
+    }
+
+    // Check if token exists in user's refresh token array
+    const tokenRecordIndex = (user.refreshTokens || []).findIndex(rt => rt.token === token);
+    if (tokenRecordIndex === -1) {
+      user.refreshTokens = [];
+      await user.save();
+      return res.status(401).json({ success: false, message: 'Security alert: Invalid refresh token' });
+    }
+
+    // Remove old refresh token and issue new pair
+    user.refreshTokens.splice(tokenRecordIndex, 1);
+    await user.save();
+
+    const { accessToken } = await setTokensCookies(res, user, req);
+
+    return res.status(200).json({
+      success: true,
+      token: accessToken,
+      user: userPayload(user),
+    });
+  } catch (error) {
+    console.error('refreshToken error:', error.message);
+    return res.status(500).json({ success: false, message: 'Could not refresh authentication token.' });
+  }
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GET /api/auth/me — Current User Profile
 // ─────────────────────────────────────────────────────────────────────────────
 export const getMe = async (req, res) => {
   try {
-    // req.user is populated by the protect middleware
     if (!req.user) return res.status(401).json({ success: false, message: 'Not authenticated' });
     return res.status(200).json({ success: true, user: userPayload(req.user) });
   } catch (error) {
     console.error('getMe error:', error.message);
-    return res.status(500).json({ success: false, message: 'Something went wrong.' });
+    return res.status(500).json({ success: false, message: 'Error retrieving profile.' });
   }
 };
 
-
-
 // ─────────────────────────────────────────────────────────────────────────────
-// POST /api/auth/signout
+// POST /api/auth/signout — Clear Cookies & Revoke Tokens
 // ─────────────────────────────────────────────────────────────────────────────
 export const signOut = async (req, res) => {
-  res.clearCookie('hr_token', {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-  });
-  return res.status(200).json({ success: true, message: 'Signed out successfully' });
+  try {
+    const refreshTokenVal = req.cookies?.hr_refresh_token;
+
+    if (refreshTokenVal) {
+      try {
+        const decoded = jwt.verify(refreshTokenVal, getRefreshSecret());
+        const user = await User.findById(decoded.id).select('+refreshTokens');
+        if (user && user.refreshTokens) {
+          user.refreshTokens = user.refreshTokens.filter(rt => rt.token !== refreshTokenVal);
+          await user.save();
+        }
+      } catch {
+        // Token already invalid/expired
+      }
+    }
+
+    const isProd = process.env.NODE_ENV === 'production';
+    const clearOpts = {
+      httpOnly: true,
+      secure: isProd,
+      sameSite: isProd ? 'none' : 'lax',
+      path: '/',
+    };
+
+    res.clearCookie('hr_access_token', clearOpts);
+    res.clearCookie('hr_refresh_token', clearOpts);
+    res.clearCookie('hr_token', clearOpts);
+
+    return res.status(200).json({ success: true, message: 'Signed out successfully' });
+  } catch (error) {
+    console.error('signOut error:', error.message);
+    return res.status(500).json({ success: false, message: 'Error signing out.' });
+  }
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
-// GET /api/auth/user/:phone
+// User & Staff Management Handlers
 // ─────────────────────────────────────────────────────────────────────────────
 export const getUserByPhone = async (req, res) => {
   try {
@@ -302,34 +576,27 @@ export const getUserByPhone = async (req, res) => {
     if (!user) return res.status(404).json({ success: false, message: 'User not found' });
     return res.status(200).json({ success: true, user: userPayload(user) });
   } catch (error) {
-    console.error('getUserByPhone error:', error.message);
-    return res.status(500).json({ success: false, message: 'Something went wrong.' });
+    return res.status(500).json({ success: false, message: error.message });
   }
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
-// GET /api/auth/users  — admin: all users
-// ─────────────────────────────────────────────────────────────────────────────
 export const getAllUsers = async (req, res) => {
   try {
     const { role } = req.query;
     const filter = {};
     if (role) filter.role = role;
     const users = await User.find(filter).sort({ createdAt: -1 });
-    
+
     const mapped = await Promise.all(users.map(async (u) => {
       const payload = userPayload(u);
       if (u.role !== 'client') {
-        const activeLeadsCount = await Enquiry.countDocuments({
+        payload.activeLeads = await Enquiry.countDocuments({
           assignedTo: u._id,
           status: { $nin: ['converted', 'lost'] }
         });
-        payload.activeLeads = activeLeadsCount;
-
-        const propertiesCount = await Property.countDocuments({
+        payload.propertiesCount = await Property.countDocuments({
           'agent.id': String(u._id)
         });
-        payload.propertiesCount = propertiesCount;
       } else {
         payload.activeLeads = 0;
         payload.propertiesCount = 0;
@@ -343,67 +610,55 @@ export const getAllUsers = async (req, res) => {
   }
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
-// POST /api/auth/staff  — admin: create internal user (employee/lead_control etc)
-// ─────────────────────────────────────────────────────────────────────────────
 export const createStaff = async (req, res) => {
   try {
-    const { name, phone, email, role, department, expertise, qualities } = req.body;
+    const { name, phone, email, password, role, department, expertise, qualities } = req.body;
     if (!name || !phone || !email || !role) {
-      return res.status(400).json({ success: false, message: 'name, phone, email and role are required' });
+      return res.status(400).json({ success: false, message: 'Name, phone, email and role are required' });
     }
     const allowed = ['agent', 'management', 'admin'];
     if (!allowed.includes(role)) {
       return res.status(400).json({ success: false, message: 'Invalid role' });
     }
-    if (role === 'admin' && email.toLowerCase() !== 'akayg@gmail.com') {
-      return res.status(400).json({ success: false, message: 'Only Abhishek (akayg@gmail.com) can be assigned the admin role.' });
-    }
+
     const existing = await User.findOne({ $or: [{ phone }, { email: email.toLowerCase() }] });
     if (existing) {
-      // Upgrade existing client to staff role
       existing.role = role;
       if (department !== undefined) existing.department = department;
       if (expertise !== undefined) existing.expertise = expertise;
       if (qualities !== undefined) existing.qualities = qualities;
-      if (name)  existing.name  = name;
+      if (name) existing.name = name;
+      if (password) existing.password = password;
       existing.email = email.toLowerCase();
       await existing.save();
-      return res.status(200).json({ success: true, message: 'User role updated', user: userPayload(existing) });
+      return res.status(200).json({ success: true, message: 'User updated successfully', user: userPayload(existing) });
     }
+
     const user = await User.create({
       name,
       phone,
       email: email.toLowerCase(),
+      password: password || 'Staff@123456',
       role,
       department: department || '',
       expertise: expertise || '',
       qualities: qualities || ''
     });
-    return res.status(201).json({ success: true, message: 'Staff member created', user: userPayload(user) });
+
+    return res.status(201).json({ success: true, message: 'Staff member created successfully', user: userPayload(user) });
   } catch (error) {
     return res.status(500).json({ success: false, message: error.message });
   }
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
-// PATCH /api/auth/users/:id/role  — admin: change user role
-// ─────────────────────────────────────────────────────────────────────────────
 export const updateUserRole = async (req, res) => {
   try {
-    const { role, department, expertise, qualities, isActive, name, phone, email } = req.body;
+    const { role, department, expertise, qualities, isActive, name, phone, email, password } = req.body;
     const update = {};
     if (role !== undefined) {
       const allowed = ['client', 'agent', 'management', 'admin'];
       if (!allowed.includes(role)) {
         return res.status(400).json({ success: false, message: 'Invalid role' });
-      }
-      if (role === 'admin') {
-        const targetUser = await User.findById(req.params.id);
-        const targetEmail = (email || targetUser?.email || '').toLowerCase();
-        if (targetEmail !== 'akayg@gmail.com') {
-          return res.status(400).json({ success: false, message: 'Only Abhishek (akayg@gmail.com) can be assigned the admin role.' });
-        }
       }
       update.role = role;
     }
@@ -415,16 +670,32 @@ export const updateUserRole = async (req, res) => {
     if (phone      !== undefined) update.phone      = phone;
     if (email      !== undefined) update.email      = email ? email.toLowerCase() : '';
 
-    const user = await User.findByIdAndUpdate(req.params.id, update, { new: true, runValidators: true });
+    const user = await User.findById(req.params.id);
     if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+
+    Object.assign(user, update);
+    if (password) user.password = password;
+
+    await user.save();
     return res.status(200).json({ success: true, user: userPayload(user) });
   } catch (error) {
     return res.status(500).json({ success: false, message: error.message });
   }
 };
 
-// ── User Wishlist Sync ────────────────────────────────────────────────────────
-// POST /api/auth/wishlist/toggle
+export const deleteUser = async (req, res) => {
+  try {
+    const user = await User.findByIdAndDelete(req.params.id);
+    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+    return res.status(200).json({ success: true, message: 'User deleted successfully' });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Wishlist Handlers
+// ─────────────────────────────────────────────────────────────────────────────
 export const toggleWishlist = async (req, res) => {
   try {
     const { propertyId } = req.body;
@@ -433,7 +704,7 @@ export const toggleWishlist = async (req, res) => {
     }
     const user = await User.findById(req.user.id);
     if (!user) return res.status(404).json({ success: false, message: 'User not found' });
-    
+
     const index = user.wishlist.indexOf(propertyId);
     if (index > -1) {
       user.wishlist.splice(index, 1);
@@ -442,7 +713,6 @@ export const toggleWishlist = async (req, res) => {
     }
     await user.save();
     const populated = await User.findById(req.user.id).populate('wishlist');
-    // Invalidate wishlist cache so next GET fetches fresh data
     await wishlistDel(req.user.id);
     return res.status(200).json({ success: true, wishlist: populated.wishlist });
   } catch (error) {
@@ -450,17 +720,14 @@ export const toggleWishlist = async (req, res) => {
   }
 };
 
-// GET /api/auth/wishlist
 export const getWishlist = async (req, res) => {
   try {
-    // Try Redis cache first (60s TTL)
     const cached = await wishlistGet(req.user.id);
     if (cached) {
       return res.status(200).json({ success: true, wishlist: cached, cached: true });
     }
     const user = await User.findById(req.user.id).populate('wishlist');
     if (!user) return res.status(404).json({ success: false, message: 'User not found' });
-    // Store in Redis cache
     await wishlistSet(req.user.id, user.wishlist);
     return res.status(200).json({ success: true, wishlist: user.wishlist });
   } catch (error) {
@@ -468,19 +735,20 @@ export const getWishlist = async (req, res) => {
   }
 };
 
-// POST /api/auth/social
+// ─────────────────────────────────────────────────────────────────────────────
+// Social Sign-In
+// ─────────────────────────────────────────────────────────────────────────────
 export const socialSignIn = async (req, res) => {
   try {
     const { name, email, provider } = req.body;
     if (!name || !email) {
-      return res.status(400).json({ success: false, message: 'Name and Email are required for social login' });
+      return res.status(400).json({ success: false, message: 'Name and Email are required' });
     }
 
     let user = await User.findOne({ email: email.toLowerCase() });
     let isNew = false;
 
     if (!user) {
-      // Generate a unique collision-resistant placeholder phone (social users have no phone)
       let phone;
       let isPhoneUnique = false;
       while (!isPhoneUnique) {
@@ -497,29 +765,25 @@ export const socialSignIn = async (req, res) => {
         role: 'client',
       });
       isNew = true;
-    } else {
-      if (!user.isActive) {
-        return res.status(403).json({ success: false, message: 'Your account has been deactivated.' });
-      }
+    } else if (!user.isActive) {
+      return res.status(403).json({ success: false, message: 'Account deactivated.' });
     }
 
-    // Set cookie
-    const token = setTokenCookie(res, user._id);
+    const { accessToken } = await setTokensCookies(res, user, req);
 
     return res.status(isNew ? 201 : 200).json({
       success: true,
-      message: isNew ? `Welcome, ${name}! Registered via ${provider}.` : 'Welcome back!',
+      message: isNew ? `Welcome, ${name}!` : 'Welcome back!',
       isNew,
-      token,
+      token: accessToken,
       user: userPayload(user),
     });
   } catch (error) {
     console.error('socialSignIn error:', error.message);
-    return res.status(500).json({ success: false, message: 'Something went wrong during social login.' });
+    return res.status(500).json({ success: false, message: 'Social sign-in error.' });
   }
 };
 
-// POST /api/auth/google/callback
 export const googleCallback = async (req, res) => {
   try {
     const { code } = req.body;
@@ -527,7 +791,6 @@ export const googleCallback = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Authorization code is required' });
     }
 
-    // Google client credentials MUST be set in environment variables — no hardcoded fallbacks
     const client_id     = process.env.GOOGLE_CLIENT_ID;
     const client_secret = process.env.GOOGLE_CLIENT_SECRET;
     const redirect_uri  = process.env.GOOGLE_REDIRECT_URI || 'http://localhost:5173/auth/callback';
@@ -536,7 +799,6 @@ export const googleCallback = async (req, res) => {
       return res.status(503).json({ success: false, message: 'Google OAuth is not configured on this server.' });
     }
 
-    // 1. Exchange auth code for access token
     const tokenUrl = 'https://oauth2.googleapis.com/token';
     const exchangeResponse = await fetch(tokenUrl, {
       method: 'POST',
@@ -553,11 +815,9 @@ export const googleCallback = async (req, res) => {
     const tokens = await exchangeResponse.json();
 
     if (!exchangeResponse.ok || !tokens.access_token) {
-      console.error('Google OAuth Token Exchange Error:', tokens);
       return res.status(400).json({ success: false, message: tokens.error_description || 'OAuth token exchange failed.' });
     }
 
-    // 2. Fetch user profile from Google
     const profileUrl = 'https://www.googleapis.com/oauth2/v3/userinfo';
     const profileResponse = await fetch(profileUrl, {
       headers: { Authorization: `Bearer ${tokens.access_token}` },
@@ -565,11 +825,9 @@ export const googleCallback = async (req, res) => {
 
     const googleUser = await profileResponse.json();
     if (!profileResponse.ok || !googleUser.email) {
-      console.error('Google Userinfo Fetch Error:', googleUser);
       return res.status(400).json({ success: false, message: 'Failed to retrieve Google user profile.' });
     }
 
-    // 3. Register or sign in the user
     const email = googleUser.email.toLowerCase();
     const name = googleUser.name || googleUser.given_name || 'Google User';
 
@@ -577,7 +835,6 @@ export const googleCallback = async (req, res) => {
     let isNew = false;
 
     if (!user) {
-      // Generate a unique collision-resistant placeholder phone (Google users have no phone)
       let phone;
       let isPhoneUnique = false;
       while (!isPhoneUnique) {
@@ -594,39 +851,21 @@ export const googleCallback = async (req, res) => {
         role: 'client',
       });
       isNew = true;
-    } else {
-      if (!user.isActive) {
-        return res.status(403).json({ success: false, message: 'Your account has been deactivated. Please contact support.' });
-      }
+    } else if (!user.isActive) {
+      return res.status(403).json({ success: false, message: 'Your account has been deactivated.' });
     }
 
-    // Set cookie
-    const token = setTokenCookie(res, user._id);
+    const { accessToken } = await setTokensCookies(res, user, req);
 
     return res.status(isNew ? 201 : 200).json({
       success: true,
       message: isNew ? 'Successfully registered with Google!' : 'Welcome back!',
       isNew,
-      token,
+      token: accessToken,
       user: userPayload(user),
     });
-
   } catch (error) {
     console.error('googleCallback error:', error.message);
-    return res.status(500).json({ success: false, message: 'Something went wrong during Google login.' });
+    return res.status(500).json({ success: false, message: 'Error during Google authentication.' });
   }
 };
-
-// ─────────────────────────────────────────────────────────────────────────────
-// DELETE /api/auth/users/:id  — admin: delete user account
-// ─────────────────────────────────────────────────────────────────────────────
-export const deleteUser = async (req, res) => {
-  try {
-    const user = await User.findByIdAndDelete(req.params.id);
-    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
-    return res.status(200).json({ success: true, message: 'User deleted successfully' });
-  } catch (error) {
-    return res.status(500).json({ success: false, message: error.message });
-  }
-};
-

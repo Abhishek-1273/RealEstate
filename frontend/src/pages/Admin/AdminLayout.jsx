@@ -180,7 +180,7 @@ export default function AdminLayout() {
             <Menu className="w-5 h-5 text-gray-600 dark:text-white/70" />
           </button>
           <span className="font-bold text-navy dark:text-white text-sm" style={{ fontFamily: 'Manrope,sans-serif' }}>
-            {settings?.logoTextPrimary || 'Hyper'}{settings?.logoTextSecondary || 'Relestix'} Panel
+            {getBrandName(settings)} Panel
           </span>
           <button onClick={handleSignOut} className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-white/10 transition-colors">
             <LogOut className="w-4 h-4 text-gray-500 dark:text-white/50" />

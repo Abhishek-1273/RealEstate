@@ -584,7 +584,7 @@ export default function UsersAdmin() {
         ) : (
           <div className="w-full">
             {/* MOBILE LAYOUT: Flex cards stack */}
-            <div className="block lg:hidden space-y-4">
+            <div className="block lg:hidden space-y-4 p-4 sm:p-5">
               {filtered.map(u => {
                 const isUpdating = updating === u.id;
                 const roleMeta = ROLE_META[u.role] || ROLE_META.agent;

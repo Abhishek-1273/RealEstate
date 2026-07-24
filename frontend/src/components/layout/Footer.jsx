@@ -98,7 +98,7 @@ export default function Footer() {
             </Link>
 
             <p className="text-white/60 text-sm leading-relaxed mb-6 max-w-sm">
-              Pune's premier luxury real estate agency, specializing in helping NRI clients find elite properties and handle secure investments entirely remotely.
+              {settings?.heroDescription || "Premier luxury real estate agency, specializing in helping NRI clients find elite properties and handle secure investments entirely remotely."}
             </p>
 
             <div className="space-y-3.5 text-xs text-white/70 mb-7">

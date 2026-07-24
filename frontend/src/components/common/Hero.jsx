@@ -79,7 +79,7 @@ export default function Hero() {
         >
           <video
             ref={videoRef}
-            key={settings.heroVideoUrl}
+            key={settings?.heroVideoUrl}
             className="w-full h-full object-cover"
             loop
             playsInline
@@ -87,7 +87,7 @@ export default function Hero() {
             poster={activeFallbackImage}
             muted
           >
-            <source src={settings.heroVideoUrl} />
+            <source src={settings?.heroVideoUrl} />
           </video>
         </div>
       )}

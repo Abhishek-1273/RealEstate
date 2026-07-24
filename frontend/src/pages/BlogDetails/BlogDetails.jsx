@@ -7,9 +7,12 @@ import { fetchBlogBySlug, fetchBlogs } from '../../utils/api';
 import { fadeUp } from '../../animations/variants';
 import PageLoader from '../../components/common/PageLoader';
 import SEO from '../../components/common/SEO';
+import { useSiteSettings, getBrandName } from '../../contexts';
 
 export default function BlogDetails() {
   const { id: slug } = useParams();
+  const { settings } = useSiteSettings();
+  const brandName = getBrandName(settings);
   const [blog, setBlog] = useState(null);
   const [related, setRelated] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -182,7 +185,7 @@ export default function BlogDetails() {
                   <div>
                     <p className="font-bold text-navy dark:text-white text-sm">{blog.author?.name}</p>
                     <p className="text-ink-soft dark:text-white/45 text-xs mt-0.5">Senior Property Advisor</p>
-                    <p className="text-[10px] mt-1 font-semibold" style={{ color: '#D4AF37' }}>HyperRelestix, Pune</p>
+                    <p className="text-[10px] mt-1 font-semibold" style={{ color: '#D4AF37' }}>{brandName}</p>
                   </div>
                 </div>
               </div>

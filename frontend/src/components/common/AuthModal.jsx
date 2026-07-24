@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, User, Phone, Mail, ArrowRight, Loader2 } from 'lucide-react';
 import { FaFacebookF, FaApple } from 'react-icons/fa6';
-import { useAuth } from '../../contexts';
+import { useAuth, useSiteSettings, getLogoInitials, getBrandName } from '../../contexts';
 import { useNavigate } from 'react-router-dom';
 import bgImage from '../../assets/image/bg.webp';
 
@@ -31,6 +31,7 @@ const itemVariants = {
 
 export default function AuthModal() {
   const { user, closeAuth, signIn, pendingRedirect } = useAuth();
+  const { settings } = useSiteSettings();
   const navigate = useNavigate();
 
   const [tab, setTab]                 = useState('login'); // 'login' | 'signup'
@@ -380,10 +381,14 @@ export default function AuthModal() {
 
           <div className="relative z-10">
             <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-gradient-to-br from-gold to-gold-dark shadow-gold">
-                <span className="text-navy font-display font-black text-xs">HR</span>
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-gradient-to-br from-gold to-gold-dark shadow-gold overflow-hidden">
+                {settings?.logoIconImage ? (
+                  <img src={settings.logoIconImage} alt="Logo" className="w-full h-full object-contain" />
+                ) : (
+                  <span className="text-navy font-display font-black text-xs">{getLogoInitials(settings)}</span>
+                )}
               </div>
-              <span className="font-display font-bold text-xs tracking-wider uppercase text-white/90">HyperRelestix</span>
+              <span className="font-display font-bold text-xs tracking-wider uppercase text-white/90">{getBrandName(settings)}</span>
             </div>
           </div>
 
@@ -546,7 +551,7 @@ export default function AuthModal() {
 
                   <motion.div variants={itemVariants} className="flex items-center justify-between text-[11px] pt-1">
                     <span className="text-white/20">OTP Verification required ✦</span>
-                    <a href="mailto:support@hyperrelestix.com" className="text-white/30 hover:text-white/50 transition-colors hover:underline">Need help?</a>
+                    <a href={`mailto:${settings?.contactEmail1 || 'support@realestate.com'}`} className="text-white/30 hover:text-white/50 transition-colors hover:underline">Need help?</a>
                   </motion.div>
 
                   <motion.div variants={itemVariants} className="space-y-3 pt-1">

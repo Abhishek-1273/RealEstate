@@ -40,13 +40,13 @@ export const sendEmail = async ({ to, subject, text, html }) => {
     }
   }
 
-  // 2. Try Brevo (Sendinblue) HTTP API (does NOT require custom domain, sends to anyone!)
+  // 2. Try Brevo (Sendinblue) HTTP API
   const { BREVO_API_KEY } = process.env;
   if (BREVO_API_KEY) {
     try {
       const senderEmail = SMTP_FROM && SMTP_FROM.includes('<')
         ? SMTP_FROM.match(/<([^>]+)>/)?.[1]
-        : (SMTP_USER && SMTP_USER.includes('@') ? SMTP_USER : 'noreply@hyperrelestix.in');
+        : (SMTP_USER && SMTP_USER.includes('@') ? SMTP_USER : 'noreply@realestate.com');
 
       const response = await fetch('https://api.brevo.com/v3/smtp/email', {
         method: 'POST',
@@ -56,7 +56,7 @@ export const sendEmail = async ({ to, subject, text, html }) => {
           'content-type': 'application/json',
         },
         body: JSON.stringify({
-          sender: { name: 'HyperRelestix', email: senderEmail },
+          sender: { name: process.env.SITE_NAME || 'RealEstate Portal', email: senderEmail },
           to: [{ email: to }],
           subject: subject,
           htmlContent: html,
@@ -85,13 +85,13 @@ export const sendEmail = async ({ to, subject, text, html }) => {
           user: SMTP_USER,
           pass: SMTP_PASS,
         },
-        connectionTimeout: 5000, // 5 seconds
-        greetingTimeout: 5000,   // 5 seconds
-        socketTimeout: 5000,     // 5 seconds
+        connectionTimeout: 5000,
+        greetingTimeout: 5000,
+        socketTimeout: 5000,
       });
 
       const info = await transporter.sendMail({
-        from: SMTP_FROM || '"HyperRelestix" <noreply@hyperrelestix.com>',
+        from: SMTP_FROM || `"${process.env.SITE_NAME || 'RealEstate Portal'}" <${SMTP_USER}>`,
         to,
         subject,
         text,

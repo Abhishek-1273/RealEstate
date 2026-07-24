@@ -281,7 +281,7 @@ function PropertyForm({ initial, onSave, onClose, masterData }) {
                         <button
                           type="button"
                           onClick={() => setForm(p => ({ ...p, images: p.images.filter((_, idx) => idx !== index) }))}
-                          className="p-1 bg-red-500 hover:bg-red-650 text-white rounded-full transition-colors"
+                          className="p-1 bg-red-500 hover:bg-red-600 text-white rounded-full transition-colors"
                         >
                           <X className="w-3.5 h-3.5" />
                         </button>
@@ -823,14 +823,16 @@ export default function PropertiesAdmin() {
                     type="button"
                     onClick={handleDelete}
                     disabled={deleting === propertyToDelete._id}
-                    className="px-4 py-2.5 rounded-xl bg-red-500 hover:bg-red-655 text-xs font-bold text-white transition-colors cursor-pointer shadow-lg shadow-red-500/15 disabled:opacity-60 flex items-center gap-1.5"
+                    className="px-5 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 active:scale-95 text-xs font-extrabold text-white transition-all cursor-pointer shadow-lg shadow-red-600/30 disabled:opacity-60 flex items-center gap-1.5"
                   >
                     {deleting === propertyToDelete._id ? (
                       <>
                         <Loader2 className="w-3.5 h-3.5 animate-spin" /> Deleting…
                       </>
                     ) : (
-                      'Delete Property'
+                      <>
+                        <Trash2 className="w-3.5 h-3.5" /> Delete Property
+                      </>
                     )}
                   </button>
                 </div>

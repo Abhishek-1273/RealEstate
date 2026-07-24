@@ -5,25 +5,23 @@ import { useAuth, useSiteSettings, getLogoInitials, getBrandName } from '../../c
 
 import PageLoader from '../../components/common/PageLoader';
 
-import { API_URL } from '../../config/api';
-const API = API_URL;
 const ROLE_LABELS = {
   admin:        { label: 'Admin', color: '#7C3AED' },
   management:   { label: 'Management', color: '#D4AF37' },
 };
 
 export default function AdminLogin() {
-  const { signIn } = useAuth();
+  const { loginStep1, loginStep2 } = useAuth();
   const { user, loading: sessionLoading }   = useAdmin();
   const { settings } = useSiteSettings();
   const navigate   = useNavigate();
 
-  const [step, setStep]     = useState('email'); // 'email' | 'otp'
-  const [email, setEmail]   = useState('');
-  const [otp, setOtp]       = useState(['', '', '', '', '', '']);
-  const [loading, setLoading] = useState(false);
-  const [error, setError]   = useState('');
-  const [info, setInfo]     = useState('');
+  const [step, setStep]         = useState('email'); // 'email' | 'otp'
+  const [email, setEmail]       = useState('');
+  const [otp, setOtp]           = useState(['', '', '', '', '', '']);
+  const [loading, setLoading]   = useState(false);
+  const [error, setError]       = useState('');
+  const [info, setInfo]         = useState('');
 
   const otpRefs = [useRef(), useRef(), useRef(), useRef(), useRef(), useRef()];
 
@@ -39,22 +37,26 @@ export default function AdminLogin() {
 
   // Step 1: Send OTP
   const handleSendOtp = async () => {
-    if (!email.trim()) { setError('Email address is required'); return; }
+    const targetEmail = email.trim().toLowerCase();
+    if (!targetEmail) { setError('Email address is required'); return; }
+    if (!/\S+@\S+\.\S+/.test(targetEmail)) { setError('Enter a valid email address'); return; }
+
     setError('');
     setLoading(true);
     try {
-      const res = await fetch(`${API}/api/auth/otp/send`, {
+      const res = await fetch(`${API_URL}/api/auth/otp/send`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ target: email.trim(), mode: 'login' }),
+        body: JSON.stringify({ target: targetEmail, mode: 'login' }),
       });
       const data = await res.json();
-      if (!res.ok || !data.success) throw new Error(data.message);
-      setInfo(`OTP sent to ${email.trim()}`);
+      if (!res.ok || !data.success) {
+        throw new Error(data.message || 'Failed to send OTP code');
+      }
+      setInfo(`Verification code sent to ${targetEmail}`);
       setStep('otp');
     } catch (err) {
-      setError(err.message || 'Failed to send OTP');
+      setError(err.message || 'Authentication failed');
     } finally {
       setLoading(false);
     }
@@ -67,14 +69,16 @@ export default function AdminLogin() {
     setError('');
     setLoading(true);
     try {
-      const res = await fetch(`${API}/api/auth/otp/verify`, {
+      const res = await fetch(`${API_URL}/api/auth/otp/verify`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ target: email.trim(), code, mode: 'login' }),
+        body: JSON.stringify({ target: email.trim().toLowerCase(), code, mode: 'login' }),
       });
       const data = await res.json();
-      if (!res.ok || !data.success) throw new Error(data.message);
+      if (!res.ok || !data.success) {
+        throw new Error(data.message || 'OTP verification failed');
+      }
       if (data.user.role === 'client' || data.user.role === 'agent') {
         setError('Access denied. This portal is for admin and management staff only.');
         return;
@@ -132,7 +136,6 @@ export default function AdminLogin() {
               <span className="font-black text-navy text-xl" style={{ fontFamily: 'Manrope, sans-serif' }}>
                 {getLogoInitials(settings)}
               </span>
-
             )}
           </div>
           <h1 className="text-white font-black text-2xl mb-1" style={{ fontFamily: 'Manrope, sans-serif' }}>
@@ -141,7 +144,6 @@ export default function AdminLogin() {
           <p className="text-white/40 text-sm">
             {getBrandName(settings)} Internal Panel
           </p>
-
         </div>
 
         {/* Card */}
@@ -155,16 +157,15 @@ export default function AdminLogin() {
                   <input
                     value={email}
                     onChange={e => setEmail(e.target.value)}
-                    placeholder="admin@hyperrelestix.in or akayg@gmail.com"
+                    placeholder="e.g. akayg@gmail.com"
                     type="email"
                     className="w-full px-4 py-3 rounded-xl text-white text-sm focus:outline-none transition-all focus:border-gold border border-white/10"
                     style={{ background: 'rgba(255,255,255,0.08)' }}
                     onKeyDown={e => e.key === 'Enter' && handleSendOtp()}
                   />
-                  <p className="text-white/40 text-[11px] mt-1.5 leading-relaxed">
-                    Admin: <span className="text-gold cursor-pointer underline" onClick={() => setEmail('akaygill64@gmail.com')}>akaygill64@gmail.com</span> | Manager: <span className="text-gold cursor-pointer underline" onClick={() => setEmail('admin@hyperrelestix.in')}>admin@hyperrelestix.in</span>
+                  <p className="text-white/40 text-[11px] mt-2 leading-relaxed">
+                    Demo Admin: <span className="text-gold cursor-pointer underline" onClick={() => setEmail('akayg@gmail.com')}>akayg@gmail.com</span> | Manager: <span className="text-gold cursor-pointer underline" onClick={() => setEmail('admin@hyperrelestix.in')}>admin@hyperrelestix.in</span>
                   </p>
-
                 </div>
 
                 {error && (
@@ -176,7 +177,7 @@ export default function AdminLogin() {
                 <button onClick={handleSendOtp} disabled={loading}
                   className="w-full py-3.5 rounded-xl font-bold text-navy text-sm transition-all duration-200 disabled:opacity-60 cursor-pointer"
                   style={{ background: loading ? '#A8882B' : 'linear-gradient(135deg, #D4AF37, #E8C84A)', boxShadow: '0 4px 20px rgba(212,175,55,0.25)' }}>
-                  {loading ? 'Sending OTP…' : 'Send OTP →'}
+                  {loading ? 'Sending OTP…' : 'Send OTP Code →'}
                 </button>
               </>
             ) : (
@@ -218,14 +219,14 @@ export default function AdminLogin() {
                 <button onClick={handleVerifyOtp} disabled={loading}
                   className="w-full py-3.5 rounded-xl font-bold text-navy text-sm transition-all duration-200 disabled:opacity-60 cursor-pointer"
                   style={{ background: loading ? '#A8882B' : 'linear-gradient(135deg, #D4AF37, #E8C84A)', boxShadow: '0 4px 20px rgba(212,175,55,0.25)' }}>
-                  {loading ? 'Verifying…' : 'Verify & Access Panel →'}
+                  {loading ? 'Verifying OTP…' : 'Verify & Access Panel →'}
                 </button>
 
                 <button
-                  onClick={() => { setStep('email'); setOtp(['','','','','','']); setError(''); setInfo(''); }}
+                  onClick={() => { setStep('credentials'); setOtp(['','','','','','']); setError(''); setInfo(''); }}
                   className="w-full text-white/40 text-xs hover:text-white/70 transition-colors"
                 >
-                  ← Change email
+                  ← Back to credentials
                 </button>
               </>
             )}

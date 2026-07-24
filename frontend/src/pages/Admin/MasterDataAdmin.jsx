@@ -371,7 +371,7 @@ export default function MasterDataAdmin() {
                 </p>
 
                 {deleteError && (
-                  <div className="p-3 mb-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-650 dark:text-red-450 text-xs">
+                  <div className="p-3 mb-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 text-xs">
                     {deleteError}
                   </div>
                 )}
@@ -389,14 +389,16 @@ export default function MasterDataAdmin() {
                     type="button"
                     onClick={confirmDelete}
                     disabled={deleteLoading}
-                    className="px-4 py-2.5 rounded-xl bg-red-500 hover:bg-red-600 text-xs font-bold text-white transition-colors cursor-pointer shadow-lg shadow-red-500/15 disabled:opacity-60 flex items-center gap-1.5"
+                    className="px-5 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 active:scale-95 text-xs font-extrabold text-white transition-all cursor-pointer shadow-lg shadow-red-600/30 disabled:opacity-60 flex items-center gap-1.5"
                   >
                     {deleteLoading ? (
                       <>
                         <Loader2 className="w-3.5 h-3.5 animate-spin" /> Deleting…
                       </>
                     ) : (
-                      'Delete Item'
+                      <>
+                        <Trash2 className="w-3.5 h-3.5" /> Delete Item
+                      </>
                     )}
                   </button>
                 </div>

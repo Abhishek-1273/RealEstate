@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { useSiteSettings, getLogoInitials } from '../../contexts';
+import { useSiteSettings, getLogoInitials, renderBrandLogo } from '../../contexts';
 
 export default function PageLoader() {
   const { settings } = useSiteSettings();
@@ -36,7 +36,7 @@ export default function PageLoader() {
 
         <div className="text-center">
           <p className="font-display font-bold text-white text-xl tracking-tight">
-            {settings?.logoTextPrimary || 'Hyper'}<span style={{ color: '#D4AF37' }}>{settings?.logoTextSecondary || 'Relestix'}</span>
+            {renderBrandLogo(settings, '#D4AF37')}
           </p>
           <p className="text-white/40 text-[9px] font-accent tracking-[0.3em] uppercase mt-1">
             {settings?.logoSubtitle || 'Luxury Real Estate · Pune'}

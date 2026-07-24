@@ -4,7 +4,7 @@ import { ArrowRight, ArrowLeft, Camera, CheckCircle2, ChevronDown } from 'lucide
 import { fadeUp } from '../../animations/variants';
 import { Link } from 'react-router-dom';
 import PremiumIcon from '../../components/common/PremiumIcon';
-import { useSiteSettings } from '../../contexts';
+import { useSiteSettings, getBrandName } from '../../contexts';
 import { submitEnquiry, fetchMasterData } from '../../utils/api';
 import CameraUploader from '../../components/common/CameraUploader';
 import SearchableSelect from '../../components/common/SearchableSelect';
@@ -88,7 +88,7 @@ function CustomSelect({ value, onChange, options, placeholder, className = "" })
 
 export default function SellProperty() {
   const { settings } = useSiteSettings();
-  const brandName = settings ? `${settings.logoTextPrimary || 'Hyper'}${settings.logoTextSecondary || 'Relestix'}` : 'HyperRelestix';
+  const brandName = getBrandName(settings);
   const [step, setStep] = useState(0);
   const [form, setForm] = useState({ type: '', locality: '', area: '', bedrooms: '', furnishing: 'Fully Furnished', name: '', phone: '', email: '', askingPrice: '', notes: '', images: [] });
   const [submitted, setSubmitted]   = useState(false);

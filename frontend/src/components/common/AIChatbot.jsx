@@ -1,14 +1,18 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Send, Bot, User, Sparkles, Loader, MessageSquare } from 'lucide-react';
+import { useSiteSettings, getBrandName } from '../../contexts';
 import { sendChatMessage } from '../../utils/api';
 
 export default function AIChatbot() {
   const [isOpen, setIsOpen] = useState(false);
+  const { settings } = useSiteSettings();
+  const brandName = getBrandName(settings);
+
   const [messages, setMessages] = useState([
     {
       role: 'assistant',
-      content: 'Hello! I am your HyperRelestix Luxury Property Advisor. How can I assist you with Pune premium real estate, NRI investments, or FEMA compliance today?'
+      content: `Hello! I am your ${brandName} Luxury Property Advisor. How can I assist you with premium real estate, NRI investments, or legal compliance today?`
     }
   ]);
   const [input, setInput] = useState('');
@@ -85,7 +89,7 @@ export default function AIChatbot() {
           <motion.div
             id="ai-chat-drawer"
             role="dialog"
-            aria-label="HyperRelestix AI Property Advisor"
+            aria-label={`${brandName} AI Property Advisor`}
             aria-modal="false"
             initial={{ opacity: 0, y: 30, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -105,7 +109,7 @@ export default function AIChatbot() {
                   <Sparkles className="w-4.5 h-4.5 text-navy" aria-hidden="true" />
                 </div>
                 <div>
-                  <h2 className="font-display font-bold text-white text-xs leading-none">HyperRelestix AI</h2>
+                  <h2 className="font-display font-bold text-white text-xs leading-none">{brandName} AI</h2>
                   <p className="text-[10px] text-[#D4AF37] font-semibold mt-0.5 tracking-wider uppercase">Luxury Assistant</p>
                 </div>
               </div>

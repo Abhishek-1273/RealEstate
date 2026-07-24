@@ -2,7 +2,6 @@ import { Helmet } from 'react-helmet-async';
 import { useSiteSettings, getBrandName } from '../../contexts';
 
 const DEFAULT_IMAGE = 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=1200&q=80';
-const SITE_URL = 'https://www.hyperrelestix.in';
 
 /**
  * Reusable SEO component — inject into every page for unique meta tags.
@@ -27,18 +26,19 @@ export default function SEO({
   const brandName = getBrandName(settings);
 
 
-  const defaultDesc = settings
-    ? `${brandName} is Pune's most trusted luxury real estate platform. Discover premium villas, penthouses and apartments in Koregaon Park, Baner, Kharadi, Kalyani Nagar, Wakad and Balewadi. RERA verified listings.`
-    : "HyperRelestix is Pune's most trusted luxury real estate platform. Discover premium villas, penthouses and apartments in Koregaon Park, Baner, Kharadi, Kalyani Nagar, Wakad and Balewadi. RERA verified listings.";
+  const siteUrl = settings?.siteUrl || window.location.origin;
+  const defaultDesc = settings?.metaDescription
+    ? settings.metaDescription
+    : `${brandName} is Pune's premier luxury real estate platform specializing in verified villas, penthouses and apartments.`;
 
-  const defaultTitle = settings
-    ? `${brandName} — Luxury Real Estate Pune | Premium Villas, Apartments & Penthouses`
-    : 'HyperRelestix — Luxury Real Estate Pune | Premium Villas, Apartments & Penthouses';
+  const defaultTitle = settings?.metaTitleSuffix
+    ? `${brandName} — ${settings.metaTitleSuffix}`
+    : `${brandName} — Luxury Real Estate Pune`;
 
   const activeDesc = description || defaultDesc;
   const fullTitle = title ? `${title} | ${brandName}` : defaultTitle;
-  const canonical = `${SITE_URL}${url}`;
-  const ogImage = image.startsWith('http') ? image : `${SITE_URL}${image}`;
+  const canonical = url ? `${siteUrl}${url}` : window.location.href;
+  const ogImage = image.startsWith('http') ? image : `${siteUrl}${image}`;
 
   return (
     <Helmet>

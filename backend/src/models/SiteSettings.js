@@ -1,12 +1,17 @@
 import mongoose from 'mongoose';
 
 const siteSettingsSchema = new mongoose.Schema({
-  // Logo settings
+  // Logo & Branding settings
   logoIconText: { type: String, default: 'HR' },
   logoIconImage: { type: String, default: '' },
+  logoFaviconUrl: { type: String, default: '' },
   logoTextPrimary: { type: String, default: 'Hyper' },
   logoTextSecondary: { type: String, default: 'Relestix' },
   logoSubtitle: { type: String, default: 'Luxury Real Estate · Pune' },
+  metaTitleSuffix: { type: String, default: 'Luxury Real Estate Pune | Premium Villas & Penthouses' },
+  metaDescription: { type: String, default: 'Premier luxury real estate platform specializing in premium villas, penthouses and apartments in Koregaon Park, Baner, Kharadi, Kalyani Nagar and Wakad.' },
+  siteUrl: { type: String, default: '' },
+
 
   // Hero settings
   heroTagline: { type: String, default: "Pune's Premier NRI Property Platform" },

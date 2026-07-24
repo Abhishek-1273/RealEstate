@@ -6,7 +6,7 @@ import User from '../models/User.js';
 // ─────────────────────────────────────────────────────────────────────────────
 export const protect = async (req, res, next) => {
   try {
-    let token = req.cookies?.hr_token;
+    let token = req.cookies?.hr_access_token || req.cookies?.hr_token;
 
     // Fallback to Authorization Header if cookie is blocked (cross-site fallback)
     if (!token && req.headers.authorization && req.headers.authorization.startsWith('Bearer ')) {
@@ -14,14 +14,17 @@ export const protect = async (req, res, next) => {
     }
 
     if (!token) {
-      return res.status(401).json({ success: false, message: 'Not authenticated' });
+      return res.status(401).json({ success: false, message: 'Not authenticated', expired: true });
     }
 
     let decoded;
     try {
       decoded = jwt.verify(token, process.env.JWT_SECRET);
-    } catch {
-      return res.status(401).json({ success: false, message: 'Invalid or expired session' });
+    } catch (err) {
+      if (err.name === 'TokenExpiredError') {
+        return res.status(401).json({ success: false, message: 'Access token expired', expired: true });
+      }
+      return res.status(401).json({ success: false, message: 'Invalid session' });
     }
 
     const user = await User.findById(decoded.id).select('-__v');

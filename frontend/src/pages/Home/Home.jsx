@@ -20,7 +20,7 @@ import KineticGrid from '../../components/common/KineticGrid';
 import Smooth3DSlideshow from '../../components/common/Smooth3DSlideshow';
 import StickerPeeling from '../../components/common/StickerPeeling';
 import reraBadge from '../../assets/image/rera-gold-badge.png';
-import { useSiteSettings, getLogoInitials } from '../../contexts';
+import { useSiteSettings, getLogoInitials, getBrandName } from '../../contexts';
 
 // Subcomponents
 
@@ -233,7 +233,7 @@ function createCardCanvas(reraBadgeImg, brandName, logoAbbr) {
    ══════════════════════════════════════════════════════════════════════════ */
 function WhyUs() {
   const { settings } = useSiteSettings();
-  const brandName = settings ? `${settings.logoTextPrimary || 'Hyper'}${settings.logoTextSecondary || 'Relestix'}` : 'HyperRelestix';
+  const brandName = getBrandName(settings);
   const logoAbbr = getLogoInitials(settings);
 
 

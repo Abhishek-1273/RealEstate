@@ -33,6 +33,7 @@ export default function AdvisorsAdmin() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [deleteConfirm, setDeleteConfirm] = useState(null);
+  const [deleting, setDeleting] = useState(false);
 
   const loadAdvisors = async () => {
     setLoading(true);
@@ -132,6 +133,7 @@ export default function AdvisorsAdmin() {
 
   const handleDelete = async () => {
     if (!deleteConfirm) return;
+    setDeleting(true);
     try {
       await deleteAdvisorAdmin(deleteConfirm._id);
       setAdvisors(prev => prev.filter(a => a._id !== deleteConfirm._id));
@@ -140,6 +142,8 @@ export default function AdvisorsAdmin() {
       setTimeout(() => setSuccess(''), 4000);
     } catch (err) {
       setError(err.message || 'Failed to delete advisor');
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -540,10 +544,13 @@ export default function AdvisorsAdmin() {
                     Cancel
                   </button>
                   <button
+                    type="button"
                     onClick={handleDelete}
-                    className="px-4 py-2.5 rounded-xl bg-red-650 hover:bg-red-700 text-white text-xs font-bold transition-all cursor-pointer"
+                    disabled={deleting}
+                    className="px-5 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 active:scale-95 text-white text-xs font-extrabold transition-all shadow-lg shadow-red-600/30 flex items-center gap-2 cursor-pointer disabled:opacity-50"
                   >
-                    Confirm Delete
+                    {deleting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+                    {deleting ? 'Deleting…' : 'Confirm Delete'}
                   </button>
                 </div>
               </motion.div>

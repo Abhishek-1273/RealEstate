@@ -1,11 +1,11 @@
 import { motion } from 'framer-motion';
 import { Scale, CheckCircle2, AlertTriangle, HelpCircle } from 'lucide-react';
 import { fadeUp } from '../../animations/variants';
-import { useSiteSettings } from '../../contexts';
+import { useSiteSettings, getBrandName } from '../../contexts';
 
 export default function TermsOfService() {
   const { settings } = useSiteSettings();
-  const brandName = settings ? `${settings.logoTextPrimary || 'Hyper'}${settings.logoTextSecondary || 'Relestix'}` : 'HyperRelestix';
+  const brandName = getBrandName(settings);
   return (
     <div className="min-h-screen bg-surface dark:bg-navy-dark pt-32 pb-20 transition-colors duration-300">
       <div className="container-luxury max-w-4xl">

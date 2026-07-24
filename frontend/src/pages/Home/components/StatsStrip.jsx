@@ -7,10 +7,10 @@ export default function StatsStrip() {
   const { settings } = useSiteSettings();
   
   const dynamicStats = [
-    { label: 'Premium Properties sold', value: settings.stats?.propertiesSold ?? 1500, suffix: '+' },
-    { label: 'Average Client Satisfaction', value: settings.stats?.happyClients ?? 98, suffix: '%' },
-    { label: 'Years of Pune Market Expertise', value: settings.stats?.experience ?? 12, suffix: '+' },
-    { label: 'Total Deals Closed Successfully', value: settings.stats?.dealsClosed ?? 350, suffix: '+' },
+    { label: 'Premium Properties sold', value: settings?.stats?.propertiesSold ?? 1500, suffix: '+' },
+    { label: 'Average Client Satisfaction', value: settings?.stats?.happyClients ?? 98, suffix: '%' },
+    { label: 'Years of Pune Market Expertise', value: settings?.stats?.experience ?? 12, suffix: '+' },
+    { label: 'Total Deals Closed Successfully', value: settings?.stats?.dealsClosed ?? 350, suffix: '+' },
   ];
 
   return (
