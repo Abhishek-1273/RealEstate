@@ -1,4 +1,4 @@
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useState } from "react";
 
 const useIsStaticRenderer = () => false;
 
@@ -20,7 +20,17 @@ export default function KineticGrid({
     const isStatic = useIsStaticRenderer();
     const prevMouseRef = useRef({ x: -9999, y: -9999 });
 
+    const [isMobile, setIsMobile] = useState(() => typeof window !== "undefined" && window.innerWidth < 1024);
+
     useEffect(() => {
+        const checkMobile = () => setIsMobile(window.innerWidth < 1024);
+        checkMobile();
+        window.addEventListener("resize", checkMobile);
+        return () => window.removeEventListener("resize", checkMobile);
+    }, []);
+
+    useEffect(() => {
+        if (isMobile) return;
         const host = hostRef.current;
         const canvas = canvasRef.current;
         if (!host || !canvas) return;
@@ -276,7 +286,10 @@ export default function KineticGrid({
         dotColor,
         lineColor,
         trailColor,
+        isMobile,
     ]);
+
+    if (isMobile) return null;
 
     return (
         <div

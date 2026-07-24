@@ -203,7 +203,7 @@ export default function Smooth3DSlideshow({
                         pointerEvents:
                             visible && !isStatic && !autoplay ? "auto" : "none",
                         backgroundColor: "#1a1a1a",
-                        boxShadow: isActive ? "0 20px 45px -10px rgba(0, 0, 0, 0.6)" : "none",
+                        boxShadow: "none",
 
                     };
 

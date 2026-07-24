@@ -472,15 +472,28 @@
   font-weight: 900;
 }
 
+.swiper-pagination {
+  position: relative !important;
+  margin-top: 1.5rem !important;
+  bottom: 0 !important;
+}
+
+.swiper-slide {
+  height: auto !important;
+}
+
 .swiper-pagination-bullet-active {
   background: #D4AF37 !important;
+  width: 24px !important;
+  border-radius: 4px !important;
 }
 
 .swiper-pagination-bullet {
   background: #D4AF37;
-  opacity: 0.3;
+  opacity: 0.35;
   width: 8px;
   height: 8px;
+  transition: all 0.3s ease !important;
 }
 
 /* ═══════════════════════════════════════

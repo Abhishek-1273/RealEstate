@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Mail, Phone, MapPin, ArrowRight } from 'lucide-react';
 import { FaInstagram, FaXTwitter, FaLinkedinIn, FaFacebookF, FaYoutube, FaWhatsapp } from 'react-icons/fa6';
@@ -47,6 +48,14 @@ const columns = [
 export default function Footer() {
   const { user, openAuth } = useAuth();
   const { settings } = useSiteSettings();
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 1024);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   const dynamicSocials = [
     { icon: <FaInstagram />, href: settings?.socials?.instagram, label: 'Instagram' },
@@ -69,10 +78,12 @@ export default function Footer() {
 
   return (
     <footer className="relative bg-[#051324] border-t border-white/10 text-white overflow-hidden">
-      {/* Background Kinetic Canvas */}
-      <div className="absolute inset-0 pointer-events-none opacity-20">
-        <KineticGrid density="low" speed="slow" />
-      </div>
+      {/* Background Kinetic Canvas — Desktop Only */}
+      {!isMobile && (
+        <div className="hidden lg:block absolute inset-0 pointer-events-none opacity-20">
+          <KineticGrid density="low" speed="slow" />
+        </div>
+      )}
 
       <div className="container-luxury pt-16 pb-12 relative z-10">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-10 lg:gap-8 pb-12">

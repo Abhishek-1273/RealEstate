@@ -1,68 +1,74 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    
-    <!-- Force hide scrollbars on mobile viewports to prevent golden line glitches -->
-    <style>
-      @media (max-width: 1023px) {
-        ::-webkit-scrollbar {
-          display: none !important;
-          width: 0 !important;
-          height: 0 !important;
-        }
-        html, body {
-          scrollbar-width: none !important;
-          -ms-overflow-style: none !important;
-        }
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- Force hide scrollbars on mobile viewports to prevent golden line glitches -->
+  <style>
+    @media (max-width: 1023px) {
+      ::-webkit-scrollbar {
+        display: none !important;
+        width: 0 !important;
+        height: 0 !important;
       }
-    </style>
 
-    <!-- Primary Meta -->
-    <title>Luxury Real Estate Pune | Premium Homes &amp; Villas</title>
-    <meta name="description" content="Discover premium luxury real estate, verified villas, penthouses and apartments." />
-    <meta name="keywords" content="luxury real estate, villas, penthouses, luxury property" />
-    <meta name="theme-color" content="#071A2F" />
-    <meta name="robots" content="index, follow" />
+      html,
+      body {
+        scrollbar-width: none !important;
+        -ms-overflow-style: none !important;
+      }
+    }
+  </style>
 
-    <!-- Open Graph -->
-    <meta property="og:type" content="website" />
-    <meta property="og:title" content="Luxury Real Estate" />
-    <meta property="og:description" content="Premier luxury real estate platform. Verified properties." />
-    <meta property="og:image" content="https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=1200&q=80" />
+  <!-- Primary Meta -->
+  <title>Luxury Real Estate Pune | Premium Homes &amp; Villas</title>
+  <meta name="description" content="Discover premium luxury real estate, verified villas, penthouses and apartments." />
+  <meta name="keywords" content="luxury real estate, villas, penthouses, luxury property" />
+  <meta name="theme-color" content="#071A2F" />
+  <meta name="robots" content="index, follow" />
 
-    <!-- Twitter Card -->
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="HyperRelestix — Luxury Real Estate Pune" />
-    <meta name="twitter:description" content="Pune's premier luxury real estate platform." />
-    <meta name="twitter:image" content="https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=1200&q=80" />
+  <!-- Open Graph -->
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Luxury Real Estate" />
+  <meta property="og:description" content="Premier luxury real estate platform. Verified properties." />
+  <meta property="og:image" content="https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=1200&q=80" />
 
-    <!-- Favicon (inline SVG) -->
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23D4AF37'/%3E%3Ctext x='50%25' y='54%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='14' font-weight='900' fill='%23071A2F'%3EHR%3C/text%3E%3C/svg%3E" />
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="HyperRelestix — Luxury Real Estate Pune" />
+  <meta name="twitter:description" content="Pune's premier luxury real estate platform." />
+  <meta name="twitter:image" content="https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=1200&q=80" />
 
-    <!-- Web App Manifest -->
-    <link rel="manifest" href="/manifest.json" />
+  <!-- Favicon (inline SVG) -->
+  <link rel="icon" type="image/svg+xml"
+    href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23D4AF37'/%3E%3Ctext x='50%25' y='54%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='14' font-weight='900' fill='%23071A2F'%3EHR%3C/text%3E%3C/svg%3E" />
 
-    <!-- DNS Prefetch & Preconnect -->
-    <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
-    <link rel="dns-prefetch" href="https://fonts.gstatic.com" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <!-- Web App Manifest -->
+  <link rel="manifest" href="/manifest.json" />
 
-    <!--
+  <!-- DNS Prefetch & Preconnect -->
+  <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
+  <link rel="dns-prefetch" href="https://fonts.gstatic.com" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+  <!--
       Google Fonts — Variable font format reduces payload and prevents render blocking.
     -->
-    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300..800&family=Plus+Jakarta+Sans:ital,wght@0,300..800;1,400&display=swap" rel="stylesheet" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Manrope:wght@300..800&family=Plus+Jakarta+Sans:ital,wght@0,300..800;1,400&display=swap"
+    rel="stylesheet" />
 
-    <!--
+  <!--
       NOTE: Leaflet CSS is intentionally NOT loaded here.
       It is dynamically imported inside InteractiveMap.jsx and InteractiveGlobe.jsx
       so it is only loaded on pages that actually use the map (~40KB savings on all other pages).
     -->
 
-    <!-- Structured Data -->
-    <script type="application/ld+json">
+  <!-- Structured Data -->
+  <script type="application/ld+json">
     {
       "@context": "https://schema.org",
       "@type": "RealEstateAgent",
@@ -84,22 +90,24 @@
     }
     </script>
 
-    <!-- Theme initialization — runs synchronously before first paint to prevent flash -->
-    <script>
-      (function() {
-        try {
-          var theme = localStorage.getItem('theme');
-          if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-            document.documentElement.classList.add('dark');
-          } else {
-            document.documentElement.classList.remove('dark');
-          }
-        } catch(e) { /* localStorage may be blocked in private mode */ }
-      })();
-    </script>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
+  <!-- Theme initialization — runs synchronously before first paint to prevent flash -->
+  <script>
+    (function () {
+      try {
+        var theme = localStorage.getItem('theme');
+        if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+          document.documentElement.classList.add('dark');
+        } else {
+          document.documentElement.classList.remove('dark');
+        }
+      } catch (e) { /* localStorage may be blocked in private mode */ }
+    })();
+  </script>
+</head>
+
+<body>
+  <div id="root"></div>
+  <script type="module" src="/src/main.jsx"></script>
+</body>
+
 </html>

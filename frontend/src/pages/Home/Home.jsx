@@ -55,9 +55,18 @@ function Categories({ counts = {} }) {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  const getCount = (cName) => {
+    if (counts && counts[cName] !== undefined) return counts[cName];
+    if (counts) {
+      const alt = cName.replace('Luxury ', '');
+      if (counts[alt] !== undefined) return counts[alt];
+    }
+    return 0;
+  };
+
   const slides = categories.map((c) => ({
     image: { src: c.image, alt: c.name },
-    title: `${c.name}\n${counts[c.name] ?? 0} Listings`,
+    title: `${c.name}\n${getCount(c.name)} Listings`,
     id: c.id
   }));
 
@@ -82,8 +91,30 @@ function Categories({ counts = {} }) {
           className="mb-14"
         />
 
-        <div className="h-[380px] flex items-center justify-center relative select-none overflow-hidden w-full">
+        {/* Mobile / Tablet view (< 1024px): Clean static grid showing all category boxes without 3D animation */}
+        <div className="grid lg:hidden grid-cols-2 sm:grid-cols-3 gap-3.5 sm:gap-5 w-full">
+          {categories.map((c) => {
+            const count = getCount(c.name);
+            return (
+              <div
+                key={c.id}
+                onClick={() => navigate(`/properties?category=${c.id}`)}
+                className="relative aspect-square rounded-2xl overflow-hidden cursor-pointer group shadow-card border border-gray-100 dark:border-white/10 active:scale-[0.98] transition-transform"
+              >
+                <img src={c.image} alt={c.name} className="w-full h-full object-cover" loading="lazy" />
+                <div className="absolute inset-0 bg-gradient-to-t from-navy/95 via-navy/40 to-transparent flex flex-col justify-end p-4 text-left">
+                  <h3 className="font-display font-bold text-white text-base leading-tight">{c.name}</h3>
+                  <p className="text-gold text-xs font-semibold mt-1" style={{ color: '#D4AF37' }}>
+                    {count} {count === 1 ? 'Listing' : 'Listings'}
+                  </p>
+                </div>
+              </div>
+            );
+          })}
+        </div>
 
+        {/* Desktop view (>= 1024px): 3D Smooth Slideshow 100% unchanged */}
+        <div className="hidden lg:flex h-[380px] items-center justify-center relative select-none overflow-hidden w-full">
           <Smooth3DSlideshow
             slides={slides}
             cardWidth={cardSize.width}
@@ -328,22 +359,59 @@ function WhyUs() {
           </div>
 
           {/* Right Column: Dynamic illustrative elements */}
-          <div className="relative aspect-[4/3] w-full max-w-[480px] mx-auto select-none flex items-center justify-center overflow-visible">
-            {cardTexture ? (
-              <StickerPeeling
-                image={cardTexture}
-                imageWidth={stickerSize.width}
-                imageHeight={stickerSize.height}
-                curlRotation={220}
-                hoverPeel={26}
-                pressPeel={45}
-                backColor="#C5A028"
-                shadowEnabled={true}
-                style={{ width: `${stickerSize.width}px`, height: `${stickerSize.height}px` }}
-              />
-            ) : (
-              <div className="w-full h-full aspect-[4/3] rounded-[32px] bg-mesh-dark animate-pulse" />
-            )}
+          <div className="w-full max-w-[480px] mx-auto">
+            {/* Mobile view (< 1024px): Clean static RERA Audit Card (No canvas peel animation) */}
+            <div className="lg:hidden w-full rounded-[28px] p-6 text-left relative overflow-hidden shadow-luxury border border-white/10"
+              style={{ background: 'linear-gradient(145deg, #071626 0%, #0c223c 100%)' }}
+            >
+              <div className="absolute top-0 right-0 w-48 h-48 pointer-events-none rounded-full"
+                style={{ background: 'radial-gradient(circle at 100% 0%, rgba(212, 175, 55, 0.22) 0%, transparent 70%)' }} />
+
+              <div className="flex items-start justify-between gap-4 mb-4 relative z-10">
+                <div>
+                  <p className="text-[#D4AF37] font-bold text-xs font-display uppercase tracking-wider mb-1">RERA DOCUMENT AUDIT</p>
+                  <h3 className="text-white font-display font-bold text-xl leading-tight">Pune Market Intelligence</h3>
+                </div>
+                <img src={reraBadge} alt="RERA Gold Badge" className="w-14 h-14 object-contain shrink-0" />
+              </div>
+
+              <div className="h-px bg-white/10 my-4" />
+
+              <p className="text-white/85 text-xs font-body leading-relaxed mb-4 italic relative z-10">
+                "{brandName} operates with complete legal compliance and fiduciary responsibility, ensuring every transaction is completely RERA-verified."
+              </p>
+
+              <div className="h-px bg-white/10 my-4" />
+
+              <div className="flex items-center gap-3 relative z-10">
+                <div className="w-10 h-10 rounded-full flex items-center justify-center font-display font-bold text-xs text-gold border border-gold/30 bg-gold/10 shrink-0" style={{ color: '#D4AF37' }}>
+                  {logoAbbr || 'HR'}
+                </div>
+                <div>
+                  <p className="text-white font-display font-bold text-sm leading-none">Advisory Board</p>
+                  <p className="text-white/40 text-[9px] font-bold tracking-wider uppercase mt-1">FEMA & TAX COMPLIANCE AUDITED</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Desktop view (>= 1024px): Interactive 3D Sticker Peeling canvas animation 100% unchanged */}
+            <div className="hidden lg:flex relative aspect-[4/3] w-full max-w-[480px] mx-auto select-none items-center justify-center overflow-visible">
+              {cardTexture ? (
+                <StickerPeeling
+                  image={cardTexture}
+                  imageWidth={stickerSize.width}
+                  imageHeight={stickerSize.height}
+                  curlRotation={220}
+                  hoverPeel={26}
+                  pressPeel={45}
+                  backColor="#C5A028"
+                  shadowEnabled={true}
+                  style={{ width: `${stickerSize.width}px`, height: `${stickerSize.height}px` }}
+                />
+              ) : (
+                <div className="w-full h-full aspect-[4/3] rounded-[32px] bg-mesh-dark animate-pulse" />
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -435,7 +503,7 @@ function Testimonials() {
             {activeTestimonials.map((t) => (
               <SwiperSlide key={t._id || t.id}>
                 <div
-                  className="rounded-3xl p-8 h-full flex flex-col transition-all duration-400 hover:-translate-y-1 bg-white dark:bg-navy-light border border-gray-150 dark:border-white/10 shadow-card"
+                  className="mb-10 rounded-3xl p-8 h-full flex flex-col transition-all duration-400 hover:-translate-y-1 bg-white dark:bg-navy-light border border-gray-150 dark:border-white/10 shadow-card"
                 >
                   <div className="flex gap-1 mb-5">
                     {[...Array(t.rating)].map((_, i) => (

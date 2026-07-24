@@ -24,7 +24,7 @@ export default function PropertyCard({ property, view = 'grid' }) {
 
   if (view === 'list') {
     return (
-      <div 
+      <div
         onClick={() => navigate(`/properties/${property._id || property.id}`)}
         className="bg-white dark:bg-navy-light rounded-3xl overflow-hidden shadow-card hover:shadow-xl transition-all duration-300 border border-gray-100 dark:border-white/20 flex flex-row h-[170px] md:h-[260px] group cursor-pointer relative"
       >
@@ -140,11 +140,10 @@ export default function PropertyCard({ property, view = 'grid' }) {
                   }
                   toggleWishlist(property);
                 }}
-                className={`w-7 h-7 md:w-9 md:h-9 rounded-full flex items-center justify-center transition-all duration-250 ${
-                  wished
+                className={`w-7 h-7 md:w-9 md:h-9 rounded-full flex items-center justify-center transition-all duration-250 ${wished
                     ? 'bg-red-500 text-white shadow-[0_4px_14px_rgba(239,68,68,0.4)]'
                     : 'bg-gray-100 text-gray-400 hover:text-red-500 hover:bg-red-50'
-                }`}
+                  }`}
               >
                 <Heart className={`w-3.5 h-3.5 md:w-4 md:h-4 ${wished ? 'fill-current animate-pulse' : ''}`} />
               </button>
@@ -214,8 +213,8 @@ export default function PropertyCard({ property, view = 'grid' }) {
               toggleWishlist(property);
             }}
             className={`absolute top-4 right-4 w-9 h-9 rounded-full flex items-center justify-center transition-all duration-250 z-[3] ${wished
-                ? 'bg-red-500 text-white shadow-[0_4px_14px_rgba(239,68,68,0.4)]'
-                : 'bg-white/90 text-gray-400 hover:text-red-500 hover:bg-white backdrop-blur-sm'
+              ? 'bg-red-500 text-white shadow-[0_4px_14px_rgba(239,68,68,0.4)]'
+              : 'bg-white/90 text-gray-400 hover:text-red-500 hover:bg-white backdrop-blur-sm'
               }`}
           >
             <motion.div
