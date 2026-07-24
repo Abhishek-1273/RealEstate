@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Mail, Phone, MapPin, ArrowRight } from 'lucide-react';
-import { FaInstagram, FaXTwitter, FaLinkedinIn, FaYoutube } from 'react-icons/fa6';
+import { FaInstagram, FaXTwitter, FaLinkedinIn, FaFacebookF, FaYoutube, FaWhatsapp } from 'react-icons/fa6';
 import { useAuth, useSiteSettings, getLogoInitials, getBrandName, renderBrandLogo } from '../../contexts';
 
 import KineticGrid from '../common/KineticGrid';
@@ -49,11 +49,16 @@ export default function Footer() {
   const { settings } = useSiteSettings();
 
   const dynamicSocials = [
-    { icon: <FaInstagram />, href: settings?.socials?.instagram || '#', label: 'Instagram' },
-    { icon: <FaXTwitter />, href: settings?.socials?.twitter || '#', label: 'X (Twitter)' },
-    { icon: <FaLinkedinIn />, href: settings?.socials?.linkedin || '#', label: 'LinkedIn' },
-    { icon: <FaYoutube />, href: settings?.socials?.facebook || '#', label: 'Facebook' },
-  ];
+    { icon: <FaInstagram />, href: settings?.socials?.instagram, label: 'Instagram' },
+    { icon: <FaXTwitter />, href: settings?.socials?.twitter, label: 'X (Twitter)' },
+    { icon: <FaLinkedinIn />, href: settings?.socials?.linkedin, label: 'LinkedIn' },
+    { icon: <FaFacebookF />, href: settings?.socials?.facebook, label: 'Facebook' },
+    { icon: <FaYoutube />, href: settings?.socials?.youtube, label: 'YouTube' },
+    { icon: <FaWhatsapp />, href: settings?.socials?.whatsapp || (settings?.contactWhatsApp ? `https://wa.me/${settings.contactWhatsApp.replace(/[^0-9]/g, '')}` : ''), label: 'WhatsApp' },
+  ].map(s => ({
+    ...s,
+    href: (s.href && s.href.trim() !== '') ? s.href : '#'
+  }));
 
   const handleLinkClick = (e, to) => {
     if (!user && gatedPaths.includes(to)) {

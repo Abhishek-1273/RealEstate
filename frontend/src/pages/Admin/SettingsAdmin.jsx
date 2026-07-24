@@ -814,7 +814,30 @@ export default function SettingsAdmin() {
                       type="text"
                       value={form.socials?.twitter || ''}
                       onChange={(e) => handleNestedChange('socials', 'twitter', e.target.value)}
-                      placeholder="https://twitter.com/..."
+                      placeholder="https://x.com/..."
+                      className={inputCls}
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className={labelCls}>YouTube Channel URL</label>
+                    <input
+                      type="text"
+                      value={form.socials?.youtube || ''}
+                      onChange={(e) => handleNestedChange('socials', 'youtube', e.target.value)}
+                      placeholder="https://youtube.com/@..."
+                      className={inputCls}
+                    />
+                  </div>
+                  <div>
+                    <label className={labelCls}>WhatsApp Channel / Direct Link</label>
+                    <input
+                      type="text"
+                      value={form.socials?.whatsapp || ''}
+                      onChange={(e) => handleNestedChange('socials', 'whatsapp', e.target.value)}
+                      placeholder="https://wa.me/919876543210"
                       className={inputCls}
                     />
                   </div>

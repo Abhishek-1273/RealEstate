@@ -127,11 +127,11 @@ export default function ServiceShuffle() {
     <div className="w-full flex justify-center items-center">
       {/* ── DESKTOP/TABLET: 3D Single Card Slide/Fade Show ── */}
       <div
-        className="hidden md:flex flex-col items-center justify-center relative w-full h-[500px] overflow-hidden"
+        className="hidden md:flex flex-col items-center justify-center relative w-full h-[540px] pt-6 pb-2 overflow-visible"
         style={{ perspective: '1600px', transformStyle: 'preserve-3d' }}
       >
         <div
-          className="relative w-full max-w-[420px] h-[500px] flex justify-center items-center"
+          className="relative w-full max-w-[420px] h-[520px] flex justify-center items-center"
           style={{ transformStyle: 'preserve-3d' }}
         >
 

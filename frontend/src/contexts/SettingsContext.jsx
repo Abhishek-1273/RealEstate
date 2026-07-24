@@ -40,7 +40,9 @@ const DEFAULT_SETTINGS = {
     facebook: '#',
     instagram: '#',
     linkedin: '#',
-    twitter: '#'
+    twitter: '#',
+    youtube: '#',
+    whatsapp: '#'
   }
 };
 

@@ -196,20 +196,20 @@ export default function SellProperty() {
                       value={form.locality}
                       onChange={val => set('locality', val)}
                       options={dynamicLocalities.length > 0 ? dynamicLocalities : localities}
-                      placeholder="Choose locality (e.g. Balewadi, KP, Sus...)"
+                      placeholder="Select property locality"
                     />
                   </div>
                   <div className="grid sm:grid-cols-3 gap-4">
                     <div>
                       <label className="block text-xs font-bold text-navy mb-1.5">Carpet Area (sqft)</label>
-                      <input value={form.area} onChange={e => set('area', e.target.value)} placeholder="e.g. 3200" className="input-luxury" />
+                      <input value={form.area} onChange={e => set('area', e.target.value)} placeholder="Carpet area in sqft" className="input-luxury" />
                     </div>
                     <div>
                       <label className="block text-xs font-bold text-navy mb-1.5">Bedrooms</label>
                       <CustomSelect
                         value={form.bedrooms}
                         onChange={val => set('bedrooms', val)}
-                        placeholder="Select"
+                        placeholder="Select BHK"
                         options={[
                           { value: '1 BHK', label: '1 BHK' },
                           { value: '2 BHK', label: '2 BHK' },
@@ -225,7 +225,7 @@ export default function SellProperty() {
                       <CustomSelect
                         value={form.furnishing}
                         onChange={val => set('furnishing', val)}
-                        placeholder="Select"
+                        placeholder="Select furnishing status"
                         options={['Fully Furnished','Semi Furnished','Unfurnished','Shell Condition']}
                       />
                     </div>
@@ -245,13 +245,13 @@ export default function SellProperty() {
                   <div>
                     <label className="block text-xs font-bold text-navy dark:text-white mb-1.5">Asking Price (₹)</label>
                     <input value={form.askingPrice} onChange={e => set('askingPrice', e.target.value)}
-                      placeholder="e.g. 8,50,00,000" className="input-luxury" />
+                      placeholder="Expected price in ₹" className="input-luxury" />
                     <p className="text-ink-soft dark:text-white/40 text-xs mt-1.5">Our team will provide a free professional valuation for comparison.</p>
                   </div>
                   <div>
                     <label className="block text-xs font-bold text-navy dark:text-white mb-1.5">Key Highlights (Optional)</label>
                     <textarea value={form.notes} onChange={e => set('notes', e.target.value)} rows={4}
-                      placeholder="e.g. Private pool, corner flat, RERA approved, recently renovated, ready-to-move, panoramic city view..."
+                      placeholder="Highlight key property features (e.g. Corner unit, RERA approved, city view)"
                       className="input-luxury resize-none" />
                   </div>
                   <div>
@@ -318,16 +318,16 @@ export default function SellProperty() {
                   <div className="grid sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-xs font-bold text-navy dark:text-white mb-1.5">Full Name *</label>
-                      <input value={form.name} onChange={e => set('name', e.target.value)} required placeholder="Anjali Reddy" className="input-luxury" />
+                      <input value={form.name} onChange={e => set('name', e.target.value)} required placeholder="Enter full name" className="input-luxury" />
                     </div>
                     <div>
                       <label className="block text-xs font-bold text-navy dark:text-white mb-1.5">Mobile Number *</label>
-                      <input value={form.phone} onChange={e => set('phone', e.target.value)} required placeholder="+91 98765 43210" className="input-luxury" />
+                      <input value={form.phone} onChange={e => set('phone', e.target.value)} required placeholder="Enter mobile number" className="input-luxury" />
                     </div>
                   </div>
                   <div>
                     <label className="block text-xs font-bold text-navy dark:text-white mb-1.5">Email Address</label>
-                    <input value={form.email} onChange={e => set('email', e.target.value)} type="email" placeholder="anjali@company.com" className="input-luxury" />
+                    <input value={form.email} onChange={e => set('email', e.target.value)} type="email" placeholder="Enter email address" className="input-luxury" />
                   </div>
                   {serverError && <p className="text-red-500 text-xs mt-2">{serverError}</p>}
                   <div className="flex gap-3 pt-2">

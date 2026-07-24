@@ -344,7 +344,7 @@ export default function AdvisorsAdmin() {
                       required
                       value={currentAdvisor.name}
                       onChange={(e) => setCurrentAdvisor(prev => ({ ...prev, name: e.target.value }))}
-                      placeholder="e.g. Arjun Kapoor"
+                      placeholder="Enter advisor full name"
                       className={inputCls}
                     />
                   </div>
@@ -355,7 +355,7 @@ export default function AdvisorsAdmin() {
                       required
                       value={currentAdvisor.role}
                       onChange={(e) => setCurrentAdvisor(prev => ({ ...prev, role: e.target.value }))}
-                      placeholder="e.g. Senior NRI Property Advisor"
+                      placeholder="Enter designation or role"
                       className={inputCls}
                     />
                   </div>
@@ -410,7 +410,7 @@ export default function AdvisorsAdmin() {
                       type="text"
                       value={currentAdvisor.phone || ''}
                       onChange={(e) => setCurrentAdvisor(prev => ({ ...prev, phone: e.target.value }))}
-                      placeholder="+91 98765 43210"
+                      placeholder="Enter contact phone number"
                       className={inputCls}
                     />
                   </div>
@@ -420,7 +420,7 @@ export default function AdvisorsAdmin() {
                       type="email"
                       value={currentAdvisor.email || ''}
                       onChange={(e) => setCurrentAdvisor(prev => ({ ...prev, email: e.target.value }))}
-                      placeholder="arjun@hyperrelestix.in"
+                      placeholder="Enter email address"
                       className={inputCls}
                     />
                   </div>
@@ -432,7 +432,7 @@ export default function AdvisorsAdmin() {
                     type="text"
                     value={currentAdvisor.specialization}
                     onChange={(e) => setCurrentAdvisor(prev => ({ ...prev, specialization: e.target.value }))}
-                    placeholder="e.g. KP, NRI Investment, Luxury Penthouses"
+                    placeholder="Enter key specializations (comma separated)"
                     className={inputCls}
                   />
                 </div>

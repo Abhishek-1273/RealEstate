@@ -289,7 +289,7 @@ export default function FaqsAdmin() {
                       required
                       value={currentFaq.question}
                       onChange={(e) => setCurrentFaq(prev => ({ ...prev, question: e.target.value }))}
-                      placeholder="e.g. Can NRIs buy residential property in Pune?"
+                      placeholder="Enter question title"
                       className={inputCls}
                     />
                   </div>

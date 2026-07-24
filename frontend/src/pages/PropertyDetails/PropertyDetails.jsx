@@ -109,6 +109,9 @@ export default function PropertyDetails() {
   const [currency, setCurrency] = useState('INR');
   const [currencyOpen, setCurrencyOpen] = useState(false);
   const currencyRef = useRef(null);
+  const sidebarWrapRef = useRef(null);
+  const sidebarRef = useRef(null);
+  const mapSectionRef = useRef(null);
 
   useEffect(() => {
     const handleOutside = (e) => {
@@ -119,6 +122,73 @@ export default function PropertyDetails() {
     document.addEventListener('mousedown', handleOutside);
     return () => document.removeEventListener('mousedown', handleOutside);
   }, []);
+
+  // Smooth 3-state scroll tracking for sidebar card
+  useEffect(() => {
+    const wrap = sidebarWrapRef.current;
+    const card = sidebarRef.current;
+    const mapEl = mapSectionRef.current;
+    if (!wrap || !card || !property) return;
+
+    const NAVBAR_H = 96;
+
+    const resetStyles = () => {
+      card.style.position = '';
+      card.style.top = '';
+      card.style.left = '';
+      card.style.width = '';
+      card.style.bottom = '';
+      card.style.zIndex = '';
+    };
+
+    const onScroll = () => {
+      // On mobile screens (< 1024px), sidebar is stacked normally below content
+      if (window.innerWidth < 1024) {
+        resetStyles();
+        return;
+      }
+
+      const wrapRect = wrap.getBoundingClientRect();
+      const cardH = card.offsetHeight;
+      const wrapTop = wrapRect.top;
+
+      const mapTop = mapEl ? mapEl.getBoundingClientRect().top : Infinity;
+      const distanceToMap = mapEl ? (mapEl.offsetTop - wrap.offsetTop) : Infinity;
+      const maxTop = distanceToMap - cardH - 24;
+
+      // State 1: Above fixed threshold (top of page)
+      if (wrapTop > NAVBAR_H) {
+        resetStyles();
+      }
+      // State 2: Map section reached -> lock at exact maxTop offset inside wrapper
+      else if (mapTop <= NAVBAR_H + cardH + 24) {
+        card.style.position = 'absolute';
+        card.style.top = maxTop + 'px';
+        card.style.bottom = 'auto';
+        card.style.left = '0px';
+        card.style.width = '100%';
+        card.style.zIndex = '30';
+      }
+      // State 3: Middle region -> stay fixed below navbar
+      else {
+        card.style.position = 'fixed';
+        card.style.top = NAVBAR_H + 'px';
+        card.style.left = wrapRect.left + 'px';
+        card.style.width = wrapRect.width + 'px';
+        card.style.bottom = 'auto';
+        card.style.zIndex = '30';
+      }
+    };
+
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll, { passive: true });
+    onScroll();
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onScroll);
+      resetStyles();
+    };
+  }, [property]);
 
   const currenciesList = [
     { value: 'INR', label: 'INR (₹)' },
@@ -257,20 +327,20 @@ export default function PropertyDetails() {
   );
 
   const emi = Math.round((loan * (rate / 1200) * Math.pow(1 + rate / 1200, years * 12)) / (Math.pow(1 + rate / 1200, years * 12) - 1));
-  
-  const galleryImages = property.images && property.images.length > 0 
-    ? property.images 
+
+  const galleryImages = property.images && property.images.length > 0
+    ? property.images
     : (property.image ? [property.image] : ['https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1200']);
 
   return (
     <div className="min-h-screen bg-surface dark:bg-navy-dark pt-20 transition-colors duration-300">
-      <SEO 
+      <SEO
         title={`${property.title} in ${property.location}, ${property.city}`}
         description={`${property.type} for sale in ${property.location}, ${property.city}. Price: ${property.priceLabel}. ${property.description || `Discover this verified premium listing on ${brandName}.`}`}
         image={getDynamicOgImage(property)}
         url={`/properties/${id}`}
       />
-      
+
       {/* Schema.org Structured Data for Real Estate Listings */}
       <script type="application/ld+json">
         {JSON.stringify({
@@ -300,7 +370,7 @@ export default function PropertyDetails() {
           }
         })}
       </script>
-      
+
       {/* Swiper gallery styles are in globals.css — .main-swiper-gallery, .thumbs-swiper-gallery */}
 
       {/* ── Breadcrumb ── */}
@@ -315,9 +385,9 @@ export default function PropertyDetails() {
       </div>
 
       {/* ── Gallery ── */}
-      <div 
-        className="py-10 relative overflow-hidden" 
-        style={{ 
+      <div
+        className="py-10 relative overflow-hidden"
+        style={{
           background: 'linear-gradient(180deg, #071A2F 0%, #030D18 100%)',
           boxShadow: 'inset 0 10px 30px rgba(0,0,0,0.2), inset 0 -10px 30px rgba(0,0,0,0.2)'
         }}
@@ -332,9 +402,9 @@ export default function PropertyDetails() {
               <Swiper
                 modules={[Pagination, Thumbs]}
                 onSwiper={setMainSwiper}
-                pagination={{ 
+                pagination={{
                   clickable: true,
-                  dynamicBullets: true 
+                  dynamicBullets: true
                 }}
                 thumbs={{ swiper: thumbsSwiper && !thumbsSwiper.destroyed ? thumbsSwiper : null }}
                 className="h-full main-swiper-gallery"
@@ -353,7 +423,7 @@ export default function PropertyDetails() {
             </ErrorBoundary>
 
             {/* Custom Premium Swiper Navigation (Fade in on hover of Swiper wrapper) */}
-            <button 
+            <button
               className="absolute left-6 top-1/2 -translate-y-1/2 z-10 w-12 h-12 rounded-full bg-white/10 hover:bg-white/90 text-white hover:text-navy border border-white/15 hover:border-white flex items-center justify-center backdrop-blur-md opacity-0 group-hover:opacity-100 transition-all duration-300 hover:scale-105 active:scale-95 shadow-2xl"
               onClick={() => {
                 mainSwiper?.slidePrev();
@@ -361,7 +431,7 @@ export default function PropertyDetails() {
             >
               <ChevronLeft className="w-5 h-5 -translate-x-0.5" />
             </button>
-            <button 
+            <button
               className="absolute right-6 top-1/2 -translate-y-1/2 z-10 w-12 h-12 rounded-full bg-white/10 hover:bg-white/90 text-white hover:text-navy border border-white/15 hover:border-white flex items-center justify-center backdrop-blur-md opacity-0 group-hover:opacity-100 transition-all duration-300 hover:scale-105 active:scale-95 shadow-2xl"
               onClick={() => {
                 mainSwiper?.slideNext();
@@ -373,10 +443,10 @@ export default function PropertyDetails() {
             {/* Overlay badges (Pill tags - shortened on mobile) */}
             <div className="absolute top-3.5 left-3.5 md:top-6 md:left-6 z-10 flex items-center gap-1.5 md:gap-2.5 select-none">
               {property.badge && (
-                <span 
+                <span
                   className="px-2.5 py-1 md:px-4 md:py-2 rounded-full text-[8px] md:text-[10px] font-bold tracking-widest uppercase shadow-md flex items-center gap-1 md:gap-1.5 border border-white/20"
-                  style={{ 
-                    background: 'linear-gradient(135deg, #D4AF37 0%, #B89020 100%)', 
+                  style={{
+                    background: 'linear-gradient(135deg, #D4AF37 0%, #B89020 100%)',
                     color: '#071A2F'
                   }}
                 >
@@ -385,11 +455,11 @@ export default function PropertyDetails() {
                   <span className="inline sm:hidden">{property.badge === 'New Launch' ? 'New' : property.badge === 'Signature Collection' ? 'Signature' : property.badge}</span>
                 </span>
               )}
-              <span 
+              <span
                 className="px-2.5 py-1 md:px-4 md:py-2 rounded-full text-[8px] md:text-[10px] font-bold tracking-widest uppercase shadow-md flex items-center gap-1 md:gap-1.5 border border-white/10"
-                style={{ 
-                  background: 'rgba(7, 26, 47, 0.65)', 
-                  color: 'white', 
+                style={{
+                  background: 'rgba(7, 26, 47, 0.65)',
+                  color: 'white',
                   backdropFilter: 'blur(12px)'
                 }}
               >
@@ -419,13 +489,13 @@ export default function PropertyDetails() {
               >
                 <Heart className={`w-3.5 h-3.5 md:w-4.5 md:h-4.5 ${wished ? 'fill-current animate-pulse' : ''}`} />
               </button>
-              <button 
+              <button
                 onClick={handleShare}
                 className="w-9 h-9 md:w-11 md:h-11 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95 shadow-lg border text-white hover:text-gold"
-                style={{ 
-                  background: 'rgba(7, 26, 47, 0.5)', 
+                style={{
+                  background: 'rgba(7, 26, 47, 0.5)',
                   borderColor: 'rgba(255, 255, 255, 0.2)',
-                  backdropFilter: 'blur(10px)' 
+                  backdropFilter: 'blur(10px)'
                 }}
               >
                 <Share2 className="w-3.5 h-3.5 md:w-4.5 md:h-4.5" />
@@ -447,15 +517,15 @@ export default function PropertyDetails() {
                   className="!h-20 thumbs-swiper-gallery"
                 >
                   {property.images.map((img, i) => (
-                    <SwiperSlide 
-                      key={i} 
+                    <SwiperSlide
+                      key={i}
                       onClick={() => mainSwiper?.slideTo(i)}
                       className="cursor-pointer !h-20 border border-white/10 hover:border-white/20 transition-all duration-300"
                     >
-                      <img 
-                        src={img} 
-                        alt="" 
-                        className="w-full h-full object-cover opacity-50 hover:opacity-100 transition-all duration-300 hover:scale-105" 
+                      <img
+                        src={img}
+                        alt=""
+                        className="w-full h-full object-cover opacity-50 hover:opacity-100 transition-all duration-300 hover:scale-105"
                       />
                     </SwiperSlide>
                   ))}
@@ -507,7 +577,7 @@ export default function PropertyDetails() {
 
           {/* ── Left Column ── */}
           <div className="lg:col-span-2">
-            <motion.div variants={fadeLeft} initial="hidden" animate="visible">
+            <div>
               {/* Title + Price */}
               <div className="flex flex-wrap items-start justify-between gap-4 mb-6">
                 <div>
@@ -547,11 +617,10 @@ export default function PropertyDetails() {
                                 setCurrency(c.value);
                                 setCurrencyOpen(false);
                               }}
-                              className={`w-full text-left px-3 py-1.5 text-[10px] font-semibold transition-colors flex items-center justify-between ${
-                                currency === c.value
-                                  ? 'bg-gold/10 text-gold-dark dark:text-gold'
-                                  : 'text-ink-muted dark:text-cream/80 hover:bg-gray-50 dark:hover:bg-white/5 hover:text-navy dark:hover:text-white'
-                              }`}
+                              className={`w-full text-left px-3 py-1.5 text-[10px] font-semibold transition-colors flex items-center justify-between ${currency === c.value
+                                ? 'bg-gold/10 text-gold-dark dark:text-gold'
+                                : 'text-ink-muted dark:text-cream/80 hover:bg-gray-50 dark:hover:bg-white/5 hover:text-navy dark:hover:text-white'
+                                }`}
                             >
                               {c.label}
                             </button>
@@ -564,9 +633,9 @@ export default function PropertyDetails() {
                     {formatPrice(property.price, currency)}
                   </p>
                   <p className="text-ink-soft dark:text-white/55 text-[11px] mt-1">
-                    {currency === 'INR' 
+                    {currency === 'INR'
                       ? `₹${Math.round(property.price / property.area).toLocaleString()}/sqft`
-                      : `${currency} ${Math.round((property.price * (currency === 'USD' ? 1/83.5 : currency === 'AED' ? 1/22.7 : currency === 'GBP' ? 1/106.2 : 1/61.2)) / property.area).toLocaleString()}/sqft`
+                      : `${currency} ${Math.round((property.price * (currency === 'USD' ? 1 / 83.5 : currency === 'AED' ? 1 / 22.7 : currency === 'GBP' ? 1 / 106.2 : 1 / 61.2)) / property.area).toLocaleString()}/sqft`
                     }
                   </p>
                 </div>
@@ -675,97 +744,85 @@ export default function PropertyDetails() {
                   </div>
                 </div>
               </div>
-            </motion.div>
+            </div>
           </div>
 
-          {/* ── Right Column ── */}
-          <div className="lg:col-span-1">
-            <div className="lg:sticky lg:top-28 space-y-4">
-              <motion.div
-                variants={fadeRight}
-                initial="hidden"
-                animate="visible"
-                className="space-y-4"
-              >
-            {/* Booking Card */}
-            <div className="rounded-3xl p-6 bg-white dark:bg-navy-light border border-gray-100 dark:border-white/10 shadow-card transition-colors duration-300"
-            >
-              <p className="font-display font-black text-navy dark:text-white text-2xl mb-0.5">{property.priceLabel}</p>
-              <p className="text-ink-soft dark:text-white/40 text-xs mb-6">Negotiable · RERA Verified</p>
+          {/* ── Right Column (Sticky Sidebar Card) ── */}
+          <div ref={sidebarWrapRef} className="lg:col-span-1 relative">
+            <div ref={sidebarRef} className="space-y-4">
 
-              <div className="flex flex-col gap-3 mb-5">
-                <Link 
-                  to="/contact"
-                  state={{
-                    subject: `Book a Site Visit: ${property.title}`,
-                    propertyId: property._id || property.id,
-                    message: `Hi, I am interested in booking a site visit for "${property.title}" (Locality: ${property.location}). Please connect me with the specialist advisor, ${property.agent?.name || 'an agent'}.`
-                  }}
-                  onClick={(e) => {
-                    if (!user) {
-                      e.preventDefault();
-                      openAuth('/contact');
-                    }
-                  }}
-                  className="w-full py-3.5 rounded-2xl font-bold text-sm text-navy flex items-center justify-center gap-2 transition-all duration-300 hover:-translate-y-0.5"
-                  style={{ background: 'linear-gradient(135deg, #D4AF37, #E8C84A)', boxShadow: '0 4px 18px rgba(212,175,55,0.3)' }}
-                  onMouseEnter={e => { e.currentTarget.style.boxShadow = '0 8px 28px rgba(212,175,55,0.45)'; }}
-                  onMouseLeave={e => { e.currentTarget.style.boxShadow = '0 4px 18px rgba(212,175,55,0.3)'; }}
-                >
-                  <Calendar className="w-4 h-4" /> Book a Site Visit
-                </Link>
-                <a href={`tel:${property.agent.phone}`}
-                  className="w-full py-3 rounded-2xl text-sm font-semibold flex items-center justify-center gap-2 border-2 border-navy dark:border-white text-navy dark:text-white hover:bg-navy dark:hover:bg-white hover:text-white dark:hover:text-navy transition-all duration-250"
-                >
-                  <Phone className="w-4 h-4" /> Call Agent
-                </a>
-              </div>
+              {/* Booking Card */}
+              <div className="rounded-3xl p-6 bg-white dark:bg-navy-light border border-gray-100 dark:border-white/10 shadow-card transition-colors duration-300">
+                <p className="font-display font-black text-navy dark:text-white text-2xl mb-0.5">{property.priceLabel}</p>
+                <p className="text-ink-soft dark:text-white/40 text-xs mb-6">Negotiable · RERA Verified</p>
 
-              <div className="flex items-center gap-3 p-3.5 rounded-2xl bg-black/5 dark:bg-white/5"
-              >
-                <div className="w-11 h-11 rounded-xl overflow-hidden shrink-0">
-                  <img src={`https://ui-avatars.com/api/?name=${property.agent.name}&background=D4AF37&color=071A2F&font-size=0.5`} alt="" className="w-full h-full object-cover" />
+                <div className="flex flex-col gap-3 mb-5">
+                  <Link
+                    to="/contact"
+                    state={{
+                      subject: `Book a Site Visit: ${property.title}`,
+                      propertyId: property._id || property.id,
+                      message: `Hi, I am interested in booking a site visit for "${property.title}" (Locality: ${property.location}). Please connect me with the specialist advisor, ${property.agent?.name || 'an agent'}.`
+                    }}
+                    onClick={(e) => { if (!user) { e.preventDefault(); openAuth('/contact'); } }}
+                    className="w-full py-3.5 rounded-2xl font-bold text-sm text-navy flex items-center justify-center gap-2 transition-all duration-300 hover:-translate-y-0.5"
+                    style={{ background: 'linear-gradient(135deg, #D4AF37, #E8C84A)', boxShadow: '0 4px 18px rgba(212,175,55,0.3)' }}
+                    onMouseEnter={e => { e.currentTarget.style.boxShadow = '0 8px 28px rgba(212,175,55,0.45)'; }}
+                    onMouseLeave={e => { e.currentTarget.style.boxShadow = '0 4px 18px rgba(212,175,55,0.3)'; }}
+                  >
+                    <Calendar className="w-4 h-4" /> Book a Site Visit
+                  </Link>
+                  <a href={`tel:${property.agent.phone}`}
+                    className="w-full py-3 rounded-2xl text-sm font-semibold flex items-center justify-center gap-2 border-2 border-navy dark:border-white text-navy dark:text-white hover:bg-navy dark:hover:bg-white hover:text-white dark:hover:text-navy transition-all duration-200"
+                  >
+                    <Phone className="w-4 h-4" /> Call Agent
+                  </a>
                 </div>
-                <div>
-                  <p className="font-bold text-navy dark:text-white text-sm">{property.agent.name}</p>
-                  <p className="text-ink-soft dark:text-white/40 text-xs">Luxury Property Advisor</p>
-                  <div className="flex gap-0.5 mt-0.5">
-                    {[...Array(5)].map((_, i) => <Star key={i} className="w-3 h-3 fill-gold text-gold" />)}
+
+                <div className="flex items-center gap-3 p-3.5 rounded-2xl bg-black/5 dark:bg-white/5">
+                  <div className="w-11 h-11 rounded-xl overflow-hidden shrink-0">
+                    <img src={`https://ui-avatars.com/api/?name=${property.agent.name}&background=D4AF37&color=071A2F&font-size=0.5`} alt="" className="w-full h-full object-cover" />
+                  </div>
+                  <div>
+                    <p className="font-bold text-navy dark:text-white text-sm">{property.agent.name}</p>
+                    <p className="text-ink-soft dark:text-white/40 text-xs">Luxury Property Advisor</p>
+                    <div className="flex gap-0.5 mt-0.5">
+                      {[...Array(5)].map((_, i) => <Star key={i} className="w-3 h-3 fill-gold text-gold" />)}
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              <div className="flex flex-col gap-2 mt-4">
-                <a href={`https://wa.me/919876543210?text=Hi, I am interested in ${property.title}`}
-                  target="_blank" rel="noopener noreferrer"
-                  className="w-full py-3 rounded-2xl text-sm font-semibold flex items-center justify-center gap-2 text-white transition-all duration-250 hover:-translate-y-0.5"
-                  style={{ background: '#25D366', boxShadow: '0 4px 14px rgba(37,211,102,0.3)' }}>
-                  WhatsApp Agent
-                </a>
-                <a href={`mailto:${property.agent.email || 'hello@hyperrelestix.in'}`}
-                  className="w-full py-2.5 rounded-2xl text-xs font-semibold flex items-center justify-center gap-2 text-ink-muted dark:text-cream/80 hover:text-navy dark:hover:text-white transition-colors"
-                >
-                  <Mail className="w-3.5 h-3.5" /> Send Email
-                </a>
-              </div>
-            </div>
+                <div className="flex flex-col gap-2 mt-4">
+                  <a href={`https://wa.me/919876543210?text=Hi, I am interested in ${property.title}`}
+                    target="_blank" rel="noopener noreferrer"
+                    className="w-full py-3 rounded-2xl text-sm font-semibold flex items-center justify-center gap-2 text-white"
+                    style={{ background: '#25D366' }}>
+                    WhatsApp Agent
+                  </a>
+                  <a href={`mailto:${property.agent.email || 'hello@hyperrelestix.in'}`}
+                    className="w-full py-2.5 rounded-2xl text-xs font-semibold flex items-center justify-center gap-2 text-ink-muted dark:text-cream/80 hover:text-navy dark:hover:text-white transition-colors"
+                  >
+                    <Mail className="w-3.5 h-3.5" /> Send Email
+                  </a>
+                </div>
+              </div>{/* end booking card */}
 
-            {/* RERA badge */}
-            <div className="rounded-2xl p-4 flex items-center gap-3 bg-gold/5 dark:bg-gold/10 border border-gold/20"
-            >
-              <Shield className="w-5 h-5 shrink-0" style={{ color: '#D4AF37' }} />
-              <div>
-                <p className="text-navy dark:text-white text-xs font-bold">RERA Registered</p>
-                <p className="text-ink-soft dark:text-white/40 text-[11px]">{property.rera || 'P52100046789'}</p>
-              </div>
-            </div>
-          </motion.div>
-        </div>
-      </div>
-    </div>
+              {/* RERA badge */}
+              <div className="rounded-2xl p-4 flex items-center gap-3 bg-gold/5 dark:bg-gold/10 border border-gold/20">
+                <Shield className="w-5 h-5 shrink-0" style={{ color: '#D4AF37' }} />
+                <div>
+                  <p className="text-navy dark:text-white text-xs font-bold">RERA Registered</p>
+                  <p className="text-ink-soft dark:text-white/40 text-[11px]">{property.rera || 'P52100046789'}</p>
+                </div>
+              </div>{/* end RERA badge */}
+
+            </div>{/* end sidebarRef */}
+          </div>{/* end sidebarWrapRef */}
+
+        </div>{/* end grid */}
 
         {/* ── Location & Neighborhood ── */}
-        <div className="mt-16 bg-white dark:bg-navy border border-gray-100 dark:border-white/10 rounded-3xl p-6 md:p-8 shadow-card transition-colors duration-300">
+        <div ref={mapSectionRef} className="mt-16 bg-white dark:bg-navy border border-gray-100 dark:border-white/10 rounded-3xl p-6 md:p-8 shadow-card transition-colors duration-300">
           <div className="flex flex-col lg:flex-row gap-8">
             {/* Map Column */}
             <div className="flex-1 min-h-[350px] md:min-h-[450px] relative z-0 order-2 lg:order-1 rounded-2xl overflow-hidden border border-gray-100 dark:border-white/5">
@@ -810,11 +867,10 @@ export default function PropertyDetails() {
                       <button
                         key={tab.id}
                         onClick={() => setAmenityCategory(tab.id)}
-                        className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-bold border transition-all duration-200 ${
-                          isActive
-                            ? 'bg-gold/10 text-gold-dark dark:text-gold border-gold'
-                            : 'bg-black/5 dark:bg-white/5 text-ink-muted dark:text-cream/80 border-transparent hover:bg-black/10 dark:hover:bg-white/10'
-                        }`}
+                        className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-bold border transition-all duration-200 ${isActive
+                          ? 'bg-gold/10 text-gold-dark dark:text-gold border-gold'
+                          : 'bg-black/5 dark:bg-white/5 text-ink-muted dark:text-cream/80 border-transparent hover:bg-black/10 dark:hover:bg-white/10'
+                          }`}
                         style={isActive ? { borderColor: '#D4AF37', color: '#D4AF37' } : {}}
                       >
                         {tab.icon}
@@ -843,16 +899,15 @@ export default function PropertyDetails() {
                         className="flex items-start justify-between gap-3 p-3 rounded-xl bg-black/5 dark:bg-white/5 hover:bg-gold/5 dark:hover:bg-gold/5 border border-transparent hover:border-gold/20 transition-all duration-200 cursor-pointer group"
                       >
                         <div className="flex gap-2.5 items-start min-w-0">
-                          <div className={`p-1.5 rounded-lg shrink-0 ${
-                            amenityCategory === 'education' ? 'bg-emerald-500/10 text-emerald-500' :
+                          <div className={`p-1.5 rounded-lg shrink-0 ${amenityCategory === 'education' ? 'bg-emerald-500/10 text-emerald-500' :
                             amenityCategory === 'transit' ? 'bg-blue-500/10 text-blue-500' :
-                            amenityCategory === 'medical' ? 'bg-red-500/10 text-red-500' :
-                            'bg-amber-500/10 text-amber-500'
-                          }`}>
+                              amenityCategory === 'medical' ? 'bg-red-500/10 text-red-500' :
+                                'bg-amber-500/10 text-amber-500'
+                            }`}>
                             {amenityCategory === 'education' ? <GraduationCap className="w-3.5 h-3.5" /> :
-                             amenityCategory === 'transit' ? <TrainFront className="w-3.5 h-3.5" /> :
-                             amenityCategory === 'medical' ? <Activity className="w-3.5 h-3.5" /> :
-                             <ShoppingBag className="w-3.5 h-3.5" />}
+                              amenityCategory === 'transit' ? <TrainFront className="w-3.5 h-3.5" /> :
+                                amenityCategory === 'medical' ? <Activity className="w-3.5 h-3.5" /> :
+                                  <ShoppingBag className="w-3.5 h-3.5" />}
                           </div>
                           <div className="min-w-0">
                             <p className="text-xs font-bold text-navy dark:text-white truncate group-hover:text-gold transition-colors">

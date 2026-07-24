@@ -131,7 +131,7 @@ export default function PartnersAdmin() {
                   required
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="e.g. Godrej Properties"
+                  placeholder="Enter developer partner name"
                   className={inputCls}
                 />
               </div>

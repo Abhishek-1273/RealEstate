@@ -213,7 +213,7 @@ export default function BlogDetails() {
                   <Mail className="w-4 h-4 text-gold" style={{ color: '#D4AF37' }} /> Weekly Insights
                 </p>
                 <p className="text-white/50 text-[10px] mb-4 leading-relaxed">Pune market trends delivered to your inbox every Monday.</p>
-                <input type="email" placeholder="your@email.com" className="w-full bg-white/5 text-white placeholder-white/30 border border-white/10 rounded-xl px-3.5 py-2 text-xs focus:outline-none focus:border-gold/50 transition-colors mb-2.5" />
+                <input type="email" placeholder="Enter email address" className="w-full bg-white/5 text-white placeholder-white/30 border border-white/10 rounded-xl px-3.5 py-2 text-xs focus:outline-none focus:border-gold/50 transition-colors mb-2.5" />
                 <button className="w-full py-2.5 rounded-xl text-xs font-bold text-navy transition-all hover:scale-[1.02]"
                   style={{ background: 'linear-gradient(135deg, #D4AF37, #E8C84A)' }}>
                   Subscribe

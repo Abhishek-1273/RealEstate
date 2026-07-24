@@ -279,7 +279,7 @@ function AddStaffModal({ onAdd, onClose }) {
               <div>
                 <label className={labelCls}>Agent Qualities / Skills</label>
                 <input type="text" value={form.qualities}
-                  placeholder="e.g. Luxury Specialist, Negotiator..."
+                  placeholder="Enter agent specialties or skills (comma separated)"
                   onChange={e => setForm(p => ({ ...p, qualities: e.target.value }))}
                   className={inputCls} />
               </div>
@@ -956,7 +956,7 @@ function EditStaffModal({ user, onSave, onClose }) {
               <div>
                 <label className={labelCls}>Agent Qualities / Skills</label>
                 <input type="text" value={form.qualities}
-                  placeholder="e.g. Luxury Specialist, Negotiator..."
+                  placeholder="Enter agent specialties or skills (comma separated)"
                   onChange={e => setForm(p => ({ ...p, qualities: e.target.value }))}
                   className={inputCls} />
               </div>

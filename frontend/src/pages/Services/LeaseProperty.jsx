@@ -120,7 +120,7 @@ export default function LeaseProperty() {
                   value={form.locality}
                   onChange={val => set('locality', val)}
                   options={dynamicLocalities.length > 0 ? dynamicLocalities : localities}
-                  placeholder="Choose locality (e.g. Balewadi, KP, Sus...)"
+                  placeholder="Select preferred locality"
                 />
               </div>
               <div className="grid sm:grid-cols-2 gap-4">
@@ -170,16 +170,16 @@ export default function LeaseProperty() {
               <div className="grid sm:grid-cols-2 gap-4 pt-2">
                 <div>
                   <label className="block text-xs font-bold text-navy dark:text-white mb-1.5">Full Name *</label>
-                  <input value={form.name} onChange={e => set('name', e.target.value)} required placeholder="Your name" className="input-luxury" />
+                  <input value={form.name} onChange={e => set('name', e.target.value)} required placeholder="Enter full name" className="input-luxury" />
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-navy dark:text-white mb-1.5">Mobile Number *</label>
-                  <input value={form.phone} onChange={e => set('phone', e.target.value)} required placeholder="+91 98765 43210" className="input-luxury" />
+                  <input value={form.phone} onChange={e => set('phone', e.target.value)} required placeholder="Enter mobile number" className="input-luxury" />
                 </div>
               </div>
               <div>
                 <label className="block text-xs font-bold text-navy dark:text-white mb-1.5">Additional Notes</label>
-                <textarea value={form.notes} onChange={e => set('notes', e.target.value)} rows={3} placeholder="e.g. Pet-friendly, furnished preference, family of 4..." className="input-luxury resize-none" />
+                <textarea value={form.notes} onChange={e => set('notes', e.target.value)} rows={3} placeholder="Specify preferences or special leasing requirements" className="input-luxury resize-none" />
               </div>
               {serverError && (
                 <div className="bg-red-50 border border-red-200 text-red-600 text-xs px-4 py-3 rounded-xl">

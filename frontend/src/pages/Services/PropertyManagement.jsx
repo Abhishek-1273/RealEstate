@@ -208,23 +208,23 @@ export default function PropertyManagement() {
                 <div className="grid sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-bold text-navy dark:text-white mb-1.5">Full Name *</label>
-                    <input value={form.name} onChange={e => set('name', e.target.value)} required placeholder="Your name" className="input-luxury" />
+                    <input value={form.name} onChange={e => set('name', e.target.value)} required placeholder="Enter full name" className="input-luxury" />
                   </div>
                   <div>
                     <label className="block text-xs font-bold text-navy dark:text-white mb-1.5">Mobile Number *</label>
-                    <input value={form.phone} onChange={e => set('phone', e.target.value)} required placeholder="+91 98765 43210" className="input-luxury" />
+                    <input value={form.phone} onChange={e => set('phone', e.target.value)} required placeholder="Enter mobile number" className="input-luxury" />
                   </div>
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-navy dark:text-white mb-1.5">Email Address</label>
-                  <input value={form.email} onChange={e => set('email', e.target.value)} type="email" placeholder="you@company.com" className="input-luxury" />
+                  <input value={form.email} onChange={e => set('email', e.target.value)} type="email" placeholder="Enter email address" className="input-luxury" />
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-navy dark:text-white mb-1.5">Number of Properties to Manage</label>
                   <CustomSelect
                     value={form.properties}
                     onChange={val => set('properties', val)}
-                    placeholder="Select"
+                    placeholder="Select property count"
                     options={[
                       { value: '1', label: '1 property' },
                       { value: '2', label: '2 properties' },
@@ -236,7 +236,7 @@ export default function PropertyManagement() {
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-navy dark:text-white mb-1.5">Property Addresses / Notes</label>
-                  <textarea value={form.notes} onChange={e => set('notes', e.target.value)} rows={3} placeholder="e.g. Villa in Baner, apartment in Kharadi — NRI, need remote management..." className="input-luxury resize-none" />
+                  <textarea value={form.notes} onChange={e => set('notes', e.target.value)} rows={3} placeholder="Enter property details or specific management requirements" className="input-luxury resize-none" />
                 </div>
                 <div className="w-full flex items-center justify-between px-5 py-3.5 rounded-2xl bg-gold/5 dark:bg-gold/10 border border-gold/20 shadow-sm">
                   <span className="text-xs font-bold text-navy dark:text-white">Selected Plan</span>

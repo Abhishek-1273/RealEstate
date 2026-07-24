@@ -242,7 +242,7 @@ export default function BuyProperty() {
                         value={form.locality}
                         onChange={val => set('locality', val)}
                         options={dynamicLocalities.length > 0 ? dynamicLocalities : localities}
-                        placeholder="Choose locality (e.g. Balewadi, KP, Sus...)"
+                        placeholder="Select preferred location or locality"
                       />
                     </div>
                     <div>
@@ -311,23 +311,23 @@ export default function BuyProperty() {
                       <div>
                         <label className="block text-xs font-semibold text-navy dark:text-white mb-1.5">Full Name *</label>
                         <input value={form.name} onChange={e => set('name', e.target.value)} required
-                          placeholder="Vikram Singhania" className="input-luxury" />
+                          placeholder="Enter full name" className="input-luxury" />
                       </div>
                       <div>
                         <label className="block text-xs font-semibold text-navy dark:text-white mb-1.5">Mobile Number *</label>
                         <input value={form.phone} onChange={e => set('phone', e.target.value)} required
-                          placeholder="+91 98765 43210" className="input-luxury" />
+                          placeholder="Enter mobile number" className="input-luxury" />
                       </div>
                     </div>
                     <div>
                       <label className="block text-xs font-semibold text-navy dark:text-white mb-1.5">Email Address</label>
                       <input value={form.email} onChange={e => set('email', e.target.value)} type="email"
-                        placeholder="vikram@company.com" className="input-luxury" />
+                        placeholder="Enter email address" className="input-luxury" />
                     </div>
                     <div>
                       <label className="block text-xs font-semibold text-navy dark:text-white mb-1.5">Specific Requirements (Optional)</label>
                       <textarea value={form.notes} onChange={e => set('notes', e.target.value)} rows={3}
-                        placeholder="e.g. Sea facing, near school, home office space, NRI investment..."
+                        placeholder="Specify preferences (e.g. Sea facing, high floor, investment purpose)"
                         className="input-luxury resize-none" />
                     </div>
                     {serverError && (

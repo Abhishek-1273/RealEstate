@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAdmin } from './AdminContext';
 import { useAuth, useSiteSettings, getLogoInitials, getBrandName } from '../../contexts';
+import { API_URL } from '../../config/api';
 
 import PageLoader from '../../components/common/PageLoader';
 
@@ -11,7 +12,7 @@ const ROLE_LABELS = {
 };
 
 export default function AdminLogin() {
-  const { loginStep1, loginStep2 } = useAuth();
+  const { signIn } = useAuth();
   const { user, loading: sessionLoading }   = useAdmin();
   const { settings } = useSiteSettings();
   const navigate   = useNavigate();
@@ -22,6 +23,7 @@ export default function AdminLogin() {
   const [loading, setLoading]   = useState(false);
   const [error, setError]       = useState('');
   const [info, setInfo]         = useState('');
+  const [resendTimer, setResendTimer] = useState(30);
 
   const otpRefs = [useRef(), useRef(), useRef(), useRef(), useRef(), useRef()];
 
@@ -31,12 +33,22 @@ export default function AdminLogin() {
     }
   }, [user, navigate]);
 
+  useEffect(() => {
+    let timer;
+    if (step === 'otp' && resendTimer > 0) {
+      timer = setInterval(() => {
+        setResendTimer(prev => prev - 1);
+      }, 1000);
+    }
+    return () => clearInterval(timer);
+  }, [step, resendTimer]);
+
   if (sessionLoading) {
     return <PageLoader />;
   }
 
   // Step 1: Send OTP
-  const handleSendOtp = async () => {
+  const handleSendOtp = async (isResend = false) => {
     const targetEmail = email.trim().toLowerCase();
     if (!targetEmail) { setError('Email address is required'); return; }
     if (!/\S+@\S+\.\S+/.test(targetEmail)) { setError('Enter a valid email address'); return; }
@@ -53,13 +65,20 @@ export default function AdminLogin() {
       if (!res.ok || !data.success) {
         throw new Error(data.message || 'Failed to send OTP code');
       }
-      setInfo(`Verification code sent to ${targetEmail}`);
+      setInfo(isResend ? `New verification code sent to ${targetEmail}` : `Verification code sent to ${targetEmail}`);
       setStep('otp');
+      setResendTimer(30);
     } catch (err) {
       setError(err.message || 'Authentication failed');
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleResendOtp = async () => {
+    if (resendTimer > 0 || loading) return;
+    setOtp(['', '', '', '', '', '']);
+    await handleSendOtp(true);
   };
 
   // Step 2: Verify OTP and sign in
@@ -157,15 +176,12 @@ export default function AdminLogin() {
                   <input
                     value={email}
                     onChange={e => setEmail(e.target.value)}
-                    placeholder="e.g. akayg@gmail.com"
+                    placeholder="Enter staff email address"
                     type="email"
                     className="w-full px-4 py-3 rounded-xl text-white text-sm focus:outline-none transition-all focus:border-gold border border-white/10"
                     style={{ background: 'rgba(255,255,255,0.08)' }}
                     onKeyDown={e => e.key === 'Enter' && handleSendOtp()}
                   />
-                  <p className="text-white/40 text-[11px] mt-2 leading-relaxed">
-                    Demo Admin: <span className="text-gold cursor-pointer underline" onClick={() => setEmail('akayg@gmail.com')}>akayg@gmail.com</span> | Manager: <span className="text-gold cursor-pointer underline" onClick={() => setEmail('admin@hyperrelestix.in')}>admin@hyperrelestix.in</span>
-                  </p>
                 </div>
 
                 {error && (
@@ -208,6 +224,22 @@ export default function AdminLogin() {
                       />
                     ))}
                   </div>
+
+                  <div className="flex items-center justify-between mt-3 px-1">
+                    <span className="text-white/40 text-xs">Didn't receive code?</span>
+                    <button
+                      type="button"
+                      onClick={handleResendOtp}
+                      disabled={resendTimer > 0 || loading}
+                      className={`text-xs font-semibold transition-colors ${
+                        resendTimer > 0 || loading
+                          ? 'text-white/30 cursor-not-allowed'
+                          : 'text-gold hover:underline cursor-pointer'
+                      }`}
+                    >
+                      {resendTimer > 0 ? `Resend code in ${resendTimer}s` : 'Resend OTP Code'}
+                    </button>
+                  </div>
                 </div>
 
                 {error && (
@@ -238,16 +270,6 @@ export default function AdminLogin() {
               ← Return to Main Website
             </Link>
           </p>
-        </div>
-
-        {/* Role badges */}
-        <div className="flex flex-wrap gap-2 justify-center mt-6">
-          {Object.entries(ROLE_LABELS).map(([key, val]) => (
-            <span key={key} className="text-[10px] font-semibold px-2.5 py-1 rounded-full"
-              style={{ background: `${val.color}22`, color: val.color, border: `1px solid ${val.color}44` }}>
-              {val.label}
-            </span>
-          ))}
         </div>
       </div>
     </div>

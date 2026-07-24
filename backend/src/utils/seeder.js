@@ -131,7 +131,9 @@ export const seedDefaultData = async () => {
           facebook: '#',
           instagram: '#',
           linkedin: '#',
-          twitter: '#'
+          twitter: '#',
+          youtube: '#',
+          whatsapp: '#'
         }
       });
       console.info('🌱 Created default site settings with stats and socials.');
@@ -146,12 +148,14 @@ export const seedDefaultData = async () => {
         };
         isUpdated = true;
       }
-      if (!settings.socials || !settings.socials.linkedin) {
+      if (!settings.socials || !settings.socials.linkedin || !settings.socials.youtube) {
         settings.socials = {
-          facebook: '#',
-          instagram: '#',
-          linkedin: '#',
-          twitter: '#'
+          facebook: settings.socials?.facebook || '#',
+          instagram: settings.socials?.instagram || '#',
+          linkedin: settings.socials?.linkedin || '#',
+          twitter: settings.socials?.twitter || '#',
+          youtube: settings.socials?.youtube || '#',
+          whatsapp: settings.socials?.whatsapp || '#'
         };
         isUpdated = true;
       }

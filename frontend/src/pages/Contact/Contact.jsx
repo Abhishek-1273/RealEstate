@@ -235,18 +235,18 @@ export default function Contact() {
                     <div>
                       <label className="block text-xs font-bold text-navy dark:text-white mb-1.5">Full Name *</label>
                       <input value={form.name} onChange={e => set('name', e.target.value)} required
-                        placeholder="Vikram Singhania" className="input-luxury" />
+                        placeholder="Enter full name" className="input-luxury" />
                     </div>
                     <div>
                       <label className="block text-xs font-bold text-navy dark:text-white mb-1.5">Mobile Number *</label>
                       <input value={form.phone} onChange={e => set('phone', e.target.value)} required
-                        placeholder="+91 98765 43210" className="input-luxury" />
+                        placeholder="Enter mobile number" className="input-luxury" />
                     </div>
                   </div>
                   <div>
                     <label className="block text-xs font-bold text-navy dark:text-white mb-1.5">Email Address</label>
                     <input value={form.email} onChange={e => set('email', e.target.value)} type="email"
-                      placeholder="vikram@company.com" className="input-luxury" />
+                      placeholder="Enter email address" className="input-luxury" />
                   </div>
                   <div>
                     <label className="block text-xs font-bold text-navy dark:text-white mb-1.5">Subject</label>
@@ -302,7 +302,7 @@ export default function Contact() {
                   <div>
                     <label className="block text-xs font-bold text-navy dark:text-white mb-1.5">Message</label>
                     <textarea value={form.message} onChange={e => set('message', e.target.value)} rows={4}
-                      placeholder="Tell us how we can help you today..."
+                      placeholder="Describe your inquiry or request details..."
                       className="input-luxury resize-none" />
                   </div>
                   {serverError && (

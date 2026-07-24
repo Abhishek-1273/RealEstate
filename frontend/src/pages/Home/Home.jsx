@@ -584,7 +584,7 @@ function Newsletter() {
                 type="text"
                 value={name}
                 onChange={e => setName(e.target.value)}
-                placeholder="Your name"
+                placeholder="Enter full name"
                 className="px-5 py-4 rounded-2xl font-body text-sm text-white placeholder-white/35 focus:outline-none transition-all duration-200"
                 style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.14)' }}
               />
@@ -592,7 +592,7 @@ function Newsletter() {
                 type="tel"
                 value={phone}
                 onChange={e => setPhone(e.target.value)}
-                placeholder="Mobile number (+91 98765 43210)"
+                placeholder="Enter mobile number"
                 className="px-5 py-4 rounded-2xl font-body text-sm text-white placeholder-white/35 focus:outline-none transition-all duration-200"
                 style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.14)' }}
               />
@@ -601,7 +601,7 @@ function Newsletter() {
                   type="email"
                   value={email}
                   onChange={e => setEmail(e.target.value)}
-                  placeholder="Your email address"
+                  placeholder="Enter email address"
                   className="flex-1 px-5 py-4 rounded-2xl font-body text-sm text-white placeholder-white/35 focus:outline-none transition-all duration-200"
                   style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.14)' }}
                 />

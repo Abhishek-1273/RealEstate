@@ -109,7 +109,7 @@ export default function Hero() {
         <div className="hidden lg:grid lg:grid-cols-2 gap-12 items-center">
           <div>
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: 0.1 }}
-              className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full mb-7"
+              className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full mb-3.5"
               style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.16)', backdropFilter: 'blur(12px)' }}>
               <span className="w-1.5 h-1.5 rounded-full animate-pulse-gold" style={{ background: '#D4AF37', boxShadow: '0 0 8px rgba(212,175,55,0.8)' }} />
               <span className="text-white/85 text-[10px] font-accent font-semibold tracking-[0.2em] uppercase">
@@ -158,7 +158,7 @@ export default function Hero() {
               ))}
             </motion.div>
           </div>
-          <div className="flex items-center justify-end">
+          <div className="flex items-center justify-end lg:translate-x-6 xl:translate-x-12">
             <ServiceShuffle />
           </div>
         </div>

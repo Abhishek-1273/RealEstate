@@ -311,7 +311,7 @@ export default function TestimonialsAdmin() {
                         required
                         value={currentTestimonial.name}
                         onChange={(e) => setCurrentTestimonial(prev => ({ ...prev, name: e.target.value }))}
-                        placeholder="e.g. Rajiv Singhania"
+                        placeholder="Enter client name"
                         className={inputCls}
                       />
                     </div>
@@ -322,7 +322,7 @@ export default function TestimonialsAdmin() {
                         required
                         value={currentTestimonial.role}
                         onChange={(e) => setCurrentTestimonial(prev => ({ ...prev, role: e.target.value }))}
-                        placeholder="e.g. NRI — Based in Dubai"
+                        placeholder="Enter role or designation"
                         className={inputCls}
                       />
                     </div>
@@ -347,7 +347,7 @@ export default function TestimonialsAdmin() {
                         type="text"
                         value={currentTestimonial.property}
                         onChange={(e) => setCurrentTestimonial(prev => ({ ...prev, property: e.target.value }))}
-                        placeholder="e.g. Elysian Heights, KP, Pune"
+                        placeholder="Enter property name and locality"
                         className={inputCls}
                       />
                     </div>
